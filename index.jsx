@@ -25,6 +25,10 @@ class App extends React.Component {
     window.removeEventListener("hashchange", this.navigate);
   }
   updateRange(range) {
+    if (range.end.getTime() == this.state.range.end.getTime() &&
+        range.duration == this.state.range.duration) {
+      return;
+    }
     this.setState({
       config: this.state.config,
       console: this.state.console,
@@ -53,7 +57,7 @@ class App extends React.Component {
         <ConsoleNav consoles={this.state.config} />
         <h1>{console.title}</h1>
         <RangePicker range={this.state.range} onChange={this.updateRange} />
-        <Console key={path} items={console.contents} range={this.state.range} />
+        <Console key={path} items={console.contents} range={this.state.range} onChangeRange={this.updateRange} />
       </div>
     );
   }
@@ -80,6 +84,12 @@ class Console extends React.Component {
     if (props.range) {
       this.setRange(props.range);
     }
+    this.tScale.onUpdate(function() {
+      this.props.onChangeRange({
+        end: this.tScale.domainMax(),
+        duration: Math.floor((this.tScale.domainMax().getTime() - this.tScale.domainMin().getTime())/1000),
+      });
+    }.bind(this));
   }
   setRange(range) {
     this.tScale.domainMax(range.end);
@@ -93,7 +103,6 @@ class Console extends React.Component {
     return true;
   }
   render() {
-    this.setRange(this.props.range);
     var items = this.props.items;
     var tScale = this.tScale;
     var focusPoint = this.focusPoint;
