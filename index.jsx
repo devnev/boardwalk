@@ -294,7 +294,7 @@ class Graph extends React.Component {
     var panel = new Plottable.Components.Group([plot, guideline, nearestPoint]);
     this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
     this.redraw = this.redraw.bind(this);
-    this.onParamsUpdate = this.onParamsUpdate.bind(this);
+    this.onParamsUpdate = _.debounce(this.onParamsUpdate.bind(this), 500);
   }
   redraw() {
     this.chart.redraw();
