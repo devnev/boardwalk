@@ -127,8 +127,11 @@ class Graph extends React.Component {
 
     var panel = new Plottable.Components.Group([plot, guideline, nearestPoint]);
     this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
-    this.resizeListener = function() { this.chart.redraw(); }.bind(this);
+    this.redraw = this.redraw.bind(this);
     this.updateData = this.updateData.bind(this);
+  }
+  redraw() {
+    this.chart.redraw();
   }
   updateData() {
     if (this.req) {
@@ -147,11 +150,11 @@ class Graph extends React.Component {
   }
   componentDidMount() {
     this.updateData();
-    window.addEventListener("resize", this.resizeListener);
+    window.addEventListener("resize", this.redraw);
   }
   componentWillUnmount() {
     this.req.abort();
-    window.removeEventListener("resize", this.resizeListener);
+    window.removeEventListener("resize", this.redraw);
   }
   render() {
     return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.chart.renderTo(ref)} />
