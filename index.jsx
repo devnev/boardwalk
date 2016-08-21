@@ -236,12 +236,80 @@ var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
   ],
 ];
 
+class Query {
+  constructor(query, tScale, yScale, focusPoint) {
+    this.query = query;
+    this.dataset = new Plottable.Dataset();
+    this.nearest = new Plottable.Dataset();
+
+    var plot = new Plottable.Plots.Line();
+    plot.x(function(d) { return d.t; }, tScale);
+    plot.y(function(d) { return d.y; }, yScale);
+    plot.addDataset(this.dataset);
+
+    var nearestPoint = new Plottable.Plots.Scatter();
+    nearestPoint.x(function(d) { return d.t; }, tScale);
+    nearestPoint.y(function(d) { return d.y; }, yScale);
+    nearestPoint.size(10);
+    nearestPoint.addDataset(this.nearest);
+
+    this._onFocusPointChanged = this._onFocusPointChanged.bind(this);
+    focusPoint.onUpdate(this._onFocusPointChanged);
+
+    this.components = new Plottable.Components.Group([plot, nearestPoint]);
+    this.loading = {};
+  }
+  _onFocusPointChanged(dataset) {
+    var data = [undefined].concat(dataset.data());
+    this.updateNearest(data.pop());
+  }
+  updateNearest(targetDate) {
+    if (!targetDate) {
+      this.nearest.data([]);
+      return;
+    }
+    for (var i = this.dataset.data().length-1; i >= 0; i--) {
+      var value = this.dataset.data()[i];
+      if (value.t <= targetDate) {
+        this.nearest.data([value]);
+        return;
+      }
+    }
+    this.nearest.data([]);
+  }
+  updateData(start, end) {
+    if (this.loading && this.loading.req) {
+      if (this.loading.start == start && this.loading.end == end) {
+        return;
+      }
+      this.loading.req.abort();
+    }
+    var step = Math.floor((end - start) / 100).toString() + "s";
+    this.loading = {
+      req: $.get("http://localhost:9090/api/v1/query_range", {
+        query: this.query, start: start, end: end, step: step}),
+      start: start,
+      end: end,
+    }
+    this.loading.req.done(function(data) {
+      this.req = null;
+      if (!data.data.result || !data.data.result.length) {
+        this.dataset.data([]);
+        return;
+      }
+      this.dataset.data(_.map(data.data.result[0].values, function(v) {
+        return {t: new Date(v[0]*1000), y: parseFloat(v[1])};
+      }));
+    }.bind(this));
+  }
+}
+
 class Graph extends React.Component {
   constructor(props) {
     super(props);
     this.id = _.uniqueId('graph_');
-    this.dataset = new Plottable.Dataset();
 
+    // axes and scales
     var tScale = this.props.tScale;
     var tAxis = new Plottable.Axes.Time(tScale, "bottom");
     tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
@@ -250,51 +318,39 @@ class Graph extends React.Component {
     var yAxis = new Plottable.Axes.Numeric(yScale, "left");
     yAxis.formatter(Plottable.Formatters.siSuffix());
 
-    var plot = new Plottable.Plots.Line();
-    plot.x(function(d) { return d.t; }, tScale);
-    plot.y(function(d) { return d.y; }, yScale);
-    plot.addDataset(this.dataset);
+    // the chart
+    this.queries = [];
+    this.props.options.queries.forEach(function(query) {
+      this.queries.push(new Query(query, tScale, yScale, this.props.focusPoint));
+    }.bind(this));
 
     var guideline = new Plottable.Components.GuideLineLayer(
-        Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
+      Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
     ).scale(tScale);
-    var nearestPointData = new Plottable.Dataset();
-    var nearestPoint = new Plottable.Plots.Scatter();
-    nearestPoint.x(function(d) { return d.t; }, tScale);
-    nearestPoint.y(function(d) { return d.y; }, yScale);
-    nearestPoint.size(10);
-    nearestPoint.addDataset(nearestPointData);
+    this.props.focusPoint.onUpdate(function(dataset) {
+      var data = [undefined].concat(dataset.data());
+      guideline.value(data.pop());
+    }.bind(this));
 
+    var panel = new Plottable.Components.Group([guideline].concat(
+      this.queries.map(function(query) { return query.components; })
+    ));
+    this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
+
+    // interactions
+    var panZoom = new Plottable.Interactions.PanZoom(tScale, null);
+    panZoom.attachTo(panel);
     var pointer = new Plottable.Interactions.Pointer();
     pointer.onPointerMove(function(point) {
       var position = point.x / tAxis.width();
       var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
       this.props.focusPoint.data([new Date(tScale.domainMin().getTime() + timeWidth * position)]);
     }.bind(this));
-    pointer.attachTo(plot);
-    this.props.focusPoint.onUpdate(function(dataset) {
-      var data = [undefined].concat(dataset.data());
-      this.onFocusPointChanged(data.pop());
-    }.bind(this));
+    pointer.attachTo(panel);
 
-    var panZoom = new Plottable.Interactions.PanZoom(tScale, null);
-    panZoom.attachTo(plot);
-
-    var panel = new Plottable.Components.Group([plot, guideline, nearestPoint]);
-    this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
+    // binds
     this.redraw = this.redraw.bind(this);
     this.onParamsUpdate = _.debounce(this.onParamsUpdate.bind(this), 500);
-  }
-  onFocusPointChanged(focusedTime) {
-    guideline.value(focusedTime);
-    for (var i = this.dataset.data().length-1; i >= 0; i--) {
-      var value = this.dataset.data()[i];
-      if (value.t <= focusedTime) {
-        nearestPointData.data([value]);
-        return;
-      }
-    }
-    nearestPointData.data([]);
   }
   redraw() {
     this.chart.redraw();
@@ -314,24 +370,9 @@ class Graph extends React.Component {
   updateData() {
     var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
     var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
-    var step = Math.floor((end - start) / 100).toString() + "s";
-    this.loading = {
-      req: $.get("http://localhost:9090/api/v1/query_range", {
-        "query": this.props.options.query, "start": start, "end": end, "step": step}),
-      start: start,
-      end: end,
-      step: step
-    }
-    this.loading.req.done(function(data) {
-      this.req = null;
-      if (!data.data.result || !data.data.result.length) {
-        this.dataset.data([]);
-        return;
-      }
-      this.dataset.data(_.map(data.data.result[0].values, function(v) {
-        return {t: new Date(v[0]*1000), y: parseFloat(v[1])};
-      }));
-    }.bind(this));
+    this.queries.forEach(function(query) {
+      query.updateData(start, end);
+    });
   }
   componentDidMount() {
     this.updateData();

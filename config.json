@@ -4,17 +4,20 @@
     "contents": [
       {
         "graph": {
-          "query": "grpc_server_handled_total::rate1m_sum{job=\"server1\"}"
+          "queries": [
+            "grpc_server_handled_total::rate1m_sum{job=\"server1\"}",
+            "grpc_server_handled_total::rate1m_sum{job=\"mystique\"}",
+            "grpc_server_handled_total::rate1m_sum{job=\"spiderman\"}"
+          ]
         }
       },
       {
         "graph": {
-          "query": "grpc_server_handled_total::rate1m_sum{job=\"mystique\"}"
-        }
-      },
-      {
-        "graph": {
-          "query": "grpc_server_handled_total::rate1m_sum{job=\"spiderman\"}"
+          "queries": [
+            "sum(up{job=\"server1\"})",
+            "sum(up{job=\"mystique\"})",
+            "sum(up{job=\"spiderman\"})"
+          ]
         }
       }
     ]
@@ -24,12 +27,16 @@
     "contents": [
       {
         "graph": {
-          "query": "sum(increase(process_cpu_seconds_total{job=\"server1\"}[1m]))"
+          "queries": [
+            "sum(increase(process_cpu_seconds_total{job=\"server1\"}[1m]))"
+          ]
         }
       },
       {
         "graph": {
-          "query": "sum(process_resident_memory_bytes{job=\"server1\"})"
+          "queries": [
+            "sum(process_resident_memory_bytes{job=\"server1\"})"
+          ]
         }
       }
     ]
