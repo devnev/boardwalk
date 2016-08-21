@@ -96,8 +96,7 @@ class Console extends React.Component {
     }.bind(this));
   }
   setRange(range) {
-    this.tScale.domainMax(range.end);
-    this.tScale.domainMin(new Date(range.end.getTime() - range.duration*1000));
+    this.tScale.domain([new Date(range.end.getTime() - range.duration*1000), range.end]);
   }
   shouldComponentUpdate(nextProps, nextState) {
     if (_.isEqual(this.props.items, nextProps.items)) {
