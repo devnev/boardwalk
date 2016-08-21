@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "graph": {
+        "query": "sum(increase(grpc_server_handled_total{job=\"server1\"}[1m]))"
+      }
+    },
+    {
+      "graph": {
+        "query": "sum(increase(grpc_server_handled_total{job=\"server1\",grpc_code!=\"OK\"}[1m]))"
+      }
+    }
+  ]
+}
