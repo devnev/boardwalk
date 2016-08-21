@@ -178,7 +178,8 @@ class DurationPicker extends React.Component {
     var d = h*24;
     this.steps = [10, 30, m, 5*m, 15*m, 30*m, h, 3*h, 6*h, 12*h, d, 3*d, 7*d, 14*d, 30*d];
     this.state = {
-      inputValue: DurationPicker.formatDuration(props.value)
+      inputValue: DurationPicker.formatDuration(props.value),
+      dirty: false
     }
     this.onIncreaseDuration = this.onIncreaseDuration.bind(this);
     this.onDecreaseDuration = this.onDecreaseDuration.bind(this);
@@ -187,8 +188,8 @@ class DurationPicker extends React.Component {
   }
   componentWillReceiveProps(nextProps) {
     var nextDuration = DurationPicker.formatDuration(nextProps.value)
-    if (nextDuration != this.state.inputValue) {
-      this.setState({ inputValue: nextDuration });
+    if (nextDuration != this.state.inputValue || this.state.dirty) {
+      this.setState({ inputValue: nextDuration, dirty: false });
     }
   }
   onIncreaseDuration() {
@@ -216,13 +217,13 @@ class DurationPicker extends React.Component {
     }
   }
   onInputChange(event) {
-    this.setState({inputValue: event.target.value});
+    this.setState({inputValue: event.target.value, dirty: true });
   }
   render() {
     return (
       <form action="" onSubmit={this.onFormSubmit}>
         <button type="button" onClick={this.onDecreaseDuration}>&#8722;</button>
-        <input type="text" value={this.state.inputValue} onChange={this.onInputChange} className={DurationPicker.parseDuration(this.state.inputValue) == 0 ? "error" : "valid"} />
+        <input type="text" value={this.state.inputValue} onChange={this.onInputChange} className={(DurationPicker.parseDuration(this.state.inputValue) == 0 ? "error" : "valid") + (this.state.dirty ? " dirty" : "")} />
         <button type="button" onClick={this.onIncreaseDuration}>+</button>
       </form>
     );

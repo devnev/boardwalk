@@ -1,0 +1,6 @@
+.error {
+  background: #fee;
+}
+.valid.dirty {
+  background: #efe;
+}
