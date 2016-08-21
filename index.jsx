@@ -101,13 +101,13 @@ class Graph extends React.Component {
     nearestPoint.size(10);
     nearestPoint.addDataset(nearestPointData);
 
-    var interaction = new Plottable.Interactions.Pointer();
-    interaction.onPointerMove(function(point) {
+    var pointer = new Plottable.Interactions.Pointer();
+    pointer.onPointerMove(function(point) {
       var position = point.x / tAxis.width();
       var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
       this.props.focusPoint.data([tScale.domainMin().getTime() + timeWidth * position]);
     }.bind(this));
-    interaction.attachTo(plot);
+    pointer.attachTo(plot);
     this.props.focusPoint.onUpdate(function(dataset) {
       var data = dataset.data();
       if (!data || !data.length) {
@@ -124,6 +124,9 @@ class Graph extends React.Component {
       }
       nearestPointData.data([]);
     }.bind(this));
+
+    var panZoom = new Plottable.Interactions.PanZoom(tScale, null);
+    panZoom.attachTo(plot);
 
     var panel = new Plottable.Components.Group([plot, guideline, nearestPoint]);
     this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
