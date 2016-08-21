@@ -94,7 +94,12 @@ class Graph extends React.Component {
     var guideline = new Plottable.Components.GuideLineLayer(
         Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
     ).scale(tScale);
-    var panel = new Plottable.Components.Group([plot, guideline]);
+    var nearestPointData = new Plottable.Dataset();
+    var nearestPoint = new Plottable.Plots.Scatter();
+    nearestPoint.x(function(d) { return d.t; }, tScale);
+    nearestPoint.y(function(d) { return d.y; }, yScale);
+    nearestPoint.size(10);
+    nearestPoint.addDataset(nearestPointData);
 
     var interaction = new Plottable.Interactions.Pointer();
     interaction.onPointerMove(function(point) {
@@ -105,12 +110,22 @@ class Graph extends React.Component {
     interaction.attachTo(plot);
     this.props.focusPoint.onUpdate(function(dataset) {
       var data = dataset.data();
-      if (data && data.length > 0) {
-        console.log(data);
-        guideline.value(new Date(data[0]));
+      if (!data || !data.length) {
+        return;
       }
+      var date = new Date(data[0])
+      guideline.value(date);
+      for (var i = this.dataset.data().length-1; i >= 0; i--) {
+        var value = this.dataset.data()[i];
+        if (value.t <= date) {
+          nearestPointData.data([value]);
+          return;
+        }
+      }
+      nearestPointData.data([]);
     }.bind(this));
 
+    var panel = new Plottable.Components.Group([plot, guideline, nearestPoint]);
     this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
     this.resizeListener = function() { this.chart.redraw(); }.bind(this);
   }
