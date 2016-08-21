@@ -10,13 +10,19 @@ class App extends React.Component {
       }
     };
     this.updateRange = this.updateRange.bind(this);
+    this.navigate = this.navigate.bind(this);
   }
   componentDidMount() {
     this.req = $.get("/config.json");
     this.req.done(function(data) { this.setState({config: data}); }.bind(this));
+    window.addEventListener("hashchange", this.navigate);
+    this.navigate();
   }
   componentWillUnmount() {
-    this.req.abort();
+    if (this.req) {
+      this.req.abort();
+    }
+    window.removeEventListener("hashchange", this.navigate);
   }
   updateRange(range) {
     this.setState({
@@ -25,16 +31,30 @@ class App extends React.Component {
       range: range
     });
   }
-  render() {
-    if (this.state.config) {
-      return (
-        <div>
-          <RangePicker range={this.state.range} onChange={this.updateRange} />
-          <Console items={this.state.config.items} range={this.state.range} />
-        </div>
-      );
+  navigate() {
+    var path = window.location.hash.substr(1);
+    var paramsStart = path.indexOf("?");
+    if (paramsStart != -1) {
+      path = path.substr(0, paramsStart);
     }
-    return <p>Loading config...</p>
+    this.setState({config: this.state.config, console: path, range: this.state.range});
+  }
+  render() {
+    if (!this.state.config) {
+      return <p>Loading config...</p>
+    }
+    var path = this.state.console.replace(/\/+$/, "");
+    var console = this.state.config[path];
+    if (!console) {
+      return <p>Console not found.</p>
+    }
+    return (
+      <div>
+        <h1>{console.title}</h1>
+        <RangePicker range={this.state.range} onChange={this.updateRange} />
+        <Console key={path} items={console.contents} range={this.state.range} />
+      </div>
+    );
   }
 }
 
@@ -56,6 +76,7 @@ class Console extends React.Component {
       this.setRange(nextProps.range);
       return false;
     }
+    return true;
   }
   render() {
     this.setRange(this.props.range);
@@ -161,6 +182,10 @@ class Graph extends React.Component {
     }
     this.loading.req.done(function(data) {
       this.req = null;
+      if (!data.data.result || !data.data.result.length) {
+        this.dataset.data([]);
+        return;
+      }
       this.dataset.data(_.map(data.data.result[0].values, function(v) {
         return {t: new Date(v[0]*1000), y: parseFloat(v[1])};
       }));
@@ -172,7 +197,9 @@ class Graph extends React.Component {
     this.props.tScale.onUpdate(this.onParamsUpdate);
   }
   componentWillUnmount() {
-    this.req.abort();
+    if (this.req) {
+      this.req.abort();
+    }
     window.removeEventListener("resize", this.redraw);
     this.props.tScale.offUpdate(this.onParamsUpdate);
   }
