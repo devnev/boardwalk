@@ -216,7 +216,8 @@ class DurationPicker extends React.Component {
     var m = 60;
     var h = m*60;
     var d = h*24;
-    this.steps = [10, 30, m, 5*m, 15*m, 30*m, h, 3*h, 6*h, 12*h, d, 3*d, 7*d, 14*d, 30*d];
+    var w = 7*d;
+    this.steps = [10, 30, m, 5*m, 15*m, 30*m, h, 3*h, 6*h, 12*h, d, 3*d, w, 2*w, 4*w, 12*w, 53*w];
     this.state = {
       inputValue: DurationPicker.formatDuration(props.value),
       dirty: false
