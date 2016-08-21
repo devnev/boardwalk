@@ -5,18 +5,16 @@
       {
         "graph": {
           "queries": [
-            "grpc_server_handled_total::rate1m_sum{job=\"server1\"}",
-            "grpc_server_handled_total::rate1m_sum{job=\"mystique\"}",
-            "grpc_server_handled_total::rate1m_sum{job=\"spiderman\"}"
+            "grpc_server_handled_total::rate1m_sum"
           ]
         }
       },
       {
         "graph": {
           "queries": [
-            "sum(up{job=\"server1\"})",
-            "sum(up{job=\"mystique\"})",
-            "sum(up{job=\"spiderman\"})"
+            "count(up)",
+            "sum(up)",
+            "sum(up == 0)"
           ]
         }
       }

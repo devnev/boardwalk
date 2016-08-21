@@ -245,11 +245,11 @@ var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
   ],
 ];
 
-class Query {
-  constructor(query, tScale, yScale, focusPoint) {
-    this.query = query;
+class Plot {
+  constructor(metric, tScale, yScale) {
     this.dataset = new Plottable.Dataset();
     this.nearest = new Plottable.Dataset();
+    this.metric = metric;
 
     var plot = new Plottable.Plots.Line();
     plot.x(function(d) { return d.t; }, tScale);
@@ -262,29 +262,76 @@ class Query {
     nearestPoint.size(10);
     nearestPoint.addDataset(this.nearest);
 
-    this._onFocusPointChanged = this._onFocusPointChanged.bind(this);
-    focusPoint.onUpdate(this._onFocusPointChanged);
-
-    this.components = new Plottable.Components.Group([plot, nearestPoint]);
-    this.loading = {};
+    this.component = new Plottable.Components.Group([plot, nearestPoint]);
   }
-  _onFocusPointChanged(dataset) {
-    var data = [undefined].concat(dataset.data());
-    this._updateNearest(data.pop());
-  }
-  _updateNearest(targetDate) {
-    if (!targetDate) {
+  updateNearest(targetTime) {
+    if (!targetTime) {
       this.nearest.data([]);
-      return;
     }
     for (var i = this.dataset.data().length-1; i >= 0; i--) {
       var value = this.dataset.data()[i];
-      if (value.t <= targetDate) {
+      if (value.t <= targetTime) {
         this.nearest.data([value]);
         return;
       }
     }
     this.nearest.data([]);
+  }
+}
+
+class Query {
+  constructor(query, tScale, yScale, focusPoint) {
+    this.tScale = tScale;
+    this.yScale = yScale;
+    this.query = query;
+    this.plots = [];
+    this.loading = {};
+    this.component = new Plottable.Components.Group([]);
+
+    this._onFocusPointChanged = this._onFocusPointChanged.bind(this);
+    focusPoint.onUpdate(this._onFocusPointChanged);
+  }
+  _onFocusPointChanged(dataset) {
+    var data = [undefined].concat(dataset.data());
+    this._updateNearest(data.pop());
+  }
+  _updateNearest(targetTime) {
+    this.plots.forEach(function(plot) {
+      plot.updateNearest(targetTime);
+    }.bind(this));
+  }
+  _addPlot(metric) {
+    var plot = new Plot(metric, this.tScale, this.yScale);
+    this.plots.push(plot);
+    this.component.append(plot.component);
+    return plot;
+  }
+  _updatePlots(results) {
+    results.forEach(function(result) {
+      var plot;
+      var found = this.plots.some(function(existingPlot) {
+        if (!_.isEqual(existingPlot.metric, result.metric)) {
+          return false;
+        }
+        plot = existingPlot;
+        return true;
+      });
+      if (!found) {
+        plot = this._addPlot(result.metric);
+      }
+      plot.dataset.data(_.map(result.values, function(v) {
+        return {t: new Date(v[0]*1000), y: parseFloat(v[1])};
+      }));
+    }.bind(this));
+    this.plots.filter(function(plot) {
+      var found = results.some(function(result) {
+        return _.isEqual(result.metric, plot.metric);
+      }.bind(this));
+      if (!found) {
+        this.component.remove(plot.plot);
+      }
+      return found;
+    }.bind(this));
   }
   updateData(start, end) {
     if (this.loading && this.loading.req) {
@@ -302,13 +349,7 @@ class Query {
     }
     this.loading.req.done(function(data) {
       this.req = null;
-      if (!data.data.result || !data.data.result.length) {
-        this.dataset.data([]);
-        return;
-      }
-      this.dataset.data(_.map(data.data.result[0].values, function(v) {
-        return {t: new Date(v[0]*1000), y: parseFloat(v[1])};
-      }));
+      this._updatePlots(data.data.result);
     }.bind(this));
   }
 }
@@ -319,9 +360,9 @@ class Graph extends React.Component {
     this.id = _.uniqueId('graph_');
 
     // axes and scales
-    var tScale = this.props.tScale;
-    var tAxis = new Plottable.Axes.Time(tScale, "bottom");
-    tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
+    this.tScale = this.props.tScale;
+    this.tAxis = new Plottable.Axes.Time(this.tScale, "bottom");
+    this.tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
     var yScale = new Plottable.Scales.Linear();
     yScale.domainMin(0);
     var yAxis = new Plottable.Axes.Numeric(yScale, "left");
@@ -330,31 +371,31 @@ class Graph extends React.Component {
     // the chart
     this.queries = [];
     this.props.options.queries.forEach(function(query) {
-      this.queries.push(new Query(query, tScale, yScale, this.props.focusPoint));
+      this.queries.push(new Query(query, this.tScale, yScale, this.props.focusPoint));
     }.bind(this));
 
     var guideline = new Plottable.Components.GuideLineLayer(
       Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
-    ).scale(tScale);
+    ).scale(this.tScale);
     this.props.focusPoint.onUpdate(function(dataset) {
       var data = [undefined].concat(dataset.data());
       guideline.value(data.pop());
     }.bind(this));
 
     var panel = new Plottable.Components.Group([guideline].concat(
-      this.queries.map(function(query) { return query.components; })
+      this.queries.map(function(query) { return query.component; })
     ));
-    this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
+    this.chart = new Plottable.Components.Table([[yAxis, panel], [null, this.tAxis]]);
 
     // interactions
-    var panZoom = new Plottable.Interactions.PanZoom(tScale, null);
+    var panZoom = new Plottable.Interactions.PanZoom(this.tScale, null);
     panZoom.attachTo(panel);
     var pointer = new Plottable.Interactions.Pointer();
     pointer.onPointerMove(function(point) {
       this.props.onFocusTime(this._timeForPoint(point));
     }.bind(this));
     pointer.onPointerExit(function() {
-      this.props.onFocusTime(tScale.domainMax());
+      this.props.onFocusTime(this.tScale.domainMax());
     }.bind(this));
     pointer.attachTo(panel);
     var click = new Plottable.Interactions.Click();
@@ -368,9 +409,9 @@ class Graph extends React.Component {
     this._onParamsUpdate = _.debounce(this._onParamsUpdate.bind(this), 500);
   }
   _timeForPoint(point) {
-    var position = point.x / tAxis.width();
-    var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
-    return new Date(tScale.domainMin().getTime() + timeWidth * position);
+    var position = point.x / this.tAxis.width();
+    var timeWidth = this.tScale.domainMax().getTime() - this.tScale.domainMin().getTime();
+    return new Date(this.tScale.domainMin().getTime() + timeWidth * position);
   }
   _redraw() {
     this.chart.redraw();
