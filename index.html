@@ -242,9 +242,9 @@ class DurationPicker extends React.Component {
   render() {
     return (
       <form action="" onSubmit={this.onFormSubmit}>
-        <button onClick={this.onDecreaseDuration}>&#8722;</button>
+        <button type="button" onClick={this.onDecreaseDuration}>&#8722;</button>
         <input type="text" value={this.state.inputValue} onChange={this.onInputChange} className={DurationPicker.parseDuration(this.state.inputValue) == 0 ? "error" : "valid"} />
-        <button onClick={this.onIncreaseDuration}>+</button>
+        <button type="button" onClick={this.onIncreaseDuration}>+</button>
       </form>
     );
   }
