@@ -84,6 +84,7 @@ class Console extends React.Component {
   constructor(props) {
     super(props);
     this.tScale = new Plottable.Scales.Time();
+    this.cScale = new Plottable.Scales.Color();
     this.focusPoint = new Plottable.Dataset();
     this.selected = false;
     if (props.range) {
@@ -122,7 +123,7 @@ class Console extends React.Component {
       <div>
         {this.props.items.map(function(item, index) {
           if (item.graph) {
-            return <Graph key={index} options={item.graph} tScale={this.tScale} onFocusTime={this._setFocusTime} onSelectTime={this._setSelectedTime} focusPoint={this.focusPoint} />;
+            return <Graph key={index} options={item.graph} tScale={this.tScale} cScale={this.cScale} onFocusTime={this._setFocusTime} onSelectTime={this._setSelectedTime} focusPoint={this.focusPoint} />;
           }
         }.bind(this))}
       </div>
@@ -246,21 +247,34 @@ var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
 ];
 
 class Plot {
-  constructor(metric, tScale, yScale) {
+  constructor(metric, tScale, yScale, cScale) {
     this.dataset = new Plottable.Dataset();
     this.nearest = new Plottable.Dataset();
     this.metric = metric;
+    var title = '';
+    Object.keys(metric).forEach(function(key) {
+      if (title == '') {
+        title = '{';
+      } else {
+        title = title + ',';
+      }
+      title = title + key + "=\"" + JSON.stringify(metric[key]);
+    }.bind(this));
+    title = title + '}';
+    this.title = title;
 
     var plot = new Plottable.Plots.Line();
     plot.x(function(d) { return d.t; }, tScale);
     plot.y(function(d) { return d.y; }, yScale);
     plot.addDataset(this.dataset);
+    plot.attr("stroke", cScale.scale(title));
 
     var nearestPoint = new Plottable.Plots.Scatter();
     nearestPoint.x(function(d) { return d.t; }, tScale);
     nearestPoint.y(function(d) { return d.y; }, yScale);
     nearestPoint.size(10);
     nearestPoint.addDataset(this.nearest);
+    nearestPoint.attr("fill", cScale.scale(title));
 
     this.component = new Plottable.Components.Group([plot, nearestPoint]);
   }
@@ -280,9 +294,10 @@ class Plot {
 }
 
 class Query {
-  constructor(query, tScale, yScale) {
+  constructor(query, tScale, yScale, cScale) {
     this.tScale = tScale;
     this.yScale = yScale;
+    this.cScale = cScale;
     this.query = query;
     this.plots = [];
     this.loading = {};
@@ -294,7 +309,7 @@ class Query {
     }.bind(this));
   }
   _addPlot(metric) {
-    var plot = new Plot(metric, this.tScale, this.yScale);
+    var plot = new Plot(metric, this.tScale, this.yScale, this.cScale);
     this.plots.push(plot);
     this.component.append(plot.component);
     return plot;
@@ -354,6 +369,7 @@ class Graph extends React.Component {
 
     // axes and scales
     this.tScale = this.props.tScale;
+    this.cScale = this.props.cScale;
     this.tAxis = new Plottable.Axes.Time(this.tScale, "bottom");
     this.tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
     var yScale = new Plottable.Scales.Linear();
@@ -364,7 +380,7 @@ class Graph extends React.Component {
     // the chart
     this.queries = [];
     this.props.options.queries.forEach(function(query) {
-      this.queries.push(new Query(query, this.tScale, yScale, this.props.focusPoint));
+      this.queries.push(new Query(query, this.tScale, yScale, this.cScale, this.props.focusPoint));
     }.bind(this));
 
     var guideline = new Plottable.Components.GuideLineLayer(
@@ -448,6 +464,7 @@ class Graph extends React.Component {
 }
 Graph.propTypes = {
   tScale: React.PropTypes.object,
+  cScale: React.PropTypes.object,
   options: React.PropTypes.object,
   focusPoint: React.PropTypes.object,
   onFocusTime: React.PropTypes.func,
