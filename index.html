@@ -108,6 +108,7 @@ class Graph extends React.Component {
     plot.y(function(d) { return d.y; }, yScale);
     plot.addDataset(this.dataset);
     this.chart = new Plottable.Components.Table([[yAxis, plot], [null, tAxis]]);
+    this.resizeListener = function() { this.chart.redraw(); }.bind(this);
   }
   componentDidMount() {
     var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
@@ -119,9 +120,11 @@ class Graph extends React.Component {
         return {t: new Date(v[0]*1000), y: parseInt(v[1])};
       }));
     }.bind(this));
+    window.addEventListener("resize", this.resizeListener);
   }
   componentWillUnmount() {
     this.req.abort();
+    window.removeEventListener("resize", this.resizeListener);
   }
   render() {
     return <svg id={this.id} width="100%" height="100%" ref={(ref) => this.chart.renderTo(ref)} />
