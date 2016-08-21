@@ -280,22 +280,15 @@ class Plot {
 }
 
 class Query {
-  constructor(query, tScale, yScale, focusPoint) {
+  constructor(query, tScale, yScale) {
     this.tScale = tScale;
     this.yScale = yScale;
     this.query = query;
     this.plots = [];
     this.loading = {};
     this.component = new Plottable.Components.Group([]);
-
-    this._onFocusPointChanged = this._onFocusPointChanged.bind(this);
-    focusPoint.onUpdate(this._onFocusPointChanged);
   }
-  _onFocusPointChanged(dataset) {
-    var data = [undefined].concat(dataset.data());
-    this._updateNearest(data.pop());
-  }
-  _updateNearest(targetTime) {
+  updateNearest(targetTime) {
     this.plots.forEach(function(plot) {
       plot.updateNearest(targetTime);
     }.bind(this));
@@ -379,7 +372,9 @@ class Graph extends React.Component {
     ).scale(this.tScale);
     this.props.focusPoint.onUpdate(function(dataset) {
       var data = [undefined].concat(dataset.data());
-      guideline.value(data.pop());
+      var targetTime = data.pop()
+      guideline.value(targetTime);
+      this.queries.map(function(query) { query.updateNearest(targetTime); });
     }.bind(this));
 
     var panel = new Plottable.Components.Group([guideline].concat(
