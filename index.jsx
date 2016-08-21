@@ -131,7 +131,7 @@ class Graph extends React.Component {
     window.removeEventListener("resize", this.resizeListener);
   }
   render() {
-    return <svg id={this.id} width="100%" height="100%" ref={(ref) => this.chart.renderTo(ref)} />
+    return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.chart.renderTo(ref)} />
   }
 }
 
