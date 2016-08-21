@@ -50,10 +50,24 @@ class App extends React.Component {
     }
     return (
       <div>
+        <ConsoleNav consoles={this.state.config} />
         <h1>{console.title}</h1>
         <RangePicker range={this.state.range} onChange={this.updateRange} />
         <Console key={path} items={console.contents} range={this.state.range} />
       </div>
+    );
+  }
+}
+
+class ConsoleNav extends React.Component {
+  render() {
+    return (
+      <nav><ul>
+        {Object.keys(this.props.consoles || {}).map(function(path) {
+          var console = this.props.consoles[path];
+          return <li key={path}><a href={"#" + path}>{console.title}</a></li>;
+        }.bind(this))}
+      </ul></nav>
     );
   }
 }
