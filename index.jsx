@@ -42,6 +42,7 @@ class Console extends React.Component {
   constructor(props) {
     super(props);
     this.tScale = new Plottable.Scales.Time();
+    this.focusPoint = new Plottable.Dataset();
     if (props.range) {
       this.setRange(props.range);
     }
@@ -60,11 +61,12 @@ class Console extends React.Component {
     this.setRange(this.props.range);
     var items = this.props.items;
     var tScale = this.tScale;
+    var focusPoint = this.focusPoint;
     return (
       <div>
         {items.map(function(item, index) {
           if (item.graph) {
-            return <Graph key={index} options={item.graph} tScale={tScale} />;
+            return <Graph key={index} options={item.graph} tScale={tScale} focusPoint={focusPoint} />;
           }
         })}
       </div>
@@ -76,17 +78,40 @@ class Graph extends React.Component {
   constructor(props) {
     super(props);
     this.id = _.uniqueId('graph_');
+    this.dataset = new Plottable.Dataset();
+
     var tScale = this.props.tScale;
     var tAxis = new Plottable.Axes.Time(tScale, "bottom");
     var yScale = new Plottable.Scales.Linear();
     yScale.domainMin(0);
     var yAxis = new Plottable.Axes.Numeric(yScale, "left");
-    this.dataset = new Plottable.Dataset();
+
     var plot = new Plottable.Plots.Line();
     plot.x(function(d) { return d.t; }, tScale);
     plot.y(function(d) { return d.y; }, yScale);
     plot.addDataset(this.dataset);
-    this.chart = new Plottable.Components.Table([[yAxis, plot], [null, tAxis]]);
+
+    var guideline = new Plottable.Components.GuideLineLayer(
+        Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
+    ).scale(tScale);
+    var panel = new Plottable.Components.Group([plot, guideline]);
+
+    var interaction = new Plottable.Interactions.Pointer();
+    interaction.onPointerMove(function(point) {
+      var position = point.x / tAxis.width();
+      var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
+      this.props.focusPoint.data([tScale.domainMin().getTime() + timeWidth * position]);
+    }.bind(this));
+    interaction.attachTo(plot);
+    this.props.focusPoint.onUpdate(function(dataset) {
+      var data = dataset.data();
+      if (data && data.length > 0) {
+        console.log(data);
+        guideline.value(new Date(data[0]));
+      }
+    }.bind(this));
+
+    this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
     this.resizeListener = function() { this.chart.redraw(); }.bind(this);
   }
   componentDidMount() {
