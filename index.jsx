@@ -194,7 +194,7 @@ class RangePicker extends React.Component {
     this.props.onChange({end: end, duration: this.props.range.duration});
   }
   render() {
-    return <div><DurationPicker value={this.props.range.duration} onChange={this.updateDuration} /><TimePicker value={this.props.range.end} onChange={this.updateEnd} /></div>
+    return <div><DurationPicker value={this.props.range.duration} onChange={this.updateDuration} /><TimePicker value={this.props.range.end} step={this.props.range.duration} onChange={this.updateEnd} /></div>
   }
 }
 
@@ -310,8 +310,13 @@ class TimePicker extends React.Component {
       dirty: false,
     }
     this.onInputChange = this.onInputChange.bind(this);
-    this.onFormSubmit = this.onFormSubmit.bind(this);
     this.onPickNow = this.onPickNow.bind(this);
+    this.onStepBack = this.onStepBack.bind(this);
+    this.onStepForward = this.onStepForward.bind(this);
+    this.onFormSubmit = this.onFormSubmit.bind(this);
+  }
+  parsedInput() {
+    return moment(this.state.inputValue, moment.ISO_8601, true);
   }
   componentWillReceiveProps(nextProps) {
     var nextValue = moment(nextProps.value).format("YYYY-MM-DD HH:mm:ssZZ")
@@ -325,9 +330,15 @@ class TimePicker extends React.Component {
   onPickNow() {
     this.props.onChange(new Date());
   }
+  onStepBack() {
+    this.props.onChange(new Date(this.props.value.getTime() - this.props.step*1000));
+  }
+  onStepForward() {
+    this.props.onChange(new Date(this.props.value.getTime() + this.props.step*1000));
+  }
   onFormSubmit(event) {
     event.preventDefault();
-    var value = moment(this.state.inputValue);
+    var value = this.parsedInput();
     if (value.isValid()) {
       this.props.onChange(value.toDate());
     }
@@ -335,7 +346,9 @@ class TimePicker extends React.Component {
   render() {
     return (
       <form action="" onSubmit={this.onFormSubmit}>
-        <input type="text" value={this.state.inputValue} onChange={this.onInputChange} className={(moment(this.state.inputValue).isValid() ? "valid" : "error") + (this.state.dirty ? " dirty" : "")}/>
+        <button type="button" onClick={this.onStepBack}>-{DurationPicker.formatDuration(this.props.step)}</button>
+        <input type="text" value={this.state.inputValue} onChange={this.onInputChange} className={(this.parsedInput().isValid() ? "valid" : "error") + (this.state.dirty ? " dirty" : "")}/>
+        <button type="button" onClick={this.onStepForward}>+{DurationPicker.formatDuration(this.props.step)}</button>
         <button type="button" onClick={this.onPickNow}>now</button>
       </form>
     );
