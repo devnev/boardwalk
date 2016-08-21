@@ -234,19 +234,20 @@ class TimePicker extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      inputValue: moment(this.props.value).format("YYYY-MM-DD HH:mm:ssZZ")
+      inputValue: moment(this.props.value).format("YYYY-MM-DD HH:mm:ssZZ"),
+      dirty: false,
     }
     this.onInputChange = this.onInputChange.bind(this);
     this.onFormSubmit = this.onFormSubmit.bind(this);
   }
   componentWillReceiveProps(nextProps) {
     var nextValue = moment(nextProps.value).format("YYYY-MM-DD HH:mm:ssZZ")
-    if (nextValue != this.state.inputValue) {
-      this.setState({ inputValue: nextValue });
+    if (nextValue != this.state.inputValue || this.state.dirty) {
+      this.setState({ inputValue: nextValue, dirty: false });
     }
   }
   onInputChange(event) {
-    this.setState({inputValue: event.target.value});
+    this.setState({inputValue: event.target.value, dirty: true});
   }
   onFormSubmit(event) {
     event.preventDefault();
@@ -258,7 +259,7 @@ class TimePicker extends React.Component {
   render() {
     return (
       <form action="" onSubmit={this.onFormSubmit}>
-        <input type="text" value={this.state.inputValue} onChange={this.onInputChange} />
+        <input type="text" value={this.state.inputValue} onChange={this.onInputChange} className={(moment(this.state.inputValue).isValid() ? "valid" : "error") + (this.state.dirty ? " dirty" : "")}/>
       </form>
     );
   }
