@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Prom Test</title>
+    <script type="text/javascript" src="node_modules/underscore/underscore.js"></script>
+    <script type="text/javascript" src="node_modules/jquery/dist/jquery.js"></script>
+    <script type="text/javascript" src="node_modules/d3/d3.js"></script>
+    <script type="text/javascript" src="node_modules/svg-typewriter/svgtypewriter.js"></script>
+    <script type="text/javascript" src="node_modules/plottable/plottable.js"></script>
+    <script type="text/javascript" src="node_modules/react/dist/react.js"></script>
+    <script type="text/javascript" src="node_modules/react-dom/dist/react-dom.js"></script>
+    <script type="text/javascript" src="babel-core-browser@5.8.38.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="node_modules/plottable/plottable.css">
+  </head>
+  <body>
+    <h1>Prom Test</h1>
+	<!--svg id="graph" width="100%" height="100%" /-->
+	<!--script>
+$(document).ready(function() {
+      var tScale = new Plottable.Scales.Time();
+      var tAxis = new Plottable.Axes.Time(tScale, "bottom")
+      var yScale = new Plottable.Scales.Linear();
+      var yAxis = new Plottable.Axes.Numeric(yScale, "left");
+      //var xScale = new Plottable.Scales.Linear();
+      //var xAxis = new Plottable.Axes.Numeric(xScale, "bottom");
+      var plot = new Plottable.Plots.Line();
+      plot.x(function(d) { return d.t; }, tScale);
+      plot.y(function(d) { return d.y; }, yScale);
+      var data = [
+        { "x": 0, "t": new Date(), "y": 1 },
+        { "x": 1, "t": new Date(new Date().getTime()+1000), "y": 2 },
+        { "x": 2, "t": new Date(new Date().getTime()+3000), "y": 4 },
+        { "x": 3, "t": new Date(new Date().getTime()+10000), "y": 8 }
+      ];
+      var dataset = new Plottable.Dataset(data);
+      plot.addDataset(dataset);
+      var chart = new Plottable.Components.Table([[yAxis, plot], [null, tAxis]]);
+      chart.renderTo("svg#graph");
+      var makeDataSet = function() {
+        var data = [];
+        var start = new Date();
+        for (var i = 0; i < 100; i++) {
+          data.push({t: start, y: _.random(50)});
+          start = new Date(start.getTime() + _.random(10000, 30000));
+        }
+        return data;
+      };
+      _.delay(function() {
+        dataset.data(makeDataSet());
+        $.get("http://localhost:9090/api/v1/query_range", {"query": "sum(increase(grpc_server_handled_total{job=\"server1\"}[1m]))", "start": "2016-08-20T20:00:00Z", "end": "2016-08-20T20:10:00Z", "step": "30s"})
+        .done(function(data) {
+          console.log(data);
+          dataset.data(_.map(data.data.result[0].values, function(v) {
+            return {t: new Date(v[0]*1000), y: parseInt(v[1])};
+          }));
+          console.log(dataset.data())
+        });
+      }, 3000);
+});
+	</script-->
+    <div id="content"></div>
+    <script type="text/babel">
+class Console extends React.Component {
+  constructor(props) {
+    super(props);
+    this.tScale = new Plottable.Scales.Time();
+  }
+  render() {
+    var items = this.props.items;
+    var tScale = this.tScale;
+    return (
+      <div>
+        {items.map(function(item, index) {
+          if (item.graph) {
+            return <Graph key={index} options={item.graph} tScale={tScale} />;
+          }
+        })}
+      </div>
+    );
+  }
+}
+class Graph extends React.Component {
+  constructor(props) {
+    super(props);
+    this.id = _.uniqueId('graph_');
+    var tScale = this.props.tScale;
+    var tAxis = new Plottable.Axes.Time(tScale, "bottom");
+    var yScale = new Plottable.Scales.Linear();
+    yScale.domainMin(0);
+    var yAxis = new Plottable.Axes.Numeric(yScale, "left");
+    this.dataset = new Plottable.Dataset();
+    var plot = new Plottable.Plots.Line();
+    plot.x(function(d) { return d.t; }, tScale);
+    plot.y(function(d) { return d.y; }, yScale);
+    plot.addDataset(this.dataset);
+    this.chart = new Plottable.Components.Table([[yAxis, plot], [null, tAxis]]);
+  }
+  componentDidMount() {
+    this.req = $.get("http://localhost:9090/api/v1/query_range", {"query": this.props.options.query, "start": "2016-08-18T20:00:00Z", "end": "2016-08-18T20:10:00Z", "step": "30s"})
+    this.req.done(function(data) {
+      this.dataset.data(_.map(data.data.result[0].values, function(v) {
+        return {t: new Date(v[0]*1000), y: parseInt(v[1])};
+      }));
+    }.bind(this));
+  }
+  componentWillUnmount() {
+    this.req.abort();
+  }
+  render() {
+    return <svg id={this.id} width="100%" height="100%" ref={(ref) => this.chart.renderTo(ref)} />
+  }
+}
+var config = {
+  items: [
+    {
+      graph: {
+        query: "sum(increase(grpc_server_handled_total{job=\"server1\"}[1m]))"
+      }
+    },
+    {
+      graph: {
+        query: "sum(increase(grpc_server_handled_total{job=\"server1\",grpc_code!=\"OK\"}[1m]))"
+      }
+    }
+  ]
+}
+ReactDOM.render(<Console items={config.items}/>, document.getElementById('content'));
+    </script>
+  </body>
+</html>
