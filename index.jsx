@@ -159,7 +159,7 @@ class Graph extends React.Component {
     this.loading.req.done(function(data) {
       this.req = null;
       this.dataset.data(_.map(data.data.result[0].values, function(v) {
-        return {t: new Date(v[0]*1000), y: parseInt(v[1])};
+        return {t: new Date(v[0]*1000), y: parseFloat(v[1])};
       }));
     }.bind(this));
   }
