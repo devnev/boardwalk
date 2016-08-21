@@ -62,6 +62,7 @@ class App extends React.Component {
     );
   }
 }
+App.propTypes = {};
 
 class ConsoleNav extends React.Component {
   render() {
@@ -75,6 +76,9 @@ class ConsoleNav extends React.Component {
     );
   }
 }
+ConsoleNav.propTypes = {
+  consoles: React.PropTypes.object,
+};
 
 class Console extends React.Component {
   constructor(props) {
@@ -117,6 +121,10 @@ class Console extends React.Component {
     );
   }
 }
+Console.propTypes = {
+  range: React.PropTypes.object,
+  items: React.PropTypes.array,
+};
 
 // Copied from Plottable.Axes.Time's default configuration, changing clocks from 12h with 24h.
 var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
@@ -342,6 +350,11 @@ class Graph extends React.Component {
     return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.chart.renderTo(ref)} />
   }
 }
+Graph.propTypes = {
+  tScale: React.PropTypes.object,
+  options: React.PropTypes.object,
+  focusPoint: React.PropTypes.object,
+};
 
 class RangePicker extends React.Component {
   constructor(props) {
@@ -358,6 +371,10 @@ class RangePicker extends React.Component {
   render() {
     return <div><DurationPicker value={this.props.range.duration} onChange={this.updateDuration} /><TimePicker value={this.props.range.end} step={this.props.range.duration} onChange={this.updateEnd} /></div>
   }
+}
+RangePicker.propTypes = {
+  range: React.PropTypes.object,
+  onChange: React.PropTypes.func,
 }
 
 class DurationPicker extends React.Component {
@@ -463,6 +480,10 @@ class DurationPicker extends React.Component {
     );
   }
 }
+DurationPicker.propTypes = {
+  value: React.PropTypes.number,
+  onChange: React.PropTypes.func,
+}
 
 class TimePicker extends React.Component {
   constructor(props) {
@@ -515,6 +536,11 @@ class TimePicker extends React.Component {
       </form>
     );
   }
+}
+TimePicker.propTypes = {
+  value: React.PropTypes.object,
+  step: React.PropTypes.number,
+  onChange: React.PropTypes.func,
 }
 
 ReactDOM.render(<App />, document.getElementById('content'));
