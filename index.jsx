@@ -85,6 +85,7 @@ class Console extends React.Component {
     super(props);
     this.tScale = new Plottable.Scales.Time();
     this.focusPoint = new Plottable.Dataset();
+    this.selected = false;
     if (props.range) {
       this._setRange(props.range);
     }
@@ -94,9 +95,20 @@ class Console extends React.Component {
         duration: Math.floor((this.tScale.domainMax().getTime() - this.tScale.domainMin().getTime())/1000),
       });
     }.bind(this));
+    this._setFocusTime = this._setFocusTime.bind(this);
+    this._setSelectedTime = this._setSelectedTime.bind(this);
   }
   _setRange(range) {
     this.tScale.domain([new Date(range.end.getTime() - range.duration*1000), range.end]);
+  }
+  _setFocusTime(focusedTime) {
+    if (!this.selected) {
+      this.focusPoint.data([focusedTime]);
+    }
+  }
+  _setSelectedTime(selectedTime) {
+    this.selected = !this.selected;
+    this.focusPoint.data([selectedTime]);
   }
   shouldComponentUpdate(nextProps, nextState) {
     if (_.isEqual(this.props.items, nextProps.items)) {
@@ -106,16 +118,13 @@ class Console extends React.Component {
     return true;
   }
   render() {
-    var items = this.props.items;
-    var tScale = this.tScale;
-    var focusPoint = this.focusPoint;
     return (
       <div>
-        {items.map(function(item, index) {
+        {this.props.items.map(function(item, index) {
           if (item.graph) {
-            return <Graph key={index} options={item.graph} tScale={tScale} focusPoint={focusPoint} />;
+            return <Graph key={index} options={item.graph} tScale={this.tScale} onFocusTime={this._setFocusTime} onSelectTime={this._setSelectedTime} focusPoint={this.focusPoint} />;
           }
-        })}
+        }.bind(this))}
       </div>
     );
   }
@@ -342,15 +351,26 @@ class Graph extends React.Component {
     panZoom.attachTo(panel);
     var pointer = new Plottable.Interactions.Pointer();
     pointer.onPointerMove(function(point) {
-      var position = point.x / tAxis.width();
-      var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
-      this.props.focusPoint.data([new Date(tScale.domainMin().getTime() + timeWidth * position)]);
+      this.props.onFocusTime(this._timeForPoint(point));
+    }.bind(this));
+    pointer.onPointerExit(function() {
+      this.props.onFocusTime(tScale.domainMax());
     }.bind(this));
     pointer.attachTo(panel);
+    var click = new Plottable.Interactions.Click();
+    click.onClick(function(point) {
+      this.props.onSelectTime(this._timeForPoint(point));
+    }.bind(this));
+    click.attachTo(panel);
 
     // binds
     this._redraw = this._redraw.bind(this);
     this._onParamsUpdate = _.debounce(this._onParamsUpdate.bind(this), 500);
+  }
+  _timeForPoint(point) {
+    var position = point.x / tAxis.width();
+    var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
+    return new Date(tScale.domainMin().getTime() + timeWidth * position);
   }
   _redraw() {
     this.chart.redraw();
@@ -394,6 +414,8 @@ Graph.propTypes = {
   tScale: React.PropTypes.object,
   options: React.PropTypes.object,
   focusPoint: React.PropTypes.object,
+  onFocusTime: React.PropTypes.func,
+  onSelectTime: React.PropTypes.func,
 };
 
 class RangePicker extends React.Component {
