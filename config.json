@@ -2,12 +2,17 @@
   "items": [
     {
       "graph": {
-        "query": "sum(increase(grpc_server_handled_total{job=\"server1\"}[1m]))"
+        "query": "grpc_server_handled_total::rate1m_sum{job=\"server1\"}"
       }
     },
     {
       "graph": {
-        "query": "sum(increase(grpc_server_handled_total{job=\"server1\",grpc_code!=\"OK\"}[1m]))"
+        "query": "grpc_server_handled_total::rate1m_sum{job=\"mystique\"}"
+      }
+    },
+    {
+      "graph": {
+        "query": "grpc_server_handled_total::rate1m_sum{job=\"spiderman\"}"
       }
     }
   ]

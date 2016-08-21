@@ -128,21 +128,36 @@ class Graph extends React.Component {
     var panel = new Plottable.Components.Group([plot, guideline, nearestPoint]);
     this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
     this.redraw = this.redraw.bind(this);
-    this.updateData = this.updateData.bind(this);
+    this.onParamsUpdate = this.onParamsUpdate.bind(this);
   }
   redraw() {
     this.chart.redraw();
   }
-  updateData() {
-    if (this.req) {
-      this.req.abort();
-    }
+  onParamsUpdate() {
     var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
     var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
     var step = Math.floor((end - start) / 100).toString() + "s";
-    this.req = $.get("http://localhost:9090/api/v1/query_range", {
-      "query": this.props.options.query, "start": start, "end": end, "step": step});
-    this.req.done(function(data) {
+    if (this.loading && this.loading.req) {
+      if (this.loading.start == start && this.loading.end == end && this.loading.step == step) {
+        return;
+      }
+      this.loading.req.abort();
+    }
+    this.updateData();
+  }
+  updateData() {
+    var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
+    var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
+    var step = Math.floor((end - start) / 100).toString() + "s";
+    this.loading = {
+      req: $.get("http://localhost:9090/api/v1/query_range", {
+        "query": this.props.options.query, "start": start, "end": end, "step": step}),
+      start: start,
+      end: end,
+      step: step
+    }
+    this.loading.req.done(function(data) {
+      this.req = null;
       this.dataset.data(_.map(data.data.result[0].values, function(v) {
         return {t: new Date(v[0]*1000), y: parseInt(v[1])};
       }));
@@ -151,10 +166,12 @@ class Graph extends React.Component {
   componentDidMount() {
     this.updateData();
     window.addEventListener("resize", this.redraw);
+    this.props.tScale.onUpdate(this.onParamsUpdate);
   }
   componentWillUnmount() {
     this.req.abort();
     window.removeEventListener("resize", this.redraw);
+    this.props.tScale.offUpdate(this.onParamsUpdate);
   }
   render() {
     return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.chart.renderTo(ref)} />
