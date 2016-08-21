@@ -248,6 +248,7 @@ class Graph extends React.Component {
     var yScale = new Plottable.Scales.Linear();
     yScale.domainMin(0);
     var yAxis = new Plottable.Axes.Numeric(yScale, "left");
+    yAxis.formatter(Plottable.Formatters.siSuffix());
 
     var plot = new Plottable.Plots.Line();
     plot.x(function(d) { return d.t; }, tScale);
