@@ -269,24 +269,12 @@ class Graph extends React.Component {
     pointer.onPointerMove(function(point) {
       var position = point.x / tAxis.width();
       var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
-      this.props.focusPoint.data([tScale.domainMin().getTime() + timeWidth * position]);
+      this.props.focusPoint.data([new Date(tScale.domainMin().getTime() + timeWidth * position)]);
     }.bind(this));
     pointer.attachTo(plot);
     this.props.focusPoint.onUpdate(function(dataset) {
-      var data = dataset.data();
-      if (!data || !data.length) {
-        return;
-      }
-      var date = new Date(data[0])
-      guideline.value(date);
-      for (var i = this.dataset.data().length-1; i >= 0; i--) {
-        var value = this.dataset.data()[i];
-        if (value.t <= date) {
-          nearestPointData.data([value]);
-          return;
-        }
-      }
-      nearestPointData.data([]);
+      var data = [undefined].concat(dataset.data());
+      this.onFocusPointChanged(data.pop());
     }.bind(this));
 
     var panZoom = new Plottable.Interactions.PanZoom(tScale, null);
@@ -296,6 +284,17 @@ class Graph extends React.Component {
     this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
     this.redraw = this.redraw.bind(this);
     this.onParamsUpdate = _.debounce(this.onParamsUpdate.bind(this), 500);
+  }
+  onFocusPointChanged(focusedTime) {
+    guideline.value(focusedTime);
+    for (var i = this.dataset.data().length-1; i >= 0; i--) {
+      var value = this.dataset.data()[i];
+      if (value.t <= focusedTime) {
+        nearestPointData.data([value]);
+        return;
+      }
+    }
+    nearestPointData.data([]);
   }
   redraw() {
     this.chart.redraw();
