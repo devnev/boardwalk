@@ -4,3 +4,16 @@
 .valid.dirty {
   background: #efe;
 }
+body {
+  background: #222;
+  color: white;
+}
+a {
+  color: #ddd;
+}
+.plottable .axis text.tick-label {
+  fill: #ddd;
+}
+.plottable .axis text {
+  fill: #ddd;
+}
