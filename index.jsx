@@ -112,11 +112,12 @@ class Console extends React.Component {
     this.focusPoint.data([selectedTime]);
   }
   shouldComponentUpdate(nextProps, nextState) {
-    if (_.isEqual(this.props.items, nextProps.items)) {
+    return !_.isEqual(this.props.items, nextProps.items);
+  }
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props.range, nextProps.range)) {
       this._setRange(nextProps.range);
-      return false;
     }
-    return true;
   }
   render() {
     return (
