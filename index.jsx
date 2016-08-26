@@ -451,57 +451,8 @@ class Graph extends React.Component {
   constructor(props) {
     super(props);
     this.id = _.uniqueId('graph_');
-
-    // axes and scales
-    this.tScale = this.props.tScale;
-    this.cScale = this.props.cScale;
-    this.tAxis = new Plottable.Axes.Time(this.props.tScale, "bottom");
-    this.tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
-    var yScale = new Plottable.Scales.Linear();
-    yScale.domainMin(0);
-    var yAxis = new Plottable.Axes.Numeric(yScale, "left");
-    yAxis.formatter(Plottable.Formatters.siSuffix());
-
-    // the chart
-    this.queries = [];
-    this.props.options.queries.forEach(function(query) {
-      this.queries.push(new Query(query, this.tScale, yScale, this.cScale, this.props.focusPoint));
-    }.bind(this));
-
-    var guideline = new Plottable.Components.GuideLineLayer(
-      Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
-    ).scale(this.tScale);
-    this.props.focusPoint.onUpdate(function(dataset) {
-      var data = [undefined].concat(dataset.data());
-      var targetTime = data.pop()
-      guideline.value(targetTime);
-      var nearestValues = this.queries.map(function(query) {
-        return query.updateNearest(targetTime);
-      });
-      this.props.onUpdateValues(_.flatten(nearestValues, true));
-    }.bind(this));
-
-    var panel = new Plottable.Components.Group([guideline].concat(
-      this.queries.map(function(query) { return query.component; })
-    ));
-    this.chart = new Plottable.Components.Table([[yAxis, panel], [null, this.tAxis]]);
-
-    // interactions
-    var panZoom = new Plottable.Interactions.PanZoom(this.tScale, null);
-    panZoom.attachTo(panel);
-    var pointer = new Plottable.Interactions.Pointer();
-    pointer.onPointerMove(function(point) {
-      this.props.onFocusTime(this._timeForPoint(point));
-    }.bind(this));
-    pointer.onPointerExit(function() {
-      this.props.onFocusTime(this.tScale.domainMax());
-    }.bind(this));
-    pointer.attachTo(panel);
-    var click = new Plottable.Interactions.Click();
-    click.onClick(function(point) {
-      this.props.onSelectTime(this._timeForPoint(point));
-    }.bind(this));
-    click.attachTo(panel);
+    this.chart = null;
+    this.queries = null;
 
     // binds
     this._redraw = this._redraw.bind(this);
@@ -514,24 +465,17 @@ class Graph extends React.Component {
       !_.isEqual(this.props.options, props.options)
     );
   }
-  _timeForPoint(point) {
-    var position = point.x / this.tAxis.width();
-    var timeWidth = this.tScale.domainMax().getTime() - this.tScale.domainMin().getTime();
-    return new Date(this.tScale.domainMin().getTime() + timeWidth * position);
+  _timeForPoint(tAxis, point) {
+    var position = point.x / tAxis.width();
+    var timeWidth = this.props.tScale.domainMax().getTime() - this.props.tScale.domainMin().getTime();
+    return new Date(this.props.tScale.domainMin().getTime() + timeWidth * position);
   }
   _redraw() {
-    this.chart.redraw();
+    if (this.chart) {
+      this.chart.redraw();
+    }
   }
   _onParamsUpdate() {
-    var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
-    var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
-    var step = Math.floor((end - start) / 100).toString() + "s";
-    if (this.loading && this.loading.req) {
-      if (this.loading.start == start && this.loading.end == end && this.loading.step == step) {
-        return;
-      }
-      this.loading.req.abort();
-    }
     this._updateData();
   }
   _updateData() {
@@ -554,6 +498,55 @@ class Graph extends React.Component {
     this.props.tScale.offUpdate(this._onParamsUpdate);
   }
   render() {
+    // axes and scales
+    var tAxis = new Plottable.Axes.Time(this.props.tScale, "bottom");
+    tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
+    var yScale = new Plottable.Scales.Linear();
+    yScale.domainMin(0);
+    var yAxis = new Plottable.Axes.Numeric(yScale, "left");
+    yAxis.formatter(Plottable.Formatters.siSuffix());
+
+    // the chart
+    this.queries = [];
+    this.props.options.queries.forEach(function(query) {
+      this.queries.push(new Query(query, this.props.tScale, yScale, this.props.cScale, this.props.focusPoint));
+    }.bind(this));
+
+    var guideline = new Plottable.Components.GuideLineLayer(
+      Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
+    ).scale(this.props.tScale);
+    this.props.focusPoint.onUpdate(function(dataset) {
+      var data = [undefined].concat(dataset.data());
+      var targetTime = data.pop()
+      guideline.value(targetTime);
+      var nearestValues = this.queries.map(function(query) {
+        return query.updateNearest(targetTime);
+      });
+      this.props.onUpdateValues(_.flatten(nearestValues, true));
+    }.bind(this));
+
+    var panel = new Plottable.Components.Group([guideline].concat(
+      this.queries.map(function(query) { return query.component; })
+    ));
+    this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
+
+    // interactions
+    var panZoom = new Plottable.Interactions.PanZoom(this.props.tScale, null);
+    panZoom.attachTo(panel);
+    var pointer = new Plottable.Interactions.Pointer();
+    pointer.onPointerMove(function(point) {
+      this.props.onFocusTime(this._timeForPoint(tAxis, point));
+    }.bind(this));
+    pointer.onPointerExit(function() {
+      this.props.onFocusTime(this.props.tScale.domainMax());
+    }.bind(this));
+    pointer.attachTo(panel);
+    var click = new Plottable.Interactions.Click();
+    click.onClick(function(point) {
+      this.props.onSelectTime(this._timeForPoint(tAxis, point));
+    }.bind(this));
+    click.attachTo(panel);
+
     return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.chart.renderTo(ref)} />
   }
 }
