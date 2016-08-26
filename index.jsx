@@ -77,7 +77,7 @@ class ConsoleNav extends React.Component {
   }
 }
 ConsoleNav.propTypes = {
-  consoles: React.PropTypes.object,
+  consoles: React.PropTypes.object.isRequired,
 };
 
 class Console extends React.Component {
@@ -141,8 +141,8 @@ class Console extends React.Component {
   }
 }
 Console.propTypes = {
-  range: React.PropTypes.object,
-  items: React.PropTypes.array,
+  range: React.PropTypes.object.isRequired,
+  items: React.PropTypes.array.isRequired,
 };
 
 class GraphPanel extends React.Component {
@@ -177,12 +177,12 @@ class GraphPanel extends React.Component {
   }
 }
 GraphPanel.propTypes = {
-  tScale: React.PropTypes.object,
-  cScale: React.PropTypes.object,
-  options: React.PropTypes.object,
-  focusPoint: React.PropTypes.object,
-  onFocusTime: React.PropTypes.func,
-  onSelectTime: React.PropTypes.func,
+  tScale: React.PropTypes.object.isRequired,
+  cScale: React.PropTypes.object.isRequired,
+  options: React.PropTypes.object.isRequired,
+  focusPoint: React.PropTypes.object.isRequired,
+  onFocusTime: React.PropTypes.func.isRequired,
+  onSelectTime: React.PropTypes.func.isRequired,
 };
 
 // Copied from Plottable.Axes.Time's default configuration, changing clocks from 12h with 24h.
@@ -551,12 +551,12 @@ class Graph extends React.Component {
   }
 }
 Graph.propTypes = {
-  tScale: React.PropTypes.object,
-  cScale: React.PropTypes.object,
-  options: React.PropTypes.object,
-  focusPoint: React.PropTypes.object,
-  onFocusTime: React.PropTypes.func,
-  onSelectTime: React.PropTypes.func,
+  tScale: React.PropTypes.object.isRequired,
+  cScale: React.PropTypes.object.isRequired,
+  options: React.PropTypes.object.isRequired,
+  focusPoint: React.PropTypes.object.isRequired,
+  onFocusTime: React.PropTypes.func.isRequired,
+  onSelectTime: React.PropTypes.func.isRequired,
 };
 
 class RangePicker extends React.Component {
@@ -576,8 +576,8 @@ class RangePicker extends React.Component {
   }
 }
 RangePicker.propTypes = {
-  range: React.PropTypes.object,
-  onChange: React.PropTypes.func,
+  range: React.PropTypes.object.isRequired,
+  onChange: React.PropTypes.func.isRequired,
 }
 
 class DurationPicker extends React.Component {
@@ -684,8 +684,8 @@ class DurationPicker extends React.Component {
   }
 }
 DurationPicker.propTypes = {
-  value: React.PropTypes.number,
-  onChange: React.PropTypes.func,
+  value: React.PropTypes.number.isRequired,
+  onChange: React.PropTypes.func.isRequired,
 }
 
 class TimePicker extends React.Component {
@@ -741,9 +741,9 @@ class TimePicker extends React.Component {
   }
 }
 TimePicker.propTypes = {
-  value: React.PropTypes.object,
-  step: React.PropTypes.number,
-  onChange: React.PropTypes.func,
+  value: React.PropTypes.object.isRequired,
+  step: React.PropTypes.number.isRequired,
+  onChange: React.PropTypes.func.isRequired,
 }
 
 ReactDOM.render(<App />, document.getElementById('content'));
