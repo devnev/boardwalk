@@ -124,7 +124,16 @@ class Console extends React.Component {
       <div>
         {this.props.items.map(function(item, index) {
           if (item.graph) {
-            return <Graph key={index} options={item.graph} tScale={this.tScale} cScale={this.cScale} onFocusTime={this._setFocusTime} onSelectTime={this._setSelectedTime} focusPoint={this.focusPoint} />;
+            return (
+              <GraphPanel 
+                key={index}
+                options={item.graph}
+                tScale={this.tScale}
+                cScale={this.cScale}
+                onFocusTime={this._setFocusTime}
+                onSelectTime={this._setSelectedTime}
+                focusPoint={this.focusPoint} />
+            );
           }
         }.bind(this))}
       </div>
@@ -134,6 +143,46 @@ class Console extends React.Component {
 Console.propTypes = {
   range: React.PropTypes.object,
   items: React.PropTypes.array,
+};
+
+class GraphPanel extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      legend: [],
+    };
+    this._setLegend = this._setLegend.bind(this);
+  }
+  _setLegend(legend) {
+    if (!_.isEqual(this.state.legend, legend)) {
+      this.setState({legend: legend});
+    }
+  }
+  render() {
+    return (
+      <div>
+        <Graph
+          options={this.props.options}
+          tScale={this.props.tScale}
+          cScale={this.props.cScale}
+          onFocusTime={this.props.onFocusTime}
+          onSelectTime={this.props.onSelectTime}
+          onUpdateValues={this._setLegend}
+          focusPoint={this.props.focusPoint} />
+        <Legend
+          items={this.state.legend}
+          cScale={this.props.cScale} />
+      </div>
+    );
+  }
+}
+GraphPanel.propTypes = {
+  tScale: React.PropTypes.object,
+  cScale: React.PropTypes.object,
+  options: React.PropTypes.object,
+  focusPoint: React.PropTypes.object,
+  onFocusTime: React.PropTypes.func,
+  onSelectTime: React.PropTypes.func,
 };
 
 // Copied from Plottable.Axes.Time's default configuration, changing clocks from 12h with 24h.
@@ -252,16 +301,25 @@ class Plot {
     this.dataset = new Plottable.Dataset();
     this.nearest = new Plottable.Dataset();
     this.metric = metric;
-    var title = '';
+    var title = "";
     Object.keys(metric).forEach(function(key) {
       if (title == '') {
         title = '{';
-      } else {
+      }
+      if (key == "__name__") {
+        title = metric[key] + title;
+        return;
+      }
+      if (!title.endsWith('{')) {
         title = title + ',';
       }
-      title = title + key + "=\"" + JSON.stringify(metric[key]);
+      title = title + key + "=" + JSON.stringify(metric[key]);
     }.bind(this));
-    title = title + '}';
+    if (title.endsWith('{')) {
+      title = title.substr(0, title.length-1);
+    } else if (title != '') {
+      title = title + '}';
+    }
     this.title = title;
 
     var plot = new Plottable.Plots.Line();
@@ -282,12 +340,13 @@ class Plot {
   updateNearest(targetTime) {
     if (!targetTime) {
       this.nearest.data([]);
+      return;
     }
     for (var i = this.dataset.data().length-1; i >= 0; i--) {
       var value = this.dataset.data()[i];
       if (value.t <= targetTime) {
         this.nearest.data([value]);
-        return;
+        return value.y;
       }
     }
     this.nearest.data([]);
@@ -305,9 +364,11 @@ class Query {
     this.component = new Plottable.Components.Group([]);
   }
   updateNearest(targetTime) {
+    var values = [];
     this.plots.forEach(function(plot) {
-      plot.updateNearest(targetTime);
+      values.push([plot.title, plot.updateNearest(targetTime)]);
     }.bind(this));
+    return values;
   }
   _addPlot(metric) {
     var plot = new Plot(metric, this.tScale, this.yScale, this.cScale);
@@ -363,6 +424,29 @@ class Query {
   }
 }
 
+class Legend extends React.Component {
+  render() {
+    return (
+      <ul>
+        {this.props.items.map(function(item, index) {
+          var title = item[0];
+          var value = item[1];
+          var colorStyle = {color: this.props.cScale.scale(title)};
+          return (<li key={title+index}>
+            <span style={colorStyle}>&#x25cf;</span>
+            <span>{title}</span>
+            <span>{value}</span>
+          </li>);
+        }.bind(this))}
+      </ul>
+    );
+  }
+}
+Legend.propTypes = {
+  items: React.PropTypes.array.isRequired,
+  cScale: React.PropTypes.object.isRequired,
+}
+
 class Graph extends React.Component {
   constructor(props) {
     super(props);
@@ -371,7 +455,7 @@ class Graph extends React.Component {
     // axes and scales
     this.tScale = this.props.tScale;
     this.cScale = this.props.cScale;
-    this.tAxis = new Plottable.Axes.Time(this.tScale, "bottom");
+    this.tAxis = new Plottable.Axes.Time(this.props.tScale, "bottom");
     this.tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
     var yScale = new Plottable.Scales.Linear();
     yScale.domainMin(0);
@@ -391,7 +475,10 @@ class Graph extends React.Component {
       var data = [undefined].concat(dataset.data());
       var targetTime = data.pop()
       guideline.value(targetTime);
-      this.queries.map(function(query) { query.updateNearest(targetTime); });
+      var nearestValues = this.queries.map(function(query) {
+        return query.updateNearest(targetTime);
+      });
+      this.props.onUpdateValues(_.flatten(nearestValues, true));
     }.bind(this));
 
     var panel = new Plottable.Components.Group([guideline].concat(
@@ -419,6 +506,13 @@ class Graph extends React.Component {
     // binds
     this._redraw = this._redraw.bind(this);
     this._onParamsUpdate = _.debounce(this._onParamsUpdate.bind(this), 500);
+  }
+  shouldComponentUpdate(props, state) {
+    return (
+      this.props.tScale != props.tScale ||
+      this.props.cScale != props.cScale ||
+      !_.isEqual(this.props.options, props.options)
+    );
   }
   _timeForPoint(point) {
     var position = point.x / this.tAxis.width();
