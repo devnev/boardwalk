@@ -424,6 +424,29 @@ class Query {
   }
 }
 
+class QuerySet {
+  constructor(queries, tScale, yScale, cScale, focusPoint) {
+    this.queries = queries.map(function(query) {
+      return new Query(query, tScale, yScale, cScale, focusPoint);
+    }.bind(this));
+    this.component = new Plottable.Components.Group(
+      this.queries.map(function(query) {
+        return query.component;
+      }.bind(this))
+    );
+  }
+  updateData(start, end) {
+    this.queries.forEach(function(query) {
+      query.updateData(start, end);
+    }.bind(this));
+  }
+  updateNearest(targetTime) {
+    return this.queries.map(function(query) {
+      return query.updateNearest(targetTime);
+    }.bind(this));
+  }
+}
+
 class Legend extends React.Component {
   render() {
     return (
@@ -481,9 +504,7 @@ class Graph extends React.Component {
   _updateData() {
     var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
     var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
-    this.queries.forEach(function(query) {
-      query.updateData(start, end);
-    });
+    this.queries.updateData(start, end)
   }
   componentDidMount() {
     this._updateData();
@@ -507,10 +528,8 @@ class Graph extends React.Component {
     yAxis.formatter(Plottable.Formatters.siSuffix());
 
     // the chart
-    this.queries = [];
-    this.props.options.queries.forEach(function(query) {
-      this.queries.push(new Query(query, this.props.tScale, yScale, this.props.cScale, this.props.focusPoint));
-    }.bind(this));
+    this.queries = new QuerySet(
+      this.props.options.queries, this.props.tScale, yScale, this.props.cScale, this.props.focusPoint);
 
     var guideline = new Plottable.Components.GuideLineLayer(
       Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
@@ -519,15 +538,11 @@ class Graph extends React.Component {
       var data = [undefined].concat(dataset.data());
       var targetTime = data.pop()
       guideline.value(targetTime);
-      var nearestValues = this.queries.map(function(query) {
-        return query.updateNearest(targetTime);
-      });
+      var nearestValues = this.queries.updateNearest(targetTime);
       this.props.onUpdateValues(_.flatten(nearestValues, true));
     }.bind(this));
 
-    var panel = new Plottable.Components.Group([guideline].concat(
-      this.queries.map(function(query) { return query.component; })
-    ));
+    var panel = new Plottable.Components.Group([guideline, this.queries.component]);
     this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
 
     // interactions
