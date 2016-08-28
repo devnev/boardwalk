@@ -426,18 +426,19 @@ class Query {
       this._updatePlots([]);
       return;
     }
+    var query = FormatQuery(this.options.query, filter);
+    var step = Math.floor((end - start) / 100).toString() + "s";
     if (this.loading && this.loading.req) {
-      if (this.loading.start == start && this.loading.end == end) {
+      if (this.loading.query == query && this.loading.start == start && this.loading.end == end) {
         return;
       }
       this.loading.req.abort();
     }
-    var query = FormatQuery(this.options.query, filter);
-    var step = Math.floor((end - start) / 100).toString() + "s";
     console.log("loading", query);
     this.loading = {
       req: $.get("http://localhost:9090/api/v1/query_range", {
         query: query, start: start, end: end, step: step}),
+      query: query,
       start: start,
       end: end,
     }
