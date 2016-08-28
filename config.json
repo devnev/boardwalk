@@ -6,9 +6,22 @@
         "graph": {
           "queries": [
             {
+              "match": {},
+              "query": "sum(grpc_server_handled_total::rate1m_sum)"
+            },
+            {
               "match": {
-                "job": ""
+                "job": ".+"
               },
+              "query": "grpc_server_handled_total::rate1m_sum{job=\"${job}\"}"
+            }
+          ]
+        }
+      },
+      {
+        "graph": {
+          "queries": [
+            {
               "query": "grpc_server_handled_total::rate1m_sum"
             }
           ]

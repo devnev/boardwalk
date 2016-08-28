@@ -361,6 +361,28 @@ class Plot {
   }
 }
 
+function FormatQuery(template, filter) {
+  var r = /([^$]|^)\$\{([^}]*)\}/;
+  var pieces = template.split(r);
+  var query = "";
+  for (var i = 0; i < pieces.length; i++) {
+    if (i % 3 != 2) {
+      query += pieces[i];
+      continue;
+    }
+    var key = pieces[i];
+    if (key == "") {
+      query += "$";
+    } else if (filter.hasOwnProperty(key)) {
+      query += filter[key];
+    } else {
+      // TODO: proper error handling
+      console.log("unknown key in query tempate: ", key);
+    }
+  }
+  return query;
+}
+
 class Query {
   constructor(options, tScale, yScale, cScale) {
     this.tScale = tScale;
@@ -421,10 +443,12 @@ class Query {
     if (!matcherHasKeys) {
       return false;
     }
-    return Object.keys(this.options.match).every(function(key) {
-      var r = new RegExp(this.options.match[key])
-      return r.test(filter[key])
+    var matches = Object.keys(this.options.match).every(function(key) {
+      var r = new RegExp(this.options.match[key]);
+      var v = filter.hasOwnProperty(key) ? filter[key] : "";
+      return r.test(v);
     }.bind(this));
+    return matches;
   }
   updateData(start, end, filter) {
     if (!this._matchFilter(filter)) {
@@ -437,10 +461,12 @@ class Query {
       }
       this.loading.req.abort();
     }
+    var query = FormatQuery(this.options.query, filter);
     var step = Math.floor((end - start) / 100).toString() + "s";
+    console.log("loading", query);
     this.loading = {
       req: $.get("http://localhost:9090/api/v1/query_range", {
-        query: this.options.query, start: start, end: end, step: step}),
+        query: query, start: start, end: end, step: step}),
       start: start,
       end: end,
     }
