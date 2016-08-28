@@ -7,9 +7,11 @@ class App extends React.Component {
       range: {
         end: new Date(),
         duration: 1*60*60
-      }
+      },
+      filter: {},
     };
     this._updateRange = this._updateRange.bind(this);
+    this._updateFilter = this._updateFilter.bind(this);
     this._navigate = this._navigate.bind(this);
   }
   componentDidMount() {
@@ -29,11 +31,14 @@ class App extends React.Component {
         range.duration == this.state.range.duration) {
       return;
     }
-    this.setState({
-      config: this.state.config,
-      console: this.state.console,
-      range: range
-    });
+    var state = Object.assign({}, this.state);
+    state.range = range;
+    this.setState(state);
+  }
+  _updateFilter(filter) {
+    var state = Object.assign({}, this.state);
+    state.filter = filter;
+    this.setState(state);
   }
   _navigate() {
     var path = window.location.hash.substr(1);
@@ -41,7 +46,9 @@ class App extends React.Component {
     if (paramsStart != -1) {
       path = path.substr(0, paramsStart);
     }
-    this.setState({config: this.state.config, console: path, range: this.state.range});
+    var state = Object.assign({}, this.state);
+    state.console = path;
+    this.setState(state);
   }
   render() {
     if (!this.state.config) {
@@ -57,6 +64,7 @@ class App extends React.Component {
         <ConsoleNav consoles={this.state.config} />
         <h1>{console.title}</h1>
         <RangePicker range={this.state.range} onChange={this._updateRange} />
+        <FilterControl filter={this.state.filter} onChange={this._updateFilter} />
         <Console key={path} items={console.contents} range={this.state.range} onChangeRange={this._updateRange} />
       </div>
     );
@@ -758,6 +766,48 @@ class TimePicker extends React.Component {
 TimePicker.propTypes = {
   value: React.PropTypes.object.isRequired,
   step: React.PropTypes.number.isRequired,
+  onChange: React.PropTypes.func.isRequired,
+}
+
+class FilterControl extends React.Component {
+  constructor(props) {
+    super(props);
+    this._onFilterChange = this._onFilterChange.bind(this);
+    this._addFilter = this._addFilter.bind(this);
+  }
+  _onFilterChange(event) {
+    var filter = Object.assign({}, this.props.filter);
+    filter[event.target.name] = event.target.value;
+    this.props.onChange(filter);
+  }
+  _addFilter(event) {
+    event.preventDefault();
+    var filter = Object.assign({}, this.props.filter);
+    filter[event.target.name.value] = "";
+    this.props.onChange(filter);
+  }
+  render() {
+    return (
+      <ul>
+        {Object.keys(this.props.filter).map(function(name) {
+          return (
+            <li key={name}>
+              <label htmlFor={"filter-" + name}>{name}</label>
+              <input type="text" id={"filter-" + name} name={name} value={this.props.filter[name]} onChange={this._onFilterChange} />
+            </li>
+          );
+        }.bind(this))}
+        <li>
+          <form action="" onSubmit={this._addFilter}>
+            <input name="name" />
+          </form>
+        </li>
+      </ul>
+    );
+  }
+}
+FilterControl.propTypes = {
+  filter: React.PropTypes.object.isRequired,
   onChange: React.PropTypes.func.isRequired,
 }
 
