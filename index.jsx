@@ -304,44 +304,48 @@ var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
   ],
 ];
 
+function FormatMetric(metric) {
+  var title = "";
+  Object.keys(metric).forEach(function(key) {
+    if (title == '') {
+      title = '{';
+    }
+    if (key == "__name__") {
+      title = metric[key] + title;
+      return;
+    }
+    if (!title.endsWith('{')) {
+      title = title + ',';
+    }
+    title = title + key + "=" + JSON.stringify(metric[key]);
+  });
+  if (title.endsWith('{')) {
+    title = title.substr(0, title.length-1);
+  } else if (title != '') {
+    title = title + '}';
+  }
+  return title;
+}
+
 class Plot {
   constructor(metric, tScale, yScale, cScale) {
     this.dataset = new Plottable.Dataset();
     this.nearest = new Plottable.Dataset();
     this.metric = metric;
-    var title = "";
-    Object.keys(metric).forEach(function(key) {
-      if (title == '') {
-        title = '{';
-      }
-      if (key == "__name__") {
-        title = metric[key] + title;
-        return;
-      }
-      if (!title.endsWith('{')) {
-        title = title + ',';
-      }
-      title = title + key + "=" + JSON.stringify(metric[key]);
-    }.bind(this));
-    if (title.endsWith('{')) {
-      title = title.substr(0, title.length-1);
-    } else if (title != '') {
-      title = title + '}';
-    }
-    this.title = title;
+    this.title = FormatMetric(this.metric);
 
     var plot = new Plottable.Plots.Line();
     plot.x(function(d) { return d.t; }, tScale);
     plot.y(function(d) { return d.y; }, yScale);
     plot.addDataset(this.dataset);
-    plot.attr("stroke", cScale.scale(title));
+    plot.attr("stroke", cScale.scale(this.title));
 
     var nearestPoint = new Plottable.Plots.Scatter();
     nearestPoint.x(function(d) { return d.t; }, tScale);
     nearestPoint.y(function(d) { return d.y; }, yScale);
     nearestPoint.size(10);
     nearestPoint.addDataset(this.nearest);
-    nearestPoint.attr("fill", cScale.scale(title));
+    nearestPoint.attr("fill", cScale.scale(this.title));
 
     this.component = new Plottable.Components.Group([plot, nearestPoint]);
   }
