@@ -327,26 +327,26 @@ function FormatMetric(metric) {
   return title;
 }
 
-function FormatQuery(template, filter) {
+function FormatTemplate(template, props) {
   var r = /([^$]|^)\$\{([^}]*)\}/;
   var pieces = template.split(r);
-  var query = "";
+  var result = "";
   for (var i = 0; i < pieces.length; i++) {
     if (i % 3 != 2) {
-      query += pieces[i];
+      result += pieces[i];
       continue;
     }
     var key = pieces[i];
     if (key == "") {
-      query += "$";
-    } else if (filter.hasOwnProperty(key)) {
-      query += filter[key];
+      result += "$";
+    } else if (props.hasOwnProperty(key)) {
+      result += props[key];
     } else {
       // TODO: proper error handling
-      console.log("unknown key in query tempate: ", key);
+      console.log("unknown key in tempate: ", key);
     }
   }
-  return query;
+  return result;
 }
 
 class Query {
@@ -392,7 +392,11 @@ class Query {
   }
   _updatePlots(results) {
     var datasets = results.map(function(result) {
-      var title = FormatMetric(result.metric);
+      var title = (
+        this.options.title ?
+        FormatTemplate(this.options.title, result.metric) :
+        FormatMetric(result.metric)
+      );
       var dataset = _.map(result.values, function(value) {
         return {
           t: new Date(value[0]*1000),
@@ -426,7 +430,7 @@ class Query {
       this._updatePlots([]);
       return;
     }
-    var query = FormatQuery(this.options.query, filter);
+    var query = FormatTemplate(this.options.query, filter);
     var step = Math.floor((end - start) / 200).toString() + "s";
     if (this.loading && this.loading.req) {
       if (this.loading.query == query && this.loading.start == start && this.loading.end == end) {

@@ -6,10 +6,12 @@
         "graph": {
           "queries": [
             {
+              "title": "rpcs",
               "match": {},
               "query": "sum(grpc_server_handled_total::rate1m_sum)"
             },
             {
+              "title": "${job} rpcs",
               "match": {
                 "job": ".+"
               },
@@ -31,12 +33,15 @@
         "graph": {
           "queries": [
             {
+              "title": "count",
               "query": "count(up)"
             },
             {
+              "title": "up",
               "query": "sum(up)"
             },
             {
+              "title": "down",
               "query": "sum(up == 0)"
             }
           ]
