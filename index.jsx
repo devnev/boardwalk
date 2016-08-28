@@ -327,44 +327,6 @@ function FormatMetric(metric) {
   return title;
 }
 
-class Plot {
-  constructor(metric, tScale, yScale, cScale) {
-    this.dataset = new Plottable.Dataset();
-    this.nearest = new Plottable.Dataset();
-    this.metric = metric;
-    this.title = FormatMetric(this.metric);
-
-    var plot = new Plottable.Plots.Line();
-    plot.x(function(d) { return d.t; }, tScale);
-    plot.y(function(d) { return d.y; }, yScale);
-    plot.addDataset(this.dataset);
-    plot.attr("stroke", cScale.scale(this.title));
-
-    var nearestPoint = new Plottable.Plots.Scatter();
-    nearestPoint.x(function(d) { return d.t; }, tScale);
-    nearestPoint.y(function(d) { return d.y; }, yScale);
-    nearestPoint.size(10);
-    nearestPoint.addDataset(this.nearest);
-    nearestPoint.attr("fill", cScale.scale(this.title));
-
-    this.component = new Plottable.Components.Group([plot, nearestPoint]);
-  }
-  updateNearest(targetTime) {
-    if (!targetTime) {
-      this.nearest.data([]);
-      return;
-    }
-    for (var i = this.dataset.data().length-1; i >= 0; i--) {
-      var value = this.dataset.data()[i];
-      if (value.t <= targetTime) {
-        this.nearest.data([value]);
-        return value.y;
-      }
-    }
-    this.nearest.data([]);
-  }
-}
-
 function FormatQuery(template, filter) {
   var r = /([^$]|^)\$\{([^}]*)\}/;
   var pieces = template.split(r);
@@ -393,49 +355,53 @@ class Query {
     this.yScale = yScale;
     this.cScale = cScale;
     this.options = options;
+
+    this.plot = new Plottable.Plots.Line();
+    this.plot.x(function(d) { return d.t; }, tScale);
+    this.plot.y(function(d) { return d.y; }, yScale);
+    this.plot.attr("stroke", function(d) { return d.c; });
+
+    this.nearest = new Plottable.Plots.Scatter();
+    this.nearest.x(function(d) { return d.t; }, tScale);
+    this.nearest.y(function(d) { return d.y; }, yScale);
+    this.nearest.attr("fill", function(d) { return d.c; });
+    this.nearest.size(10);
+
     this.plots = [];
     this.loading = {};
-    this.component = new Plottable.Components.Group([]);
+    this.component = new Plottable.Components.Group([this.plot, this.nearest]);
   }
   updateNearest(targetTime) {
+    var points = [];
     var values = [];
-    this.plots.forEach(function(plot) {
-      values.push([plot.title, plot.updateNearest(targetTime)]);
+    this.plot.datasets().forEach(function(dataset) {
+      var data = dataset.data();
+      for (var i = data.length-1; i >= 0; i--) {
+        var point = data[i];
+        if (point.t <= targetTime) {
+          points.push(point);
+          values.push([dataset.metadata().title, point.y]);
+          return;
+        }
+      }
+      values.push([dataset.metadata().title, ""]);
     }.bind(this));
+    this.nearest.datasets([new Plottable.Dataset(points)]);
     return values;
   }
-  _addPlot(metric) {
-    var plot = new Plot(metric, this.tScale, this.yScale, this.cScale);
-    this.plots.push(plot);
-    this.component.append(plot.component);
-    return plot;
-  }
   _updatePlots(results) {
-    results.forEach(function(result) {
-      var plot;
-      var found = this.plots.some(function(existingPlot) {
-        if (!_.isEqual(existingPlot.metric, result.metric)) {
-          return false;
-        }
-        plot = existingPlot;
-        return true;
-      });
-      if (!found) {
-        plot = this._addPlot(result.metric);
-      }
-      plot.dataset.data(_.map(result.values, function(v) {
-        return {t: new Date(v[0]*1000), y: parseFloat(v[1])};
-      }));
-    }.bind(this));
-    this.plots = this.plots.filter(function(plot) {
-      var found = results.some(function(result) {
-        return _.isEqual(result.metric, plot.metric);
+    var datasets = results.map(function(result) {
+      var title = FormatMetric(result.metric);
+      var dataset = _.map(result.values, function(value) {
+        return {
+          t: new Date(value[0]*1000),
+          y: parseFloat(value[1]),
+          c: this.cScale.scale(title),
+        };
       }.bind(this));
-      if (!found) {
-        plot.component.destroy();
-      }
-      return found;
+      return new Plottable.Dataset(dataset, {title: title});
     }.bind(this));
+    this.plot.datasets(datasets);
   }
   _matchFilter(filter) {
     if (!this.options.match) {
