@@ -588,6 +588,7 @@ class Graph extends React.Component {
     yScale.domainMin(0);
     var yAxis = new Plottable.Axes.Numeric(yScale, "left");
     yAxis.formatter(Plottable.Formatters.siSuffix());
+    yAxis.usesTextWidthApproximation(true);
 
     // the chart
     this.queries = new QuerySet(
