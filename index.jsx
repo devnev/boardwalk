@@ -804,6 +804,7 @@ class FilterControl extends React.Component {
     super(props);
     this._onFilterChange = this._onFilterChange.bind(this);
     this._addFilter = this._addFilter.bind(this);
+    this._removeFilter = this._removeFilter.bind(this);
   }
   _onFilterChange(event) {
     var filter = Object.assign({}, this.props.filter);
@@ -816,6 +817,12 @@ class FilterControl extends React.Component {
     filter[event.target.name.value] = "";
     this.props.onChange(filter);
   }
+  _removeFilter(event) {
+    event.preventDefault();
+    var filter = Object.assign({}, this.props.filter);
+    delete filter[event.target.name];
+    this.props.onChange(filter);
+  }
   render() {
     return (
       <ul>
@@ -824,6 +831,7 @@ class FilterControl extends React.Component {
             <li key={name}>
               <label htmlFor={"filter-" + name}>{name}</label>
               <input type="text" id={"filter-" + name} name={name} value={this.props.filter[name]} onChange={this._onFilterChange} />
+              <button type="button" name={name} onClick={this._removeFilter}>X</button>
             </li>
           );
         }.bind(this))}
