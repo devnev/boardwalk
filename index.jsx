@@ -427,7 +427,7 @@ class Query {
       return;
     }
     var query = FormatQuery(this.options.query, filter);
-    var step = Math.floor((end - start) / 100).toString() + "s";
+    var step = Math.floor((end - start) / 200).toString() + "s";
     if (this.loading && this.loading.req) {
       if (this.loading.query == query && this.loading.start == start && this.loading.end == end) {
         return;
