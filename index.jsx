@@ -366,6 +366,7 @@ class Query {
     this.nearest.y(function(d) { return d.y; }, yScale);
     this.nearest.attr("fill", function(d) { return d.c; });
     this.nearest.size(10);
+    this.nearest.autorangeMode("none");
 
     this.plots = [];
     this.loading = {};
