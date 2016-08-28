@@ -430,22 +430,28 @@ class Query {
     var step = Math.floor((end - start) / 200).toString() + "s";
     if (this.loading && this.loading.req) {
       if (this.loading.query == query && this.loading.start == start && this.loading.end == end) {
+        console.log("cached", query);
         return;
       }
       this.loading.req.abort();
     }
     console.log("loading", query);
+    var req = $.get("http://localhost:9090/api/v1/query_range", {
+      query: query,
+      start: start,
+      end: end,
+      step: step,
+    }).always(function() {
+      this.loading.req = null;
+    }.bind(this)).done(function(data) {
+      this._updatePlots(data.data.result);
+    }.bind(this));
     this.loading = {
-      req: $.get("http://localhost:9090/api/v1/query_range", {
-        query: query, start: start, end: end, step: step}),
+      req: req,
       query: query,
       start: start,
       end: end,
     }
-    this.loading.req.done(function(data) {
-      this.req = null;
-      this._updatePlots(data.data.result);
-    }.bind(this));
   }
 }
 
