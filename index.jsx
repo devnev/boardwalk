@@ -65,7 +65,7 @@ class App extends React.Component {
         <h1>{console.title}</h1>
         <RangePicker range={this.state.range} onChange={this._updateRange} />
         <FilterControl filter={this.state.filter} onChange={this._updateFilter} />
-        <Console key={path} items={console.contents} range={this.state.range} onChangeRange={this._updateRange} />
+        <Console key={path} items={console.contents} range={this.state.range} filter={this.state.filter} onChangeRange={this._updateRange} />
       </div>
     );
   }
@@ -119,9 +119,6 @@ class Console extends React.Component {
     this.selected = !this.selected;
     this.focusPoint.data([selectedTime]);
   }
-  shouldComponentUpdate(nextProps, nextState) {
-    return !_.isEqual(this.props.items, nextProps.items);
-  }
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.range, nextProps.range)) {
       this._setRange(nextProps.range);
@@ -140,7 +137,8 @@ class Console extends React.Component {
                 cScale={this.cScale}
                 onFocusTime={this._setFocusTime}
                 onSelectTime={this._setSelectedTime}
-                focusPoint={this.focusPoint} />
+                focusPoint={this.focusPoint}
+                filter={this.props.filter} />
             );
           }
         }.bind(this))}
@@ -176,7 +174,8 @@ class GraphPanel extends React.Component {
           onFocusTime={this.props.onFocusTime}
           onSelectTime={this.props.onSelectTime}
           onUpdateValues={this._setLegend}
-          focusPoint={this.props.focusPoint} />
+          focusPoint={this.props.focusPoint}
+          filter={this.props.filter} />
         <Legend
           items={this.state.legend}
           cScale={this.props.cScale} />
@@ -191,6 +190,7 @@ GraphPanel.propTypes = {
   focusPoint: React.PropTypes.object.isRequired,
   onFocusTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
+  filter: React.PropTypes.object.isRequired,
 };
 
 // Copied from Plottable.Axes.Time's default configuration, changing clocks from 12h with 24h.
@@ -362,11 +362,11 @@ class Plot {
 }
 
 class Query {
-  constructor(query, tScale, yScale, cScale) {
+  constructor(options, tScale, yScale, cScale) {
     this.tScale = tScale;
     this.yScale = yScale;
     this.cScale = cScale;
-    this.query = query;
+    this.options = options;
     this.plots = [];
     this.loading = {};
     this.component = new Plottable.Components.Group([]);
@@ -401,17 +401,36 @@ class Query {
         return {t: new Date(v[0]*1000), y: parseFloat(v[1])};
       }));
     }.bind(this));
-    this.plots.filter(function(plot) {
+    this.plots = this.plots.filter(function(plot) {
       var found = results.some(function(result) {
         return _.isEqual(result.metric, plot.metric);
       }.bind(this));
       if (!found) {
-        this.component.remove(plot.plot);
+        plot.component.destroy();
       }
       return found;
     }.bind(this));
   }
-  updateData(start, end) {
+  _matchFilter(filter) {
+    if (!this.options.match) {
+      return true;
+    }
+    var matcherHasKeys = Object.keys(filter).every(function(key) {
+      return this.options.match.hasOwnProperty(key);
+    }.bind(this));
+    if (!matcherHasKeys) {
+      return false;
+    }
+    return Object.keys(this.options.match).every(function(key) {
+      var r = new RegExp(this.options.match[key])
+      return r.test(filter[key])
+    }.bind(this));
+  }
+  updateData(start, end, filter) {
+    if (!this._matchFilter(filter)) {
+      this._updatePlots([]);
+      return;
+    }
     if (this.loading && this.loading.req) {
       if (this.loading.start == start && this.loading.end == end) {
         return;
@@ -421,7 +440,7 @@ class Query {
     var step = Math.floor((end - start) / 100).toString() + "s";
     this.loading = {
       req: $.get("http://localhost:9090/api/v1/query_range", {
-        query: this.query, start: start, end: end, step: step}),
+        query: this.options.query, start: start, end: end, step: step}),
       start: start,
       end: end,
     }
@@ -443,9 +462,9 @@ class QuerySet {
       }.bind(this))
     );
   }
-  updateData(start, end) {
+  updateData(start, end, filter) {
     this.queries.forEach(function(query) {
-      query.updateData(start, end);
+      query.updateData(start, end, filter);
     }.bind(this));
   }
   updateNearest(targetTime) {
@@ -496,6 +515,11 @@ class Graph extends React.Component {
       !_.isEqual(this.props.options, props.options)
     );
   }
+  componentWillReceiveProps(props) {
+    if (!_.isEqual(this.props.filter, props.filter)) {
+      this._onParamsUpdate();
+    }
+  }
   _timeForPoint(tAxis, point) {
     var position = point.x / tAxis.width();
     var timeWidth = this.props.tScale.domainMax().getTime() - this.props.tScale.domainMin().getTime();
@@ -512,7 +536,7 @@ class Graph extends React.Component {
   _updateData() {
     var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
     var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
-    this.queries.updateData(start, end)
+    this.queries.updateData(start, end, this.props.filter)
   }
   componentDidMount() {
     this._updateData();
@@ -580,6 +604,7 @@ Graph.propTypes = {
   focusPoint: React.PropTypes.object.isRequired,
   onFocusTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
+  filter: React.PropTypes.object.isRequired,
 };
 
 class RangePicker extends React.Component {
