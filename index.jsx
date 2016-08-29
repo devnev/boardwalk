@@ -65,6 +65,7 @@ class App extends React.Component {
         <h1>{console.title}</h1>
         <RangePicker range={this.state.range} onChange={this._updateRange} />
         <FilterControl filter={this.state.filter} onChange={this._updateFilter} />
+        <FilterSelectControl selectors={console.selectors} filter={this.state.filter} onChange={this._updateFilter} />
         <Console key={path} items={console.contents} range={this.state.range} filter={this.state.filter} onChangeRange={this._updateRange} />
       </div>
     );
@@ -843,6 +844,71 @@ class TimePicker extends React.Component {
 TimePicker.propTypes = {
   value: React.PropTypes.object.isRequired,
   step: React.PropTypes.number.isRequired,
+  onChange: React.PropTypes.func.isRequired,
+}
+
+class FilterSelectControl extends React.Component {
+  constructor(props) {
+    super(props);
+    this._onFilterChange = this._onFilterChange.bind(this);
+  }
+  _onFilterChange(event) {
+    var filter = _.clone(this.props.filter);
+    var value = event.target.value;
+    if (value) {
+      filter[event.target.name] = value;
+    }
+    else {
+      delete filter[event.target.name];
+    }
+    this.props.onChange(filter);
+  }
+  _removeLabel(label) {
+    var filter = _.clone(this.props.filter);
+    delete filter[label];
+    this.props.onChange(filter);
+  }
+  render() {
+    var selectorLabels = this.props.selectors.map(function(s) { return s.label; });
+    var unknown = _.difference(_.keys(this.props.filter), selectorLabels);
+    return (
+      <ul>
+        {this.props.selectors.map(function(selector) {
+          var selected = (
+            _(this.props.filter).has(selector.label)
+            ? this.props.filter[selector.label]
+            : ""
+          );
+          var options = selector.options;
+          if (selected && !_(options).contains(selected)) {
+            options = [selected].concat(options);
+          }
+          options = [""].concat(options);
+          return (
+            <li key={selector.label}>
+              <select name={selector.label} defaultValue={selected} onChange={this._onFilterChange}>
+                {options.map(function(option) {
+                  return <option key={option} value={option}>{option}</option>;
+                }.bind(this))}
+              </select>
+            </li>
+          );
+        }.bind(this))}
+        {unknown.map(function(label) {
+          return (
+            <li key={label}>
+              <span>{label}</span>
+              <button type="button" onClick={this._removeLabel.bind(this, label)}>X</button>
+            </li>
+          );
+        }.bind(this))}
+      </ul>
+    );
+  }
+}
+FilterSelectControl.propTypes = {
+  selectors: React.PropTypes.array.isRequired,
+  filter: React.PropTypes.object.isRequired,
   onChange: React.PropTypes.func.isRequired,
 }
 
