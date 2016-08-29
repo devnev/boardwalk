@@ -93,9 +93,9 @@ class Console extends React.Component {
     super(props);
     this.tScale = new Plottable.Scales.Time();
     this.cScale = new Plottable.Scales.Color();
-    this.focusPoint = new Plottable.Dataset();
+    this.hoverPoint = new Plottable.Dataset();
     this.selected = false;
-    this.focused = false;
+    this.hovered = false;
     if (props.range) {
       this._setRange(props.range);
     }
@@ -105,29 +105,29 @@ class Console extends React.Component {
         duration: Math.floor((this.tScale.domainMax().getTime() - this.tScale.domainMin().getTime())/1000),
       });
     }.bind(this));
-    this._setFocusTime = this._setFocusTime.bind(this);
+    this._setHoverTime = this._setHoverTime.bind(this);
     this._setSelectedTime = this._setSelectedTime.bind(this);
   }
   _setRange(range) {
     this.tScale.domain([new Date(range.end.getTime() - range.duration*1000), range.end]);
-    if (!this.selected && !this.focused) {
-      this.focusPoint.data([this.tScale.domainMax()]);
+    if (!this.selected && !this.hovered) {
+      this.hoverPoint.data([this.tScale.domainMax()]);
     }
   }
-  _setFocusTime(focusedTime) {
-    this.focused = !!focusedTime;
+  _setHoverTime(hoveredTime) {
+    this.hovered = !!hoveredTime;
     if (this.selected) {
       return;
     }
-    if (!focusedTime) {
-      this.focusPoint.data([this.tScale.domainMax()]);
+    if (!hoveredTime) {
+      this.hoverPoint.data([this.tScale.domainMax()]);
       return;
     }
-    this.focusPoint.data([focusedTime]);
+    this.hoverPoint.data([hoveredTime]);
   }
   _setSelectedTime(selectedTime) {
     this.selected = !this.selected;
-    this.focusPoint.data([selectedTime]);
+    this.hoverPoint.data([selectedTime]);
   }
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.range, nextProps.range)) {
@@ -145,9 +145,9 @@ class Console extends React.Component {
                 options={item.graph}
                 tScale={this.tScale}
                 cScale={this.cScale}
-                onFocusTime={this._setFocusTime}
+                onHoverTime={this._setHoverTime}
                 onSelectTime={this._setSelectedTime}
-                focusPoint={this.focusPoint}
+                hoverPoint={this.hoverPoint}
                 filter={this.props.filter} />
             );
           }
@@ -181,10 +181,10 @@ class GraphPanel extends React.Component {
           options={this.props.options}
           tScale={this.props.tScale}
           cScale={this.props.cScale}
-          onFocusTime={this.props.onFocusTime}
+          onHoverTime={this.props.onHoverTime}
           onSelectTime={this.props.onSelectTime}
           onUpdateValues={this._setLegend}
-          focusPoint={this.props.focusPoint}
+          hoverPoint={this.props.hoverPoint}
           filter={this.props.filter} />
         <Legend
           items={this.state.legend}
@@ -197,8 +197,8 @@ GraphPanel.propTypes = {
   tScale: React.PropTypes.object.isRequired,
   cScale: React.PropTypes.object.isRequired,
   options: React.PropTypes.object.isRequired,
-  focusPoint: React.PropTypes.object.isRequired,
-  onFocusTime: React.PropTypes.func.isRequired,
+  hoverPoint: React.PropTypes.object.isRequired,
+  onHoverTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
   filter: React.PropTypes.object.isRequired,
 };
@@ -552,7 +552,7 @@ class Graph extends React.Component {
     // binds
     this._redraw = this._redraw.bind(this);
     this._onParamsUpdate = _.debounce(this._onParamsUpdate.bind(this), 500);
-    this._updateFocused = this._updateFocused.bind(this);
+    this._updateHovered = this._updateHovered.bind(this);
     this._onUpdateCaptions = this._onUpdateCaptions.bind(this);
   }
   shouldComponentUpdate(props, state) {
@@ -588,8 +588,8 @@ class Graph extends React.Component {
     var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
     this.queries.updateData(start, end, this.props.filter);
   }
-  _updateFocused() {
-    var targetTime = [undefined].concat(this.props.focusPoint.data()).pop();
+  _updateHovered() {
+    var targetTime = [undefined].concat(this.props.hoverPoint.data()).pop();
     this.guideline.value(targetTime);
     this.queries.updateNearest(targetTime);
   }
@@ -599,10 +599,10 @@ class Graph extends React.Component {
   }
   componentDidMount() {
     this._updateData();
-    this._updateFocused();
+    this._updateHovered();
     window.addEventListener("resize", this._redraw);
     this.props.tScale.onUpdate(this._onParamsUpdate);
-    this.props.focusPoint.onUpdate(this._updateFocused);
+    this.props.hoverPoint.onUpdate(this._updateHovered);
     this.queries.captions.onUpdate(this._onUpdateCaptions);
   }
   componentWillUnmount() {
@@ -611,7 +611,7 @@ class Graph extends React.Component {
     }
     window.removeEventListener("resize", this._redraw);
     this.props.tScale.offUpdate(this._onParamsUpdate);
-    this.props.focusPoint.offUpdate(this._updateFocused);
+    this.props.hoverPoint.offUpdate(this._updateHovered);
     this.queries.captions.offUpdate(this._onUpdateCaptions);
   }
   render() {
@@ -634,10 +634,10 @@ class Graph extends React.Component {
     panZoom.attachTo(panel);
     var pointer = new Plottable.Interactions.Pointer();
     pointer.onPointerMove(function(point) {
-      this.props.onFocusTime(this._timeForPoint(tAxis, point));
+      this.props.onHoverTime(this._timeForPoint(tAxis, point));
     }.bind(this));
     pointer.onPointerExit(function() {
-      this.props.onFocusTime();
+      this.props.onHoverTime();
     }.bind(this));
     pointer.attachTo(panel);
     var click = new Plottable.Interactions.Click();
@@ -653,8 +653,8 @@ Graph.propTypes = {
   tScale: React.PropTypes.object.isRequired,
   cScale: React.PropTypes.object.isRequired,
   options: React.PropTypes.object.isRequired,
-  focusPoint: React.PropTypes.object.isRequired,
-  onFocusTime: React.PropTypes.func.isRequired,
+  hoverPoint: React.PropTypes.object.isRequired,
+  onHoverTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
   filter: React.PropTypes.object.isRequired,
 };
