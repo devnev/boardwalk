@@ -493,18 +493,12 @@ function NewHighlightPlot(tScale, yScale, cScale) {
 }
 
 class QuerySet {
-  constructor(queries, tScale, yScale, cScale) {
+  constructor(queries, onData) {
     this.queries = queries.map(function(query, index) {
       return new Query(query, this._onQueryData.bind(this, index));
     }.bind(this));
-    this.captioner = new QueryCaptions();
-    this.captions = this.captioner.dataset;
     this.datasets = Array(this.queries.length);
-
-    this.plot = NewDataPlot(tScale, yScale, cScale);
-    this.points = NewHighlightPlot(tScale, yScale, cScale);
-    this.points.datasets([this.captioner.nearest]);
-    this.component = new Plottable.Components.Group([this.plot, this.points]);
+    this.onData = onData.bind(undefined);
   }
   updateData(start, end, filter) {
     this.queries.forEach(function(query) {
@@ -514,11 +508,7 @@ class QuerySet {
   _onQueryData(queryIndex, datasets) {
     this.datasets[queryIndex] = datasets;
     var datasets = _.flatten(this.datasets, true).filter(function(d) { return d; });
-    this.captioner.setSources(datasets);
-    this.plot.datasets(datasets);
-  }
-  updateNearest(targetTime) {
-    this.captioner.target(targetTime);
+    this.onData(datasets);
   }
 }
 
@@ -549,10 +539,11 @@ class Graph extends React.Component {
   constructor(props) {
     super(props);
     this.id = _.uniqueId('graph_');
-    this.chart = null;
+    this.guideline = null;
+    this.plot = null;
+    this.highlight = null;
+    this.graph = null;
     this.queries = null;
-    this.yScale = new Plottable.Scales.Linear();
-    this.yScale.domainMin(0);
 
     // binds
     this._redraw = this._redraw.bind(this);
@@ -560,17 +551,35 @@ class Graph extends React.Component {
     this._updateHovered = this._updateHovered.bind(this);
     this._onUpdateCaptions = this._onUpdateCaptions.bind(this);
   }
-  shouldComponentUpdate(props, state) {
-    return (
-      this.props.tScale != props.tScale ||
-      this.props.cScale != props.cScale ||
-      !_.isEqual(this.props.options, props.options)
-    );
+  componentDidMount() {
+    this._updateData();
+    this._updateHovered();
+    window.addEventListener("resize", this._redraw);
+    this.props.tScale.onUpdate(this._onParamsUpdate);
+    this.props.hoverPoint.onUpdate(this._updateHovered);
+    this.captions.dataset.onUpdate(this._onUpdateCaptions);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("resize", this._redraw);
+    this.props.tScale.offUpdate(this._onParamsUpdate);
+    this.props.hoverPoint.offUpdate(this._updateHovered);
+    this.graph.destroy();
   }
   componentWillReceiveProps(props) {
     if (!_.isEqual(this.props.filter, props.filter)) {
       this._onParamsUpdate();
     }
+  }
+  shouldComponentUpdate(props, state) {
+    return (
+      this.props.tScale !== props.tScale ||
+      this.props.cScale !== props.cScale ||
+      !_.isEqual(this.props.options, props.options)
+    );
+  }
+  render() {
+    this._setup();
+    return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.graph.renderTo(ref)} />
   }
   _timeForPoint(tAxis, point) {
     var position = point.x / tAxis.width();
@@ -578,8 +587,8 @@ class Graph extends React.Component {
     return new Date(this.props.tScale.domainMin().getTime() + timeWidth * position);
   }
   _redraw() {
-    if (this.chart) {
-      this.chart.redraw();
+    if (this.graph) {
+      this.graph.redraw();
     }
   }
   _onParamsUpdate() {
@@ -596,40 +605,26 @@ class Graph extends React.Component {
   _updateHovered() {
     var targetTime = [undefined].concat(this.props.hoverPoint.data()).pop();
     this.guideline.value(targetTime);
-    this.queries.updateNearest(targetTime);
+    this.captions.target(targetTime);
   }
-  componentWillMount() {
-    this.queries = new QuerySet(
-      this.props.options.queries, this.props.tScale, this.yScale, this.props.cScale);
-  }
-  componentDidMount() {
-    this._updateData();
-    this._updateHovered();
-    window.addEventListener("resize", this._redraw);
-    this.props.tScale.onUpdate(this._onParamsUpdate);
-    this.props.hoverPoint.onUpdate(this._updateHovered);
-    this.queries.captions.onUpdate(this._onUpdateCaptions);
-  }
-  componentWillUnmount() {
-    window.removeEventListener("resize", this._redraw);
-    this.props.tScale.offUpdate(this._onParamsUpdate);
-    this.props.hoverPoint.offUpdate(this._updateHovered);
-    this.queries.captions.offUpdate(this._onUpdateCaptions);
-  }
-  render() {
+  _setup() {
     // axes and scales
     var tAxis = new Plottable.Axes.Time(this.props.tScale, "bottom");
     tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
-    var yAxis = new Plottable.Axes.Numeric(this.yScale, "left");
+    var yScale = new Plottable.Scales.Linear();
+    yScale.domainMin(0);
+    var yAxis = new Plottable.Axes.Numeric(yScale, "left");
     yAxis.formatter(Plottable.Formatters.siSuffix());
     yAxis.usesTextWidthApproximation(true);
 
-    // the chart
+    // the graph
     this.guideline = new Plottable.Components.GuideLineLayer(
       Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
     ).scale(this.props.tScale);
-    var panel = new Plottable.Components.Group([this.guideline, this.queries.component]);
-    this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
+    this.plot = NewDataPlot(this.props.tScale, yScale, this.props.cScale);
+    this.highlight = NewHighlightPlot(this.props.tScale, yScale, this.props.cScale);
+    var panel = new Plottable.Components.Group([this.guideline, this.plot, this.highlight]);
+    this.graph = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
 
     // interactions
     var panZoom = new Plottable.Interactions.PanZoom(this.props.tScale, null);
@@ -648,7 +643,14 @@ class Graph extends React.Component {
     }.bind(this));
     click.attachTo(panel);
 
-    return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.chart.renderTo(ref)} />
+    // the data
+    this.captions = new QueryCaptions();
+    this.highlight.datasets([this.captions.nearest]);
+    this.queries = new QuerySet(this.props.options.queries, function(datasets) {
+      this.plot.datasets(datasets);
+      this.captions.setSources(datasets);
+    }.bind(this));
+    this._updateData();
   }
 }
 Graph.propTypes = {
