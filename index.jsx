@@ -474,6 +474,24 @@ class QueryCaptions {
   }
 }
 
+function NewDataPlot(tScale, yScale, cScale) {
+  var plot = new Plottable.Plots.Line();
+  plot.x(function(d) { return d.t; }, tScale);
+  plot.y(function(d) { return d.y; }, yScale);
+  plot.attr("stroke", function(d, i, dataset) { return dataset.metadata().title; }, cScale);
+  return plot;
+}
+
+function NewHighlightPlot(tScale, yScale, cScale) {
+  var plot = new Plottable.Plots.Scatter();
+  plot.x(function(d) { return d.t; }, tScale);
+  plot.y(function(d) { return d.y; }, yScale);
+  plot.attr("fill", function(d) { return d.caption; }, cScale);
+  plot.size(10);
+  plot.autorangeMode("none");
+  return plot;
+}
+
 class QuerySet {
   constructor(queries, tScale, yScale, cScale) {
     this.queries = queries.map(function(query, index) {
@@ -483,19 +501,9 @@ class QuerySet {
     this.captions = this.captioner.dataset;
     this.datasets = Array(this.queries.length);
 
-    this.plot = new Plottable.Plots.Line();
-    this.plot.x(function(d) { return d.t; }, tScale);
-    this.plot.y(function(d) { return d.y; }, yScale);
-    this.plot.attr("stroke", function(d, i, dataset) { return dataset.metadata().title; }, cScale);
-
-    this.points = new Plottable.Plots.Scatter();
-    this.points.x(function(d) { return d.t; }, tScale);
-    this.points.y(function(d) { return d.y; }, yScale);
-    this.points.attr("fill", function(d) { return d.caption; }, cScale);
-    this.points.size(10);
-    this.points.autorangeMode("none");
+    this.plot = NewDataPlot(tScale, yScale, cScale);
+    this.points = NewHighlightPlot(tScale, yScale, cScale);
     this.points.datasets([this.captioner.nearest]);
-
     this.component = new Plottable.Components.Group([this.plot, this.points]);
   }
   updateData(start, end, filter) {
