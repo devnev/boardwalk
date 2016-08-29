@@ -350,47 +350,15 @@ function FormatTemplate(template, props) {
 }
 
 class Query {
-  constructor(options, tScale, yScale, cScale) {
+  constructor(options, tScale, yScale, cScale, onData) {
     this.tScale = tScale;
     this.yScale = yScale;
     this.cScale = cScale;
     this.options = options;
-
-    this.plot = new Plottable.Plots.Line();
-    this.plot.x(function(d) { return d.t; }, tScale);
-    this.plot.y(function(d) { return d.y; }, yScale);
-    this.plot.attr("stroke", function(d) { return d.c; });
-
-    this.nearest = new Plottable.Plots.Scatter();
-    this.nearest.x(function(d) { return d.t; }, tScale);
-    this.nearest.y(function(d) { return d.y; }, yScale);
-    this.nearest.attr("fill", function(d) { return d.c; });
-    this.nearest.size(10);
-    this.nearest.autorangeMode("none");
-
-    this.plots = [];
+    this.onData = onData.bind(undefined);
     this.loading = {};
-    this.component = new Plottable.Components.Group([this.plot, this.nearest]);
   }
-  updateNearest(targetTime) {
-    var points = [];
-    var values = [];
-    this.plot.datasets().forEach(function(dataset) {
-      var data = dataset.data();
-      for (var i = data.length-1; i >= 0; i--) {
-        var point = data[i];
-        if (point.t <= targetTime) {
-          points.push(point);
-          values.push([dataset.metadata().title, point.y]);
-          return;
-        }
-      }
-      values.push([dataset.metadata().title, ""]);
-    }.bind(this));
-    this.nearest.datasets([new Plottable.Dataset(points)]);
-    return values;
-  }
-  _updatePlots(results) {
+  _updateDatasets(results) {
     var datasets = results.map(function(result) {
       var title = (
         this.options.title ?
@@ -406,7 +374,7 @@ class Query {
       }.bind(this));
       return new Plottable.Dataset(dataset, {title: title});
     }.bind(this));
-    this.plot.datasets(datasets);
+    this.onData(datasets);
   }
   _matchFilter(filter) {
     if (!this.options.match) {
@@ -427,7 +395,7 @@ class Query {
   }
   updateData(start, end, filter) {
     if (!this._matchFilter(filter)) {
-      this._updatePlots([]);
+      this._updateDatasets([]);
       return;
     }
     var query = FormatTemplate(this.options.query, filter);
@@ -448,7 +416,7 @@ class Query {
     }).always(function() {
       this.loading.req = null;
     }.bind(this)).done(function(data) {
-      this._updatePlots(data.data.result);
+      this._updateDatasets(data.data.result);
     }.bind(this));
     this.loading = {
       req: req,
@@ -459,26 +427,83 @@ class Query {
   }
 }
 
-class QuerySet {
-  constructor(queries, tScale, yScale, cScale, focusPoint) {
-    this.queries = queries.map(function(query) {
-      return new Query(query, tScale, yScale, cScale, focusPoint);
+class QueryCaptions {
+  constructor() {
+    this.nearest = new Plottable.Dataset();
+    this.dataset = new Plottable.Dataset();
+    this.sources = [];
+  }
+  target(targetTime) {
+    if (!targetTime) {
+      this.nearest.data([]);
+      this.dataset.data(this.sources.map(function(dataset) {
+        return [dataset.metadata().title, ""];
+      }));
+      this._target = undefined;
+      return;
+    }
+
+    var points = [];
+    var values = [];
+    this.sources.forEach(function(dataset) {
+      var data = dataset.data();
+      for (var i = data.length-1; i >= 0; i--) {
+        var point = data[i];
+        if (point.t <= targetTime) {
+          points.push(point);
+          values.push([dataset.metadata().title, point.y]);
+          return;
+        }
+      }
+      values.push([dataset.metadata().title, ""]);
     }.bind(this));
-    this.component = new Plottable.Components.Group(
-      this.queries.map(function(query) {
-        return query.component;
-      }.bind(this))
-    );
+    this.nearest.data(points);
+    this.dataset.data(values);
+    this._target = targetTime;
+  }
+  setSources(datasets) {
+    this.sources = datasets || [];
+    this.target(this._target);
+  }
+}
+
+class QuerySet {
+  constructor(queries, tScale, yScale, cScale) {
+    this.queries = queries.map(function(query, index) {
+      return new Query(query, tScale, yScale, cScale, this._onQueryData.bind(this, index));
+    }.bind(this));
+    this.captioner = new QueryCaptions();
+    this.captions = this.captioner.dataset;
+    this.datasets = Array(this.queries.length);
+
+    this.plot = new Plottable.Plots.Line();
+    this.plot.x(function(d) { return d.t; }, tScale);
+    this.plot.y(function(d) { return d.y; }, yScale);
+    this.plot.attr("stroke", function(d) { return d.c; });
+
+    this.points = new Plottable.Plots.Scatter();
+    this.points.x(function(d) { return d.t; }, tScale);
+    this.points.y(function(d) { return d.y; }, yScale);
+    this.points.attr("fill", function(d) { return d.c; });
+    this.points.size(10);
+    this.points.autorangeMode("none");
+    this.points.datasets([this.captioner.nearest]);
+
+    this.component = new Plottable.Components.Group([this.plot, this.points]);
   }
   updateData(start, end, filter) {
     this.queries.forEach(function(query) {
       query.updateData(start, end, filter);
     }.bind(this));
   }
+  _onQueryData(queryIndex, datasets) {
+    this.datasets[queryIndex] = datasets;
+    var datasets = _.flatten(this.datasets, true).filter(function(d) { return d; });
+    this.captioner.setSources(datasets);
+    this.plot.datasets(datasets);
+  }
   updateNearest(targetTime) {
-    return this.queries.map(function(query) {
-      return query.updateNearest(targetTime);
-    }.bind(this));
+    this.captioner.target(targetTime);
   }
 }
 
@@ -511,10 +536,14 @@ class Graph extends React.Component {
     this.id = _.uniqueId('graph_');
     this.chart = null;
     this.queries = null;
+    this.yScale = new Plottable.Scales.Linear();
+    this.yScale.domainMin(0);
 
     // binds
     this._redraw = this._redraw.bind(this);
     this._onParamsUpdate = _.debounce(this._onParamsUpdate.bind(this), 500);
+    this._updateFocused = this._updateFocused.bind(this);
+    this._onUpdateCaptions = this._onUpdateCaptions.bind(this);
   }
   shouldComponentUpdate(props, state) {
     return (
@@ -541,15 +570,30 @@ class Graph extends React.Component {
   _onParamsUpdate() {
     this._updateData();
   }
+  _onUpdateCaptions(dataset) {
+    this.props.onUpdateValues(dataset.data());
+  }
   _updateData() {
     var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
     var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
-    this.queries.updateData(start, end, this.props.filter)
+    this.queries.updateData(start, end, this.props.filter);
+  }
+  _updateFocused() {
+    var targetTime = [undefined].concat(this.props.focusPoint.data()).pop();
+    this.guideline.value(targetTime);
+    this.queries.updateNearest(targetTime);
+  }
+  componentWillMount() {
+    this.queries = new QuerySet(
+      this.props.options.queries, this.props.tScale, this.yScale, this.props.cScale);
   }
   componentDidMount() {
     this._updateData();
+    this._updateFocused();
     window.addEventListener("resize", this._redraw);
     this.props.tScale.onUpdate(this._onParamsUpdate);
+    this.props.focusPoint.onUpdate(this._updateFocused);
+    this.queries.captions.onUpdate(this._onUpdateCaptions);
   }
   componentWillUnmount() {
     if (this.req) {
@@ -557,33 +601,22 @@ class Graph extends React.Component {
     }
     window.removeEventListener("resize", this._redraw);
     this.props.tScale.offUpdate(this._onParamsUpdate);
+    this.props.focusPoint.offUpdate(this._updateFocused);
+    this.queries.captions.offUpdate(this._onUpdateCaptions);
   }
   render() {
     // axes and scales
     var tAxis = new Plottable.Axes.Time(this.props.tScale, "bottom");
     tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
-    var yScale = new Plottable.Scales.Linear();
-    yScale.domainMin(0);
-    var yAxis = new Plottable.Axes.Numeric(yScale, "left");
+    var yAxis = new Plottable.Axes.Numeric(this.yScale, "left");
     yAxis.formatter(Plottable.Formatters.siSuffix());
     yAxis.usesTextWidthApproximation(true);
 
     // the chart
-    this.queries = new QuerySet(
-      this.props.options.queries, this.props.tScale, yScale, this.props.cScale, this.props.focusPoint);
-
-    var guideline = new Plottable.Components.GuideLineLayer(
+    this.guideline = new Plottable.Components.GuideLineLayer(
       Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
     ).scale(this.props.tScale);
-    this.props.focusPoint.onUpdate(function(dataset) {
-      var data = [undefined].concat(dataset.data());
-      var targetTime = data.pop()
-      guideline.value(targetTime);
-      var nearestValues = this.queries.updateNearest(targetTime);
-      this.props.onUpdateValues(_.flatten(nearestValues, true));
-    }.bind(this));
-
-    var panel = new Plottable.Components.Group([guideline, this.queries.component]);
+    var panel = new Plottable.Components.Group([this.guideline, this.queries.component]);
     this.chart = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
 
     // interactions
