@@ -108,6 +108,7 @@ class App extends React.Component {
         end: new Date(),
         duration: 1*60*60
       },
+      tScale: new Plottable.Scales.Time(),
       filter: {},
     };
     this._updateRange = this._updateRange.bind(this);
@@ -125,6 +126,31 @@ class App extends React.Component {
     }
     hashURI.offUpdate(this._navigate);
   }
+  componentWillUpdate(nextProps, nextState) {
+    if (nextState.tScale !== this.state.tScale) {
+      if (this.state.tScale) {
+        this.state.tScale.offUpdate(this._setRangeFromScale);
+      }
+      if (nextState.tScale) {
+        nextState.tScale.onUpdate(this._setRangeFromScale);
+      }
+    }
+  }
+  _setRangeFromScale() {
+    var range = {
+      end: this.state.tScale.domainMax(),
+      duration: Math.floor((this.state.tScale.domainMax().getTime() - this.state.tScale.domainMin().getTime())/1000),
+    };
+    this._updateRange(range);
+  }
+  _setScaleFromRange() {
+    var range = this.state.range;
+    var start = new Date(range.end.getTime() - range.duration*1000);
+    if (start.getTime() !== this.state.tScale.domainMin().getTime() ||
+        range.end.getTime() !== this.state.tScale.domainMax().getTime()) {
+      this.state.tScale.domain([start, range.end]);
+    }
+  }
   _updateRange(range) {
     SetSubState(this, {range: range});
   }
@@ -135,6 +161,7 @@ class App extends React.Component {
     SetSubState(this, {console: hashURI.path().replace(/\/+$/, "")});
   }
   render() {
+    this._setScaleFromRange();
     if (!this.state.config) {
       return <p>Loading config...</p>
     }
@@ -164,9 +191,8 @@ class App extends React.Component {
         <Console
           key={this.state.console}
           items={console.contents}
-          range={this.state.range}
           filter={this.state.filter}
-          onChangeRange={this._updateRange} />
+          tScale={this.state.tScale} />
       </div>
     );
   }
@@ -192,50 +218,30 @@ ConsoleNav.propTypes = {
 class Console extends React.Component {
   constructor(props) {
     super(props);
-    this.tScale = new Plottable.Scales.Time();
-    this.cScale = new Plottable.Scales.Color();
-    this.hoverPoint = new Plottable.Dataset();
-    this.selected = false;
-    this.hovered = false;
-    if (props.range) {
-      this._setRange(props.range);
+    this.state = {
+      cScale: new Plottable.Scales.Color(),
+      hoveredTime: null,
+      selectedTime: null,
     }
-    this.tScale.onUpdate(function() {
-      this.props.onChangeRange({
-        end: this.tScale.domainMax(),
-        duration: Math.floor((this.tScale.domainMax().getTime() - this.tScale.domainMin().getTime())/1000),
-      });
-    }.bind(this));
     this._setHoverTime = this._setHoverTime.bind(this);
     this._setSelectedTime = this._setSelectedTime.bind(this);
   }
-  _setRange(range) {
-    this.tScale.domain([new Date(range.end.getTime() - range.duration*1000), range.end]);
-    if (!this.selected && !this.hovered) {
-      this.hoverPoint.data([this.tScale.domainMax()]);
-    }
-  }
   _setHoverTime(hoveredTime) {
-    this.hovered = !!hoveredTime;
-    if (this.selected) {
-      return;
-    }
-    if (!hoveredTime) {
-      this.hoverPoint.data([this.tScale.domainMax()]);
-      return;
-    }
-    this.hoverPoint.data([hoveredTime]);
+    SetSubState(this, {hoveredTime: hoveredTime});
   }
   _setSelectedTime(selectedTime) {
-    this.selected = !this.selected;
-    this.hoverPoint.data([selectedTime]);
-  }
-  componentWillReceiveProps(nextProps) {
-    if (!_.isEqual(this.props.range, nextProps.range)) {
-      this._setRange(nextProps.range);
-    }
+    SetSubState(this, {
+      selectedTime: this.state.selectedTime ? null : selectedTime,
+    });
   }
   render() {
+    var targetTime = this.state.selectedTime;
+    if (!targetTime) {
+      targetTime = this.state.hoveredTime;
+    }
+    if (!targetTime) {
+      targetTime = this.props.tScale.domainMax();
+    }
     return (
       <div>
         {this.props.items.map(function(item, index) {
@@ -244,11 +250,11 @@ class Console extends React.Component {
               <GraphPanel 
                 key={index}
                 options={item.graph}
-                tScale={this.tScale}
-                cScale={this.cScale}
+                tScale={this.props.tScale}
+                cScale={this.state.cScale}
                 onHoverTime={this._setHoverTime}
                 onSelectTime={this._setSelectedTime}
-                hoverPoint={this.hoverPoint}
+                highlightTime={targetTime}
                 filter={this.props.filter} />
             );
           }
@@ -258,8 +264,9 @@ class Console extends React.Component {
   }
 }
 Console.propTypes = {
-  range: React.PropTypes.object.isRequired,
   items: React.PropTypes.array.isRequired,
+  filter: React.PropTypes.object.isRequired,
+  tScale: React.PropTypes.object.isRequired,
 };
 
 class GraphPanel extends React.Component {
@@ -279,14 +286,8 @@ class GraphPanel extends React.Component {
     return (
       <div>
         <Graph
-          options={this.props.options}
-          tScale={this.props.tScale}
-          cScale={this.props.cScale}
-          onHoverTime={this.props.onHoverTime}
-          onSelectTime={this.props.onSelectTime}
-          onUpdateValues={this._setLegend}
-          hoverPoint={this.props.hoverPoint}
-          filter={this.props.filter} />
+          {...this.props}
+          onUpdateValues={this._setLegend} />
         <Legend
           items={this.state.legend}
           cScale={this.props.cScale} />
@@ -298,7 +299,7 @@ GraphPanel.propTypes = {
   tScale: React.PropTypes.object.isRequired,
   cScale: React.PropTypes.object.isRequired,
   options: React.PropTypes.object.isRequired,
-  hoverPoint: React.PropTypes.object.isRequired,
+  highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
   filter: React.PropTypes.object.isRequired,
@@ -557,18 +558,22 @@ class QueryCaptions {
     var values = [];
     this.sources.forEach(function(dataset) {
       var data = dataset.data();
-      for (var i = data.length-1; i >= 0; i--) {
-        var point = data[i];
-        if (point.t <= targetTime) {
-          points.push(_({caption: dataset.metadata().title}).assign(point));
-          values.push({caption: dataset.metadata().title, value: point.y});
-          return;
-        }
+      if (data.length == 0 || data[0].t > targetTime) {
+        values.push({caption: dataset.metadata().title, value: ""});
+        return;
       }
-      values.push({caption: dataset.metadata().title, value: ""});
+      var index = _.sortedIndex(data, {t: targetTime}, 't');
+      if (!(index < data.length && data[index].t === targetTime)) {
+        index -= 1;
+      }
+      var point = data[index];
+      points.push(_({caption: dataset.metadata().title}).assign(point));
+      values.push({caption: dataset.metadata().title, value: point.y});
     }.bind(this));
-    this.nearest.data(points);
-    this.dataset.data(values);
+    _.defer(function() {
+      this.nearest.data(points);
+      this.dataset.data(values);
+    }.bind(this));
     this._target = targetTime;
   }
   setSources(datasets) {
@@ -651,24 +656,26 @@ class Graph extends React.Component {
     // binds
     this._redraw = this._redraw.bind(this);
     this._onParamsUpdate = _.debounce(this._onParamsUpdate.bind(this), 500);
-    this._updateHovered = this._updateHovered.bind(this);
-    this._onUpdateCaptions = this._onUpdateCaptions.bind(this);
   }
   componentDidMount() {
     window.addEventListener("resize", this._redraw);
     this.props.tScale.onUpdate(this._onParamsUpdate);
-    this.props.hoverPoint.onUpdate(this._updateHovered);
-    this.captions.dataset.onUpdate(this._onUpdateCaptions);
   }
   componentWillUnmount() {
     window.removeEventListener("resize", this._redraw);
     this.props.tScale.offUpdate(this._onParamsUpdate);
-    this.props.hoverPoint.offUpdate(this._updateHovered);
     this.graph.destroy();
   }
-  componentWillReceiveProps(props) {
-    if (!_.isEqual(this.props.filter, props.filter)) {
+  componentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props.filter, nextProps.filter)) {
       this._onParamsUpdate();
+    }
+    if (!_.isEqual(this.props.highlightTime, nextProps.highlightTime)) {
+      this._updateHighlight(nextProps.highlightTime);
+    }
+    if (nextProps.tScale !== this.props.tScale) {
+      this.props.tScale.offUpdate(this._onParamsUpdate);
+      nextProps.tScale.onUpdate(this._onParamsUpdate);
     }
   }
   shouldComponentUpdate(props, state) {
@@ -695,16 +702,12 @@ class Graph extends React.Component {
   _onParamsUpdate() {
     this._updateData();
   }
-  _onUpdateCaptions(dataset) {
-    this.props.onUpdateValues(dataset.data());
-  }
   _updateData() {
     var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
     var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
     this.queries.updateData(start, end, this.props.filter);
   }
-  _updateHovered() {
-    var targetTime = [undefined].concat(this.props.hoverPoint.data()).pop();
+  _updateHighlight(targetTime) {
     this.guideline.value(targetTime);
     this.captions.target(targetTime);
   }
@@ -746,20 +749,23 @@ class Graph extends React.Component {
 
     // the data
     this.captions = new QueryCaptions();
+    this.captions.dataset.onUpdate(function(dataset) {
+      this.props.onUpdateValues(dataset.data());
+    }.bind(this));
     this.highlight.datasets([this.captions.nearest]);
     this.queries = new QuerySet(this.props.options.queries, function(datasets) {
       this.plot.datasets(datasets);
       this.captions.setSources(datasets);
     }.bind(this));
     this._updateData();
-    this._updateHovered();
+    this._updateHighlight(this.props.highlightTime);
   }
 }
 Graph.propTypes = {
   tScale: React.PropTypes.object.isRequired,
   cScale: React.PropTypes.object.isRequired,
   options: React.PropTypes.object.isRequired,
-  hoverPoint: React.PropTypes.object.isRequired,
+  highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
   filter: React.PropTypes.object.isRequired,
