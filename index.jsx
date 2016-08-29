@@ -444,7 +444,7 @@ class QueryCaptions {
     if (!targetTime) {
       this.nearest.data([]);
       this.dataset.data(this.sources.map(function(dataset) {
-        return [dataset.metadata().title, ""];
+        return {caption: dataset.metadata().title, value: ""};
       }));
       this._target = undefined;
       return;
@@ -458,11 +458,11 @@ class QueryCaptions {
         var point = data[i];
         if (point.t <= targetTime) {
           points.push(_({caption: dataset.metadata().title}).assign(point));
-          values.push([dataset.metadata().title, point.y]);
+          values.push({caption: dataset.metadata().title, value: point.y});
           return;
         }
       }
-      values.push([dataset.metadata().title, ""]);
+      values.push({caption: dataset.metadata().title, value: ""});
     }.bind(this));
     this.nearest.data(points);
     this.dataset.data(values);
@@ -519,12 +519,12 @@ class Legend extends React.Component {
     return (
       <ul>
         {this.props.items.map(function(item, index) {
-          var title = item[0];
-          var value = item[1];
-          var colorStyle = {color: this.props.cScale.scale(title)};
-          return (<li key={title+index}>
+          var caption = item.caption;
+          var value = item.value;
+          var colorStyle = {color: this.props.cScale.scale(caption)};
+          return (<li key={caption+index}>
             <span style={colorStyle}>&#x25cf;</span>
-            <span>{title}</span>
+            <span>{caption}</span>
             <span>{value}</span>
           </li>);
         }.bind(this))}
