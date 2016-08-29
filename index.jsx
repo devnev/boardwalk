@@ -552,8 +552,6 @@ class Graph extends React.Component {
     this._onUpdateCaptions = this._onUpdateCaptions.bind(this);
   }
   componentDidMount() {
-    this._updateData();
-    this._updateHovered();
     window.addEventListener("resize", this._redraw);
     this.props.tScale.onUpdate(this._onParamsUpdate);
     this.props.hoverPoint.onUpdate(this._updateHovered);
@@ -651,6 +649,7 @@ class Graph extends React.Component {
       this.captions.setSources(datasets);
     }.bind(this));
     this._updateData();
+    this._updateHovered();
   }
 }
 Graph.propTypes = {
