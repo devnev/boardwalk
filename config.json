@@ -4,7 +4,13 @@
     "selectors": [
       {
         "label": "job",
-        "options": ["server1", "server2"]
+        "options": ["server1", "server2"],
+        "queries": [
+          {
+            "label": "job",
+            "query": "count(grpc_server_handled_total::rate1m_sum) by (job)"
+          }
+        ]
       }
     ],
     "contents": [

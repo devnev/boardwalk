@@ -65,7 +65,7 @@ class App extends React.Component {
         <h1>{console.title}</h1>
         <RangePicker range={this.state.range} onChange={this._updateRange} />
         <FilterControl filter={this.state.filter} onChange={this._updateFilter} />
-        <FilterSelectControl selectors={console.selectors} filter={this.state.filter} onChange={this._updateFilter} />
+        <FilterSelectControl selectors={console.selectors} filter={this.state.filter} time={this.state.range.end.getTime()/1000} onChange={this._updateFilter} />
         <Console key={path} items={console.contents} range={this.state.range} filter={this.state.filter} onChangeRange={this._updateRange} />
       </div>
     );
@@ -883,7 +883,11 @@ class FilterSelectControl extends React.Component {
           );
           return (
             <li key={selector.label}>
+              <span>{selector.label}</span>
               <FilterSelector
+                queries={selector.queries || []}
+                time={this.props.time}
+                filter={this.props.filter}
                 value={value}
                 options={selector.options}
                 onChange={this._onSelect.bind(this, selector.label)} />
@@ -905,6 +909,7 @@ class FilterSelectControl extends React.Component {
 FilterSelectControl.propTypes = {
   selectors: React.PropTypes.array.isRequired,
   filter: React.PropTypes.object.isRequired,
+  time: React.PropTypes.number.isRequired,
   onChange: React.PropTypes.func.isRequired,
 }
 
@@ -912,13 +917,35 @@ class FilterSelector extends React.Component {
   constructor(props) {
     super(props);
     this._onSelect = this._onSelect.bind(this);
+    this.queries = null;
+    this.state = {
+      labels: [],
+    }
+  }
+  componentWillMount() {
+    this._setupQueries(this.props);
+  }
+  comopnentWillReceiveProps(nextProps) {
+    if (!_.isEqual(this.props.queries, nextProps.queries)) {
+      this._setupQueries(nextProps);
+    } else if (this.props.time != nextProps.time || !_.isEqual(this.props.filter, nextProps.filter)) {
+      this.queries.updateData(nextProps.time, nextProps.filter);
+    }
+  }
+  _setupQueries(props) {
+    this.queries = new SelectorQuerySet(props.queries, function(labels) {
+      this.setState({labels: labels});
+    }.bind(this));
+    if (props.time && props.filter) {
+      this.queries.updateData(props.time, props.filter);
+    }
   }
   _onSelect(event) {
     this.props.onChange(event.target.value);
   }
   render() {
     var value = this.props.value;
-    var options = this.props.options;
+    var options = _.union(this.props.options, this.state.labels);
     if (!_(options).contains(value)) {
       options = [value].concat(options);
     }
@@ -926,7 +953,7 @@ class FilterSelector extends React.Component {
       options = [""].concat(options);
     }
     return (
-      <select defaultValue={value} onChange={this._onSelect}>
+      <select value={value} onChange={this._onSelect}>
         {options.map(function(option) {
           return <option key={option} value={option}>{option}</option>;
         }.bind(this))}
@@ -935,9 +962,90 @@ class FilterSelector extends React.Component {
   }
 }
 FilterSelector.propTypes = {
+  queries: React.PropTypes.array.isRequired,
+  time: React.PropTypes.number.isRequired,
+  filter: React.PropTypes.object.isRequired,
   value: React.PropTypes.string.isRequired,
   options: React.PropTypes.array.isRequired,
   onChange: React.PropTypes.func.isRequired,
+}
+
+class SelectorQuerySet {
+  constructor(queries, onData) {
+    this.queries = queries.map(function(options, index) {
+      return new SelectorQuery(
+          options.label, options.query, options.match, this._onQueryData.bind(this, index));
+    }.bind(this));
+    this.labelsets = Array(this.queries.length);
+    this.onData = onData.bind(undefined);
+  }
+  updateData(time, filter) {
+    this.queries.forEach(function(query) {
+      query.updateData(time, filter);
+    });
+  }
+  _onQueryData(queryIndex, dataset) {
+    this.labelsets[queryIndex] = dataset;
+    var labels = _(this.labelsets).flatten(true);
+    labels = _.filter(labels, _.identity);
+    labels = _.sortBy(labels, _.identity);
+    labels = _.uniq(labels, true);
+    this.onData(labels);
+  }
+}
+
+class SelectorQuery {
+  constructor(label, query, match, onData) {
+    this.label = label;
+    this.query = query;
+    this.match = match;
+    this.onData = onData.bind(undefined);
+    this.loading = {};
+  }
+  updateData(time, filter) {
+    if (!MatchFilter(this.match, filter)) {
+      this.onData([]);
+      return;
+    }
+    var query = FormatTemplate(this.query, filter);
+    if (this.loading.query == query && this.loading.time == time) {
+      console.log("cached", query);
+      return;
+    }
+    if (this.loading.req) {
+      this.loading.req.abort();
+    }
+    console.log("loading", query);
+    var req = $.get("http://localhost:9090/api/v1/query", {
+      query: query,
+      time: time,
+    }).always(function() {
+      this.loading.req = null;
+    }.bind(this)).done(function(data) {
+      this._handleResponse(data);
+    }.bind(this));
+    this.loading = {
+      req: req,
+      query: query,
+      time: time,
+    }
+  }
+  _handleResponse(response) {
+    if (response.status != "success") {
+      console.warn("selector query returned status", response.status);
+      this.onData([]);
+      return;
+    }
+    if (response.data.resultType != "vector") {
+      console.warn("expected selector query to return a instant vector, got a", response.data.resultType);
+      this.onData([]);
+      return;
+    }
+    var values = response.data.result.map(function(result) {
+      return result.metric[this.label];
+    }.bind(this)).filter(_.identity);
+    this.onData(values)
+  }
 }
 
 class FilterControl extends React.Component {
