@@ -1,3 +1,103 @@
+function SetSubState(component, values) {
+  var same = true;
+  for (var key in values) {
+    if (!_.has(values, key)) {
+      continue;
+    }
+    if (!_.has(component.state, key)) {
+      same = false;
+      break;
+    }
+    if (component.state[key] !== values[key]) {
+      same = false;
+      break;
+    }
+    if (!_.isEqual(component.state[key], values[key])) {
+      same = false;
+      break;
+    }
+  }
+  if (!same) {
+    var state = _.clone(component.state);
+    component.setState(_.assign(state, values));
+  }
+}
+
+function ParseHashURI(hash) {
+  var qmarkPos = hash.indexOf("?");
+  if (qmarkPos == -1) {
+    return {path: decodeURIComponent(hash), params: {}};
+  }
+  var path = decodeURIComponent(hash.substr(0, qmarkPos));
+  var paramsParts = hash.substr(paramsStart + 1).split("&");
+  var params = {};
+  for (var i = 0; i < paramsParts.length; i++) {
+    var paramStr = paramsParts[i];
+    var eqPos = paramStr.indexOf("=");
+    var name = paramStr;
+    var value = "";
+    if (eqPos != -1) {
+      name = paramStr.substr(0, eqPos);
+      value = paramStr.substr(eqPos + 1);
+    }
+    name = decodeURIComponent(name);
+    value = decodeURIComponent(value);
+    if (!_.has(params, name)) {
+      params[name] = [];
+    }
+    params[name].push(value);
+  }
+  return {path: path, params: params};
+}
+
+class HashURIStore {
+  constructor() {
+    this._path = "";
+    this._params = {};
+    this._callbacks = new Plottable.Utils.CallbackSet();
+    this._parseHash = this._parseHash.bind(this);
+    window.addEventListener("hashchange", this._parseHash);
+    this._parseHash();
+  }
+  _parseHash() {
+    var uri = ParseHashURI(window.location.hash);
+    this._path = uri.path;
+    this._params = uri.params;
+    this._callbacks.callCallbacks(this);
+  }
+  onUpdate(callback, immediate) {
+    this._callbacks.add(callback);
+    if (immediate) {
+      callback(this);
+    }
+    return this;
+  }
+  offUpdate(callback) {
+    this._callbacks.delete(callback);
+    return this;
+  }
+  path() {
+    return this._path;
+  }
+  has(name) {
+    return _.has(this.params, name);
+  }
+  first(name) {
+    if (!this.has(name)) {
+      return;
+    }
+    return this._params[name][0];
+  }
+  params(name) {
+    if (!this.has(name)) {
+      return;
+    }
+    return this._params[name];
+  }
+}
+
+var hashURI = new HashURIStore();
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -14,59 +114,59 @@ class App extends React.Component {
     this._updateFilter = this._updateFilter.bind(this);
     this._navigate = this._navigate.bind(this);
   }
-  componentDidMount() {
+  componentWillMount() {
+    hashURI.onUpdate(this._navigate, true);
     this.req = $.get("/config.json");
-    this.req.done(function(data) { this.setState({config: data}); }.bind(this));
-    window.addEventListener("hashchange", this._navigate);
-    this._navigate();
+    this.req.done(function(data) { SetSubState(this, {config: data}); }.bind(this));
   }
   componentWillUnmount() {
     if (this.req) {
       this.req.abort();
     }
-    window.removeEventListener("hashchange", this._navigate);
+    hashURI.offUpdate(this._navigate);
   }
   _updateRange(range) {
-    if (range.end.getTime() == this.state.range.end.getTime() &&
-        range.duration == this.state.range.duration) {
-      return;
-    }
-    var state = Object.assign({}, this.state);
-    state.range = range;
-    this.setState(state);
+    SetSubState(this, {range: range});
   }
   _updateFilter(filter) {
-    var state = Object.assign({}, this.state);
-    state.filter = filter;
-    this.setState(state);
+    SetSubState(this, {filter: filter});
   }
-  _navigate() {
-    var path = window.location.hash.substr(1);
-    var paramsStart = path.indexOf("?");
-    if (paramsStart != -1) {
-      path = path.substr(0, paramsStart);
-    }
-    var state = Object.assign({}, this.state);
-    state.console = path;
-    this.setState(state);
+  _navigate(hashURI) {
+    SetSubState(this, {console: hashURI.path().replace(/\/+$/, "")});
   }
   render() {
     if (!this.state.config) {
       return <p>Loading config...</p>
     }
-    var path = this.state.console.replace(/\/+$/, "");
-    var console = this.state.config[path];
+    var console = this.state.config[this.state.console];
     if (!console) {
-      return <p>Console not found.</p>
+      console = {
+        title: "Console Not Found",
+        selectors: [],
+        contents: [],
+      };
     }
     return (
       <div>
         <ConsoleNav consoles={this.state.config} />
         <h1>{console.title}</h1>
-        <RangePicker range={this.state.range} onChange={this._updateRange} />
-        <FilterControl filter={this.state.filter} onChange={this._updateFilter} />
-        <FilterSelectControl selectors={console.selectors} filter={this.state.filter} time={this.state.range.end.getTime()/1000} onChange={this._updateFilter} />
-        <Console key={path} items={console.contents} range={this.state.range} filter={this.state.filter} onChangeRange={this._updateRange} />
+        <RangePicker
+          range={this.state.range}
+          onChange={this._updateRange} />
+        <FilterControl
+          filter={this.state.filter}
+          onChange={this._updateFilter} />
+        <FilterSelectControl
+          selectors={console.selectors}
+          filter={this.state.filter}
+          time={this.state.range.end.getTime()/1000}
+          onChange={this._updateFilter} />
+        <Console
+          key={this.state.console}
+          items={console.contents}
+          range={this.state.range}
+          filter={this.state.filter}
+          onChangeRange={this._updateRange} />
       </div>
     );
   }
