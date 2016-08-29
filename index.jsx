@@ -95,6 +95,7 @@ class Console extends React.Component {
     this.cScale = new Plottable.Scales.Color();
     this.focusPoint = new Plottable.Dataset();
     this.selected = false;
+    this.focused = false;
     if (props.range) {
       this._setRange(props.range);
     }
@@ -109,11 +110,20 @@ class Console extends React.Component {
   }
   _setRange(range) {
     this.tScale.domain([new Date(range.end.getTime() - range.duration*1000), range.end]);
+    if (!this.selected && !this.focused) {
+      this.focusPoint.data([this.tScale.domainMax()]);
+    }
   }
   _setFocusTime(focusedTime) {
-    if (!this.selected) {
-      this.focusPoint.data([focusedTime]);
+    this.focused = !!focusedTime;
+    if (this.selected) {
+      return;
     }
+    if (!focusedTime) {
+      this.focusPoint.data([this.tScale.domainMax()]);
+      return;
+    }
+    this.focusPoint.data([focusedTime]);
   }
   _setSelectedTime(selectedTime) {
     this.selected = !this.selected;
@@ -627,7 +637,7 @@ class Graph extends React.Component {
       this.props.onFocusTime(this._timeForPoint(tAxis, point));
     }.bind(this));
     pointer.onPointerExit(function() {
-      this.props.onFocusTime(this.props.tScale.domainMax());
+      this.props.onFocusTime();
     }.bind(this));
     pointer.attachTo(panel);
     var click = new Plottable.Interactions.Click();
