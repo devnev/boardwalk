@@ -361,10 +361,7 @@ function FormatTemplate(template, props) {
 }
 
 class Query {
-  constructor(options, tScale, yScale, cScale, onData) {
-    this.tScale = tScale;
-    this.yScale = yScale;
-    this.cScale = cScale;
+  constructor(options, onData) {
     this.options = options;
     this.onData = onData.bind(undefined);
     this.loading = {};
@@ -380,7 +377,6 @@ class Query {
         return {
           t: new Date(value[0]*1000),
           y: parseFloat(value[1]),
-          c: this.cScale.scale(title),
         };
       }.bind(this));
       return new Plottable.Dataset(dataset, {title: title});
@@ -461,7 +457,7 @@ class QueryCaptions {
       for (var i = data.length-1; i >= 0; i--) {
         var point = data[i];
         if (point.t <= targetTime) {
-          points.push(point);
+          points.push(_({caption: dataset.metadata().title}).assign(point));
           values.push([dataset.metadata().title, point.y]);
           return;
         }
@@ -481,7 +477,7 @@ class QueryCaptions {
 class QuerySet {
   constructor(queries, tScale, yScale, cScale) {
     this.queries = queries.map(function(query, index) {
-      return new Query(query, tScale, yScale, cScale, this._onQueryData.bind(this, index));
+      return new Query(query, this._onQueryData.bind(this, index));
     }.bind(this));
     this.captioner = new QueryCaptions();
     this.captions = this.captioner.dataset;
@@ -490,12 +486,12 @@ class QuerySet {
     this.plot = new Plottable.Plots.Line();
     this.plot.x(function(d) { return d.t; }, tScale);
     this.plot.y(function(d) { return d.y; }, yScale);
-    this.plot.attr("stroke", function(d) { return d.c; });
+    this.plot.attr("stroke", function(d, i, dataset) { return dataset.metadata().title; }, cScale);
 
     this.points = new Plottable.Plots.Scatter();
     this.points.x(function(d) { return d.t; }, tScale);
     this.points.y(function(d) { return d.y; }, yScale);
-    this.points.attr("fill", function(d) { return d.c; });
+    this.points.attr("fill", function(d) { return d.caption; }, cScale);
     this.points.size(10);
     this.points.autorangeMode("none");
     this.points.datasets([this.captioner.nearest]);
