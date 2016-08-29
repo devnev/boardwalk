@@ -603,9 +603,6 @@ class Graph extends React.Component {
     this.queries.captions.onUpdate(this._onUpdateCaptions);
   }
   componentWillUnmount() {
-    if (this.req) {
-      this.req.abort();
-    }
     window.removeEventListener("resize", this._redraw);
     this.props.tScale.offUpdate(this._onParamsUpdate);
     this.props.hoverPoint.offUpdate(this._updateHovered);
