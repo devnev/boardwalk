@@ -360,6 +360,24 @@ function FormatTemplate(template, props) {
   return result;
 }
 
+function MatchFilter(matches, filter) {
+  if (!matches) {
+    return true;
+  }
+  var matcherHasKeys = Object.keys(filter).every(function(key) {
+    return matches.hasOwnProperty(key);
+  }.bind(this));
+  if (!matcherHasKeys) {
+    return false;
+  }
+  var matches = Object.keys(matches).every(function(key) {
+    var r = new RegExp(matches[key]);
+    var v = _(filter).has(key) ? filter[key] : "";
+    return r.test(v);
+  }.bind(this));
+  return matches;
+}
+
 class RangeQuery {
   constructor(options, onData) {
     this.options = options;
@@ -383,25 +401,8 @@ class RangeQuery {
     }.bind(this));
     this.onData(datasets);
   }
-  _matchFilter(filter) {
-    if (!this.options.match) {
-      return true;
-    }
-    var matcherHasKeys = Object.keys(filter).every(function(key) {
-      return this.options.match.hasOwnProperty(key);
-    }.bind(this));
-    if (!matcherHasKeys) {
-      return false;
-    }
-    var matches = Object.keys(this.options.match).every(function(key) {
-      var r = new RegExp(this.options.match[key]);
-      var v = filter.hasOwnProperty(key) ? filter[key] : "";
-      return r.test(v);
-    }.bind(this));
-    return matches;
-  }
   updateData(start, end, filter) {
-    if (!this._matchFilter(filter)) {
+    if (!MatchFilter(this.options.match, filter)) {
       this._updateDatasets([]);
       return;
     }
