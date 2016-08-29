@@ -850,16 +850,13 @@ TimePicker.propTypes = {
 class FilterSelectControl extends React.Component {
   constructor(props) {
     super(props);
-    this._onFilterChange = this._onFilterChange.bind(this);
   }
-  _onFilterChange(event) {
+  _onSelect(label, value) {
     var filter = _.clone(this.props.filter);
-    var value = event.target.value;
     if (value) {
-      filter[event.target.name] = value;
-    }
-    else {
-      delete filter[event.target.name];
+      filter[label] = value;
+    } else {
+      delete filter[label];
     }
     this.props.onChange(filter);
   }
@@ -874,23 +871,17 @@ class FilterSelectControl extends React.Component {
     return (
       <ul>
         {this.props.selectors.map(function(selector) {
-          var selected = (
+          var value = (
             _(this.props.filter).has(selector.label)
             ? this.props.filter[selector.label]
             : ""
           );
-          var options = selector.options;
-          if (selected && !_(options).contains(selected)) {
-            options = [selected].concat(options);
-          }
-          options = [""].concat(options);
           return (
             <li key={selector.label}>
-              <select name={selector.label} defaultValue={selected} onChange={this._onFilterChange}>
-                {options.map(function(option) {
-                  return <option key={option} value={option}>{option}</option>;
-                }.bind(this))}
-              </select>
+              <FilterSelector
+                value={value}
+                options={selector.options}
+                onChange={this._onSelect.bind(this, selector.label)} />
             </li>
           );
         }.bind(this))}
@@ -909,6 +900,38 @@ class FilterSelectControl extends React.Component {
 FilterSelectControl.propTypes = {
   selectors: React.PropTypes.array.isRequired,
   filter: React.PropTypes.object.isRequired,
+  onChange: React.PropTypes.func.isRequired,
+}
+
+class FilterSelector extends React.Component {
+  constructor(props) {
+    super(props);
+    this._onSelect = this._onSelect.bind(this);
+  }
+  _onSelect(event) {
+    this.props.onChange(event.target.value);
+  }
+  render() {
+    var value = this.props.value;
+    var options = this.props.options;
+    if (!_(options).contains(value)) {
+      options = [value].concat(options);
+    }
+    if (!_(options).contains("")) {
+      options = [""].concat(options);
+    }
+    return (
+      <select defaultValue={value} onChange={this._onSelect}>
+        {options.map(function(option) {
+          return <option key={option} value={option}>{option}</option>;
+        }.bind(this))}
+      </select>
+    );
+  }
+}
+FilterSelector.propTypes = {
+  value: React.PropTypes.string.isRequired,
+  options: React.PropTypes.array.isRequired,
   onChange: React.PropTypes.func.isRequired,
 }
 
