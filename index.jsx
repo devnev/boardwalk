@@ -360,7 +360,7 @@ function FormatTemplate(template, props) {
   return result;
 }
 
-class Query {
+class RangeQuery {
   constructor(options, onData) {
     this.options = options;
     this.onData = onData.bind(undefined);
@@ -497,7 +497,7 @@ function NewHighlightPlot(tScale, yScale, cScale) {
 class QuerySet {
   constructor(queries, onData) {
     this.queries = queries.map(function(query, index) {
-      return new Query(query, this._onQueryData.bind(this, index));
+      return new RangeQuery(query, this._onQueryData.bind(this, index));
     }.bind(this));
     this.datasets = Array(this.queries.length);
     this.onData = onData.bind(undefined);
