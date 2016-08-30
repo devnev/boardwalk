@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom';
 import _ from 'underscore';
 import $ from 'jquery';
 import Plottable from 'plottable';
-import { RangePicker, FilterSelectControl, FilterControl } from './controls.jsx';
+import RangePicker from './range_controls.jsx';
+import { FilterSelectControl, FilterControl } from './filter_controls.jsx';
 import GraphPanel from './graph.jsx';
 import HashURIStore from './hash_uri.jsx';
 
