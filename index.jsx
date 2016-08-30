@@ -24,12 +24,16 @@ function SetSubState(component, values) {
 }
 
 function ParseHashURI(hash) {
-  var qmarkPos = hash.indexOf("?");
-  if (qmarkPos == -1) {
-    return {path: decodeURIComponent(hash), params: {}};
+  var hashURI = hash;
+  if (hash.substr(0, 1) === "#") {
+    hashURI = hash.substr(1);
   }
-  var path = decodeURIComponent(hash.substr(0, qmarkPos));
-  var paramsParts = hash.substr(paramsStart + 1).split("&");
+  var qmarkPos = hashURI.indexOf("?");
+  if (qmarkPos == -1) {
+    return {path: decodeURIComponent(hashURI), params: {}};
+  }
+  var path = decodeURIComponent(hashURI.substr(0, qmarkPos));
+  var paramsParts = hashURI.substr(paramsStart + 1).split("&");
   var params = {};
   for (var i = 0; i < paramsParts.length; i++) {
     var paramStr = paramsParts[i];
