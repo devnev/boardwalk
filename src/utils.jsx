@@ -62,3 +62,28 @@ export function MatchFilter(matches, filter) {
   }.bind(this));
   return matches;
 }
+
+export function SetSubState(component, values) {
+  var same = true;
+  for (var key in values) {
+    if (!_.has(values, key)) {
+      continue;
+    }
+    if (!_.has(component.state, key)) {
+      same = false;
+      break;
+    }
+    if (component.state[key] !== values[key]) {
+      same = false;
+      break;
+    }
+    if (!_.isEqual(component.state[key], values[key])) {
+      same = false;
+      break;
+    }
+  }
+  if (!same) {
+    var state = _.clone(component.state);
+    component.setState(_.assign(state, values));
+  }
+}

@@ -7,31 +7,7 @@ import RangePicker from './range_controls.jsx';
 import { FilterSelectControl, FilterControl } from './filter_controls.jsx';
 import GraphPanel from './graph.jsx';
 import HashURIStore from './hash_uri.jsx';
-
-function SetSubState(component, values) {
-  var same = true;
-  for (var key in values) {
-    if (!_.has(values, key)) {
-      continue;
-    }
-    if (!_.has(component.state, key)) {
-      same = false;
-      break;
-    }
-    if (component.state[key] !== values[key]) {
-      same = false;
-      break;
-    }
-    if (!_.isEqual(component.state[key], values[key])) {
-      same = false;
-      break;
-    }
-  }
-  if (!same) {
-    var state = _.clone(component.state);
-    component.setState(_.assign(state, values));
-  }
-}
+import { SetSubState } from './utils.jsx';
 
 var hashURI = new HashURIStore();
 
