@@ -1,3 +1,10 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+import _ from 'underscore';
+import $ from 'jquery';
+import Plottable from 'plottable';
+import moment from 'moment';
+
 function SetSubState(component, values) {
   var same = true;
   for (var key in values) {
