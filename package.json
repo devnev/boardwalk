@@ -5,7 +5,7 @@
   "author": "Mark Nevill",
   "main": "''",
   "scripts": {
-    "dev": "webpack -d --watch",
+    "dev": "webpack -d --watch --progress",
     "build": "webpack --config webpack.config.js --progress --profile --colors"
   },
   "devDependencies": {
