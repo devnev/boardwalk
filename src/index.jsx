@@ -18,17 +18,22 @@ class App extends React.Component {
       config: null,
       console: "/",
       range: {
+        duration: 1*60*60,
         end: new Date(),
-        duration: 1*60*60
       },
       tScale: new Plottable.Scales.Time(),
       filter: {},
     };
+    this._setScaleFromRange();
+    this._setRangeFromScale();
     this._updateRange = this._updateRange.bind(this);
     this._updateFilter = this._updateFilter.bind(this);
     this._navigate = this._navigate.bind(this);
+    this._setRangeFromScale = _.debounce(this._setRangeFromScale.bind(this), 100);
+    this._setScaleFromRange = this._setScaleFromRange.bind(this);
   }
   componentWillMount() {
+    this.state.tScale.onUpdate(this._setRangeFromScale);
     hashURI.onUpdate(this._navigate, true);
     this.req = $.get("/config.json");
     this.req.done(function(data) { SetSubState(this, {config: data}); }.bind(this));
@@ -41,20 +46,16 @@ class App extends React.Component {
   }
   componentWillUpdate(nextProps, nextState) {
     if (nextState.tScale !== this.state.tScale) {
-      if (this.state.tScale) {
-        this.state.tScale.offUpdate(this._setRangeFromScale);
-      }
-      if (nextState.tScale) {
-        nextState.tScale.onUpdate(this._setRangeFromScale);
-      }
+      this.state.tScale.offUpdate(this._setRangeFromScale);
+      nextState.tScale.onUpdate(this._setRangeFromScale);
     }
   }
   _setRangeFromScale() {
-    var range = {
-      end: this.state.tScale.domainMax(),
-      duration: Math.floor((this.state.tScale.domainMax().getTime() - this.state.tScale.domainMin().getTime())/1000),
-    };
-    this._updateRange(range);
+    var end = this.state.tScale.domainMax().getTime();
+    var duration = Math.floor(end - this.state.tScale.domainMin().getTime())/1000;
+    end = Math.floor(end/1000);
+    var uri = hashURI.format(this.state.console, {end: end, duration: duration});
+    window.location.hash = "#" + uri;
   }
   _setScaleFromRange() {
     var range = this.state.range;
@@ -70,8 +71,23 @@ class App extends React.Component {
   _updateFilter(filter) {
     SetSubState(this, {filter: filter});
   }
-  _navigate(hashURI) {
-    SetSubState(this, {console: hashURI.path().replace(/\/+$/, "")});
+  _navigate() {
+    var duration = this.state.range.duration;
+    if (/^\d+$/.test(hashURI.first('duration'))) {
+      duration = Number(hashURI.first('duration'));
+    }
+    var end = this.state.range.end;
+    if (/^\d+$/.test(hashURI.first('end'))) {
+      end = new Date(Number(hashURI.first('end')*1000));
+    }
+    var console = hashURI.path().replace(/\/+$/, "");
+    SetSubState(this, {
+      console: console,
+      range: {
+        duration: duration,
+        end: end,
+      },
+    });
   }
   render() {
     this._setScaleFromRange();
@@ -118,7 +134,7 @@ class ConsoleNav extends React.Component {
       <nav><ul>
         {Object.keys(this.props.consoles || {}).map(function(path) {
           var console = this.props.consoles[path];
-          return <li key={path}><a href={"#" + path}>{console.title}</a></li>;
+          return <li key={path}><a href={"#" + hashURI.format(path, hashURI.params())}>{console.title}</a></li>;
         }.bind(this))}
       </ul></nav>
     );

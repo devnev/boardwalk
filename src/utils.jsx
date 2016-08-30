@@ -65,25 +65,22 @@ export function MatchFilter(matches, filter) {
 
 export function SetSubState(component, values) {
   var same = true;
+  var state = _.clone(component.state);
   for (var key in values) {
     if (!_.has(values, key)) {
       continue;
     }
-    if (!_.has(component.state, key)) {
-      same = false;
-      break;
+    if (_.has(component.state, key)) {
+      if (component.state[key] === values[key]) {
+        continue;
+      } else if (_.isEqual(component.state[key], values[key])) {
+        continue;
+      }
     }
-    if (component.state[key] !== values[key]) {
-      same = false;
-      break;
-    }
-    if (!_.isEqual(component.state[key], values[key])) {
-      same = false;
-      break;
-    }
+    same = false;
+    state[key] = values[key];
   }
   if (!same) {
-    var state = _.clone(component.state);
-    component.setState(_.assign(state, values));
+    component.setState(state);
   }
 }

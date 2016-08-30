@@ -1,6 +1,10 @@
 import _ from 'underscore';
 import Plottable from 'plottable';
 
+function EncodePath(path) {
+  return encodeURIComponent(path).replace('%2F', '/');
+}
+
 function ParseHashURI(hash) {
   var hashURI = hash;
   if (hash.substr(0, 1) === "#") {
@@ -11,7 +15,7 @@ function ParseHashURI(hash) {
     return {path: decodeURIComponent(hashURI), params: {}};
   }
   var path = decodeURIComponent(hashURI.substr(0, qmarkPos));
-  var paramsParts = hashURI.substr(paramsStart + 1).split("&");
+  var paramsParts = hashURI.substr(qmarkPos + 1).split("&");
   var params = {};
   for (var i = 0; i < paramsParts.length; i++) {
     var paramStr = paramsParts[i];
@@ -62,19 +66,36 @@ export default class HashURIStore {
     return this._path;
   }
   has(name) {
-    return _.has(this.params, name);
+    return _.has(this._params, name);
   }
   first(name) {
     if (!this.has(name)) {
-      return;
+      return "";
     }
     return this._params[name][0];
   }
   params(name) {
+    if (!name) {
+      return this._params;
+    }
     if (!this.has(name)) {
-      return;
+      return "";
     }
     return this._params[name];
+  }
+  format(path, params) {
+    var s = EncodePath(path);
+    var haveDelim = false;
+    _.each(params, function(values, key) {
+      _.each((_.isArray(values) ? values : [values]), function(value) {
+        s += haveDelim ? "&" : "?";
+        haveDelim = true;
+        s += encodeURIComponent(key);
+        s += "=";
+        s += encodeURIComponent(value);
+      });
+    });
+    return s;
   }
 }
 
