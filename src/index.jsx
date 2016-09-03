@@ -9,10 +9,8 @@ import Plottable from 'plottable';
 import RangePicker from './range_controls.jsx';
 import { FilterSelectControl, FilterControl } from './filter_controls.jsx';
 import GraphPanel from './graph.jsx';
-import HashURIStore from './hash_uri.jsx';
 import { SetSubState } from './utils.jsx';
-
-var hashURI = new HashURIStore();
+import { HashURI, TimeScale } from './stores.jsx';
 
 class App extends React.Component {
   constructor(props) {
@@ -20,24 +18,13 @@ class App extends React.Component {
     this.state = {
       config: null,
       console: "/",
-      range: {
-        duration: 1*60*60,
-        end: new Date(),
-      },
-      tScale: new Plottable.Scales.Time(),
       filter: {},
     };
-    this._setScaleFromRange();
-    this._setRangeFromScale();
-    this._updateRange = this._updateRange.bind(this);
     this._updateFilter = this._updateFilter.bind(this);
     this._navigate = this._navigate.bind(this);
-    this._setRangeFromScale = _.debounce(this._setRangeFromScale.bind(this), 100);
-    this._setScaleFromRange = this._setScaleFromRange.bind(this);
   }
   componentWillMount() {
-    this.state.tScale.onUpdate(this._setRangeFromScale);
-    hashURI.onUpdate(this._navigate, true);
+    HashURI.onUpdate(this._navigate, true);
     this.req = $.get("/config.json");
     this.req.done(function(data) { SetSubState(this, {config: data}); }.bind(this));
   }
@@ -45,55 +32,16 @@ class App extends React.Component {
     if (this.req) {
       this.req.abort();
     }
-    hashURI.offUpdate(this._navigate);
-  }
-  componentWillUpdate(nextProps, nextState) {
-    if (nextState.tScale !== this.state.tScale) {
-      this.state.tScale.offUpdate(this._setRangeFromScale);
-      nextState.tScale.onUpdate(this._setRangeFromScale);
-    }
-  }
-  _setRangeFromScale() {
-    var end = this.state.tScale.domainMax().getTime();
-    var duration = Math.floor(end - this.state.tScale.domainMin().getTime())/1000;
-    end = Math.floor(end/1000);
-    var uri = hashURI.format(this.state.console, {end: end, duration: duration});
-    window.location.hash = "#" + uri;
-  }
-  _setScaleFromRange() {
-    var range = this.state.range;
-    var start = new Date(range.end.getTime() - range.duration*1000);
-    if (start.getTime() !== this.state.tScale.domainMin().getTime() ||
-        range.end.getTime() !== this.state.tScale.domainMax().getTime()) {
-      this.state.tScale.domain([start, range.end]);
-    }
-  }
-  _updateRange(range) {
-    SetSubState(this, {range: range});
+    HashURI.offUpdate(this._navigate);
   }
   _updateFilter(filter) {
     SetSubState(this, {filter: filter});
   }
   _navigate() {
-    var duration = this.state.range.duration;
-    if (/^\d+$/.test(hashURI.first('duration'))) {
-      duration = Number(hashURI.first('duration'));
-    }
-    var end = this.state.range.end;
-    if (/^\d+$/.test(hashURI.first('end'))) {
-      end = new Date(Number(hashURI.first('end')*1000));
-    }
-    var console = hashURI.path().replace(/\/+$/, "");
-    SetSubState(this, {
-      console: console,
-      range: {
-        duration: duration,
-        end: end,
-      },
-    });
+    var console = HashURI.path().replace(/\/+$/, "");
+    SetSubState(this, {console: console});
   }
   render() {
-    this._setScaleFromRange();
     if (!this.state.config) {
       return <p>Loading config...</p>
     }
@@ -109,22 +57,19 @@ class App extends React.Component {
       <div>
         <ConsoleNav consoles={this.state.config} />
         <h1>{console.title}</h1>
-        <RangePicker
-          range={this.state.range}
-          onChange={this._updateRange} />
+        <RangePicker />
         <FilterControl
           filter={this.state.filter}
           onChange={this._updateFilter} />
         <FilterSelectControl
           selectors={console.selectors}
           filter={this.state.filter}
-          time={this.state.range.end.getTime()/1000}
+          time={Math.floor(TimeScale.range().end.getTime()/1000)}
           onChange={this._updateFilter} />
         <Console
           key={this.state.console}
           items={console.contents}
-          filter={this.state.filter}
-          tScale={this.state.tScale} />
+          filter={this.state.filter} />
       </div>
     );
   }
@@ -137,7 +82,7 @@ class ConsoleNav extends React.Component {
       <nav><ul>
         {Object.keys(this.props.consoles || {}).map(function(path) {
           var console = this.props.consoles[path];
-          return <li key={path}><a href={"#" + hashURI.format(path, hashURI.params())}>{console.title}</a></li>;
+          return <li key={path}><a href={"#" + HashURI.formatWith(path)}>{console.title}</a></li>;
         }.bind(this))}
       </ul></nav>
     );
@@ -172,7 +117,7 @@ class Console extends React.Component {
       targetTime = this.state.hoveredTime;
     }
     if (!targetTime) {
-      targetTime = this.props.tScale.domainMax();
+      targetTime = TimeScale.scale().domainMax();
     }
     return (
       <div>
@@ -182,7 +127,6 @@ class Console extends React.Component {
               <GraphPanel 
                 key={index}
                 options={item.graph}
-                tScale={this.props.tScale}
                 cScale={this.state.cScale}
                 onHoverTime={this._setHoverTime}
                 onSelectTime={this._setSelectedTime}
@@ -198,7 +142,6 @@ class Console extends React.Component {
 Console.propTypes = {
   items: React.PropTypes.array.isRequired,
   filter: React.PropTypes.object.isRequired,
-  tScale: React.PropTypes.object.isRequired,
 };
 
 ReactDOM.render(<App />, document.getElementById('content'));

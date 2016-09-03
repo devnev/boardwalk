@@ -6,6 +6,7 @@ import React from 'react';
 import Plottable from 'plottable';
 import QuerySet from './rangequery.jsx';
 import { FormatMetric, FormatTemplate, MatchFilter } from './utils.jsx';
+import { TimeScale } from './stores.jsx';
 
 export default class GraphPanel extends React.Component {
   constructor(props) {
@@ -34,7 +35,6 @@ export default class GraphPanel extends React.Component {
   }
 }
 GraphPanel.propTypes = {
-  tScale: React.PropTypes.object.isRequired,
   cScale: React.PropTypes.object.isRequired,
   options: React.PropTypes.object.isRequired,
   highlightTime: React.PropTypes.object.isRequired,
@@ -255,11 +255,11 @@ class Graph extends React.Component {
   }
   componentDidMount() {
     window.addEventListener("resize", this._redraw);
-    this.props.tScale.onUpdate(this._onParamsUpdate);
+    TimeScale.onUpdate(this._onParamsUpdate);
   }
   componentWillUnmount() {
     window.removeEventListener("resize", this._redraw);
-    this.props.tScale.offUpdate(this._onParamsUpdate);
+    TimeScale.offUpdate(this._onParamsUpdate);
     this.graph.destroy();
   }
   componentWillReceiveProps(nextProps) {
@@ -269,14 +269,9 @@ class Graph extends React.Component {
     if (!_.isEqual(this.props.highlightTime, nextProps.highlightTime)) {
       this._updateHighlight(nextProps.highlightTime);
     }
-    if (nextProps.tScale !== this.props.tScale) {
-      this.props.tScale.offUpdate(this._onParamsUpdate);
-      nextProps.tScale.onUpdate(this._onParamsUpdate);
-    }
   }
   shouldComponentUpdate(props, state) {
     return (
-      this.props.tScale !== props.tScale ||
       this.props.cScale !== props.cScale ||
       !_.isEqual(this.props.options, props.options)
     );
@@ -287,8 +282,8 @@ class Graph extends React.Component {
   }
   _timeForPoint(tAxis, point) {
     var position = point.x / tAxis.width();
-    var timeWidth = this.props.tScale.domainMax().getTime() - this.props.tScale.domainMin().getTime();
-    return new Date(this.props.tScale.domainMin().getTime() + timeWidth * position);
+    var timeWidth = TimeScale.scale().domainMax().getTime() - TimeScale.scale().domainMin().getTime();
+    return new Date(TimeScale.scale().domainMin().getTime() + timeWidth * position);
   }
   _redraw() {
     if (this.graph) {
@@ -299,8 +294,8 @@ class Graph extends React.Component {
     this._updateData();
   }
   _updateData() {
-    var start = Math.floor(this.props.tScale.domainMin().getTime()/1000);
-    var end = Math.floor(this.props.tScale.domainMax().getTime()/1000);
+    var start = Math.floor(TimeScale.scale().domainMin().getTime()/1000);
+    var end = Math.floor(TimeScale.scale().domainMax().getTime()/1000);
     this.queries.updateData(start, end, this.props.filter);
   }
   _updateHighlight(targetTime) {
@@ -309,7 +304,7 @@ class Graph extends React.Component {
   }
   _setup() {
     // axes and scales
-    var tAxis = new Plottable.Axes.Time(this.props.tScale, "bottom");
+    var tAxis = new Plottable.Axes.Time(TimeScale.scale(), "bottom");
     tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
     var yScale = new Plottable.Scales.Linear();
     yScale.domainMin(0);
@@ -320,14 +315,14 @@ class Graph extends React.Component {
     // the graph
     this.guideline = new Plottable.Components.GuideLineLayer(
       Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
-    ).scale(this.props.tScale);
-    this.plot = NewDataPlot(this.props.tScale, yScale, this.props.cScale);
-    this.highlight = NewHighlightPlot(this.props.tScale, yScale, this.props.cScale);
+    ).scale(TimeScale.scale());
+    this.plot = NewDataPlot(TimeScale.scale(), yScale, this.props.cScale);
+    this.highlight = NewHighlightPlot(TimeScale.scale(), yScale, this.props.cScale);
     var panel = new Plottable.Components.Group([this.guideline, this.plot, this.highlight]);
     this.graph = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
 
     // interactions
-    var panZoom = new Plottable.Interactions.PanZoom(this.props.tScale, null);
+    var panZoom = new Plottable.Interactions.PanZoom(TimeScale.scale(), null);
     panZoom.attachTo(panel);
     var pointer = new Plottable.Interactions.Pointer();
     pointer.onPointerMove(function(point) {
@@ -358,7 +353,6 @@ class Graph extends React.Component {
   }
 }
 Graph.propTypes = {
-  tScale: React.PropTypes.object.isRequired,
   cScale: React.PropTypes.object.isRequired,
   options: React.PropTypes.object.isRequired,
   highlightTime: React.PropTypes.object.isRequired,

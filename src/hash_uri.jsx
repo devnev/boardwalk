@@ -44,12 +44,12 @@ export default class HashURIStore {
     this._path = "";
     this._params = {};
     this._callbacks = new Plottable.Utils.CallbackSet();
-    this._parseHash = this._parseHash.bind(this);
-    window.addEventListener("hashchange", this._parseHash);
-    this._parseHash();
+    this.parseHash = this.parseHash.bind(this);
+    this.parseHash();
   }
-  _parseHash() {
+  parseHash() {
     var uri = ParseHashURI(window.location.hash);
+    console.log("parsed uri is", uri);
     this._path = uri.path;
     this._params = uri.params;
     this._callbacks.callCallbacks(this);
@@ -86,10 +86,11 @@ export default class HashURIStore {
     }
     return this._params[name];
   }
-  format(path, params) {
+  formatNew(path, params) {
     var s = EncodePath(path);
     var haveDelim = false;
-    _.each(params, function(values, key) {
+    _.each(_.sortBy(Object.keys(params), _.identity), function(key) {
+      var values = params[key];
       _.each((_.isArray(values) ? values : [values]), function(value) {
         s += haveDelim ? "&" : "?";
         haveDelim = true;
@@ -99,6 +100,33 @@ export default class HashURIStore {
       });
     });
     return s;
+  }
+  formatWith(path, params) {
+    var retPath = this._path;
+    var retParams = _.clone(this._params);
+    var newPath;
+    var newParams;
+    if (params !== undefined) {
+      newParams = params;
+      newPath = path;
+    } else if (_.isObject(path)) {
+      newParams = path;
+    } else {
+      newPath = path;
+    }
+    if (newPath || newPath === "") {
+      retPath = newPath;
+    }
+    if (newParams) {
+      _.each(newParams, function(values, key) {
+        if (values === null) {
+          delete retParams[key];
+        } else {
+          retParams[key] = values;
+        }
+      })
+    }
+    return this.formatNew(retPath, retParams);
   }
 }
 
