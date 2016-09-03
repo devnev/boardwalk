@@ -9,6 +9,7 @@ import Plottable from 'plottable';
 import RangePicker from './range_controls.jsx';
 import FilterSelectControl from './filter_controls.jsx';
 import GraphPanel from './graph.jsx';
+import LinksPanel from './links.jsx';
 import { SetSubState } from './utils.jsx';
 import { HashURI, TimeScale } from './stores.jsx';
 
@@ -120,6 +121,12 @@ class Console extends React.Component {
                 onHoverTime={this._setHoverTime}
                 onSelectTime={this._setSelectedTime}
                 highlightTime={targetTime} />
+            );
+          } else if (item.links) {
+            return (
+              <LinksPanel
+                key={index}
+                links={item.links} />
             );
           }
         }.bind(this))}

@@ -33,6 +33,17 @@
         }
       },
       {
+        "links": [
+          {
+            "match": {
+              "job": ".+"
+            },
+            "url": "https://localhost/${job}",
+            "text": "${job} redirect"
+          }
+        ]
+      },
+      {
         "graph": {
           "queries": [
             {
@@ -82,6 +93,14 @@
             }
           ]
         }
+      },
+      {
+        "links": [
+          {
+            "url": "http://localhost",
+            "text": "Localhost Link"
+          }
+        ]
       }
     ]
   }
