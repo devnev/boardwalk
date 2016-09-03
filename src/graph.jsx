@@ -6,7 +6,7 @@ import React from 'react';
 import Plottable from 'plottable';
 import QuerySet from './rangequery.jsx';
 import { FormatMetric, FormatTemplate, MatchFilter } from './utils.jsx';
-import { TimeScale } from './stores.jsx';
+import { TimeScale, Filter } from './stores.jsx';
 
 export default class GraphPanel extends React.Component {
   constructor(props) {
@@ -40,7 +40,6 @@ GraphPanel.propTypes = {
   highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
-  filter: React.PropTypes.object.isRequired,
 };
 
 // Copied from Plottable.Axes.Time's default configuration, changing clocks from 12h with 24h.
@@ -256,16 +255,15 @@ class Graph extends React.Component {
   componentDidMount() {
     window.addEventListener("resize", this._redraw);
     TimeScale.onUpdate(this._onParamsUpdate);
+    Filter.onUpdate(this._onParamsUpdate);
   }
   componentWillUnmount() {
     window.removeEventListener("resize", this._redraw);
     TimeScale.offUpdate(this._onParamsUpdate);
+    Filter.offUpdate(this._onParamsUpdate);
     this.graph.destroy();
   }
   componentWillReceiveProps(nextProps) {
-    if (!_.isEqual(this.props.filter, nextProps.filter)) {
-      this._onParamsUpdate();
-    }
     if (!_.isEqual(this.props.highlightTime, nextProps.highlightTime)) {
       this._updateHighlight(nextProps.highlightTime);
     }
@@ -296,7 +294,7 @@ class Graph extends React.Component {
   _updateData() {
     var start = Math.floor(TimeScale.scale().domainMin().getTime()/1000);
     var end = Math.floor(TimeScale.scale().domainMax().getTime()/1000);
-    this.queries.updateData(start, end, this.props.filter);
+    this.queries.updateData(start, end, Filter.filter());
   }
   _updateHighlight(targetTime) {
     this.guideline.value(targetTime);
@@ -358,6 +356,5 @@ Graph.propTypes = {
   highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
-  filter: React.PropTypes.object.isRequired,
 };
 

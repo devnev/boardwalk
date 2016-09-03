@@ -39,7 +39,6 @@ export default class TimeScaleStore {
     if (!range) {
       return this._range;
     } else if (!_.isEqual(range, this._range)) {
-      console.log("updating range to", range);
       this._range = range;
       this._setScaleFromRange();
     }

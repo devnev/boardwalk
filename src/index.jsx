@@ -18,9 +18,7 @@ class App extends React.Component {
     this.state = {
       config: null,
       console: "/",
-      filter: {},
     };
-    this._updateFilter = this._updateFilter.bind(this);
     this._navigate = this._navigate.bind(this);
   }
   componentWillMount() {
@@ -33,9 +31,6 @@ class App extends React.Component {
       this.req.abort();
     }
     HashURI.offUpdate(this._navigate);
-  }
-  _updateFilter(filter) {
-    SetSubState(this, {filter: filter});
   }
   _navigate() {
     var console = HashURI.path().replace(/\/+$/, "");
@@ -60,13 +55,10 @@ class App extends React.Component {
         <RangePicker />
         <FilterSelectControl
           selectors={console.selectors}
-          filter={this.state.filter}
-          time={Math.floor(TimeScale.range().end.getTime()/1000)}
-          onChange={this._updateFilter} />
+          time={Math.floor(TimeScale.range().end.getTime()/1000)} />
         <Console
           key={this.state.console}
-          items={console.contents}
-          filter={this.state.filter} />
+          items={console.contents} />
       </div>
     );
   }
@@ -127,8 +119,7 @@ class Console extends React.Component {
                 cScale={this.state.cScale}
                 onHoverTime={this._setHoverTime}
                 onSelectTime={this._setSelectedTime}
-                highlightTime={targetTime}
-                filter={this.props.filter} />
+                highlightTime={targetTime} />
             );
           }
         }.bind(this))}
@@ -138,7 +129,6 @@ class Console extends React.Component {
 }
 Console.propTypes = {
   items: React.PropTypes.array.isRequired,
-  filter: React.PropTypes.object.isRequired,
 };
 
 ReactDOM.render(<App />, document.getElementById('content'));

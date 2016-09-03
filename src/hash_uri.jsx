@@ -49,7 +49,6 @@ export default class HashURIStore {
   }
   parseHash() {
     var uri = ParseHashURI(window.location.hash);
-    console.log("parsed uri is", uri);
     this._path = uri.path;
     this._params = uri.params;
     this._callbacks.callCallbacks(this);
@@ -119,7 +118,7 @@ export default class HashURIStore {
     }
     if (newParams) {
       _.each(newParams, function(values, key) {
-        if (values === null) {
+        if (!values) {
           delete retParams[key];
         } else {
           retParams[key] = values;
