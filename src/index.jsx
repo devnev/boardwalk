@@ -7,7 +7,7 @@ import _ from 'underscore';
 import $ from 'jquery';
 import Plottable from 'plottable';
 import RangePicker from './range_controls.jsx';
-import { FilterSelectControl, FilterControl } from './filter_controls.jsx';
+import FilterSelectControl from './filter_controls.jsx';
 import GraphPanel from './graph.jsx';
 import { SetSubState } from './utils.jsx';
 import { HashURI, TimeScale } from './stores.jsx';
@@ -58,9 +58,6 @@ class App extends React.Component {
         <ConsoleNav consoles={this.state.config} />
         <h1>{console.title}</h1>
         <RangePicker />
-        <FilterControl
-          filter={this.state.filter}
-          onChange={this._updateFilter} />
         <FilterSelectControl
           selectors={console.selectors}
           filter={this.state.filter}

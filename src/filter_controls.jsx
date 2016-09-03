@@ -6,7 +6,7 @@ import _ from 'underscore';
 import $ from 'jquery';
 import QuerySet from './selectorquery.jsx';
 
-class FilterSelectControl extends React.Component {
+export default class FilterSelectControl extends React.Component {
   constructor(props) {
     super(props);
   }
@@ -123,55 +123,3 @@ FilterSelector.propTypes = {
   options: React.PropTypes.array.isRequired,
   onChange: React.PropTypes.func.isRequired,
 }
-
-class FilterControl extends React.Component {
-  constructor(props) {
-    super(props);
-    this._onFilterChange = this._onFilterChange.bind(this);
-    this._addFilter = this._addFilter.bind(this);
-    this._removeFilter = this._removeFilter.bind(this);
-  }
-  _onFilterChange(event) {
-    var filter = Object.assign({}, this.props.filter);
-    filter[event.target.name] = event.target.value;
-    this.props.onChange(filter);
-  }
-  _addFilter(event) {
-    event.preventDefault();
-    var filter = Object.assign({}, this.props.filter);
-    filter[event.target.name.value] = "";
-    this.props.onChange(filter);
-  }
-  _removeFilter(event) {
-    event.preventDefault();
-    var filter = Object.assign({}, this.props.filter);
-    delete filter[event.target.name];
-    this.props.onChange(filter);
-  }
-  render() {
-    return (
-      <ul>
-        {Object.keys(this.props.filter).map(function(name) {
-          return (
-            <li key={name}>
-              <label htmlFor={"filter-" + name}>{name}</label>
-              <input type="text" id={"filter-" + name} name={name} value={this.props.filter[name]} onChange={this._onFilterChange} />
-              <button type="button" name={name} onClick={this._removeFilter}>X</button>
-            </li>
-          );
-        }.bind(this))}
-        <li>
-          <form action="" onSubmit={this._addFilter}>
-            <input name="name" />
-          </form>
-        </li>
-      </ul>
-    );
-  }
-}
-FilterControl.propTypes = {
-  filter: React.PropTypes.object.isRequired,
-  onChange: React.PropTypes.func.isRequired,
-}
-
-export { FilterSelectControl, FilterControl };
