@@ -153,6 +153,8 @@ class TimePicker extends React.Component {
     var nextValue = moment(TimeScale.range().end).format("YYYY-MM-DD HH:mm:ssZZ")
     if (nextValue != this.state.inputValue || this.state.dirty) {
       this.setState({ inputValue: nextValue, dirty: false });
+    } else {
+      this.setState(this.state);
     }
   }
   _onInputChange(event) {
