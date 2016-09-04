@@ -38,6 +38,7 @@ timeScale.onUpdate(function() {
     duration: timeScale.range().duration,
     end: Math.round(timeScale.range().end.getTime()/1000),
   });
+  window.location.hash = '#' + uri;
 });
 filter.onUpdate(function() {
   var params = {};
