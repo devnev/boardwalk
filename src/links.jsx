@@ -10,8 +10,8 @@ export default class LinksPanel extends React.Component {
   render() {
     return (
       <div>
-        {this.props.links.map(function(link) {
-          return <Link match={link.match} url={link.url} text={link.text} />
+        {this.props.links.map(function(link, index) {
+          return <Link key={index} match={link.match} url={link.url} text={link.text} />
         }.bind(this))}
       </div>
     );
