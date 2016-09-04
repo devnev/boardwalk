@@ -11,6 +11,7 @@ import GraphPanel from './graph.jsx';
 import LinksPanel from './links.jsx';
 import { SetSubState } from './utils.jsx';
 import { HashURI, TimeScale } from './dispatch.jsx';
+import ConsoleNav from './nav.jsx';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -64,36 +65,6 @@ export default class App extends React.Component {
   }
 }
 App.propTypes = {};
-
-class ConsoleNav extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {};
-    this._update = this._update.bind(this);
-  }
-  componentDidMount() {
-    HashURI.onUpdate(this._update);
-  }
-  componentWillUnmount() {
-    HashURI.offUpdate(this._update);
-  }
-  _update() {
-    this.setState({});
-  }
-  render() {
-    return (
-      <nav><ul>
-        {Object.keys(this.props.consoles || {}).map(function(path) {
-          var console = this.props.consoles[path];
-          return <li key={path}><a href={"#" + HashURI.formatWith(path)}>{console.title}</a></li>;
-        }.bind(this))}
-      </ul></nav>
-    );
-  }
-}
-ConsoleNav.propTypes = {
-  consoles: React.PropTypes.object.isRequired,
-};
 
 class Console extends React.Component {
   constructor(props) {
