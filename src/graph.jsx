@@ -330,8 +330,8 @@ class Graph extends React.Component {
       this.props.onHoverTime();
     }.bind(this));
     pointer.attachTo(panel);
-    var click = new Plottable.Interactions.Click();
-    click.onClick(function(point) {
+    var click = new Plottable.Interactions.DoubleClick();
+    click.onDoubleClick(function(point) {
       this.props.onSelectTime(this._timeForPoint(tAxis, point));
     }.bind(this));
     click.attachTo(panel);
