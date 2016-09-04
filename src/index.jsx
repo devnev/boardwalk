@@ -7,4 +7,4 @@ import { Dispatcher } from './dispatch.jsx';
 import App from './app.jsx';
 
 Dispatcher.enable();
-ReactDOM.render(<App />, document.getElementById('content'));
+ReactDOM.render(<App />, document.getElementById('boardwalk-app'));
