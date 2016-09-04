@@ -11,7 +11,7 @@ import FilterSelectControl from './filter_controls.jsx';
 import GraphPanel from './graph.jsx';
 import LinksPanel from './links.jsx';
 import { SetSubState } from './utils.jsx';
-import { HashURI, TimeScale } from './stores.jsx';
+import { HashURI, TimeScale, Dispatcher } from './stores.jsx';
 
 class App extends React.Component {
   constructor(props) {
@@ -152,4 +152,5 @@ Console.propTypes = {
   items: React.PropTypes.array.isRequired,
 };
 
+Dispatcher.enable();
 ReactDOM.render(<App />, document.getElementById('content'));

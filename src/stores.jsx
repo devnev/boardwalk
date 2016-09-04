@@ -11,51 +11,64 @@ var timeScale = new TimeScaleStore();
 var filter = new FilterStore();
 const filterPrefix = "filter.";
 
-hashURI.onUpdate(function() {
-  var duration = timeScale.range().duration;
-  if (/^\d+$/.test(hashURI.first('duration'))) {
-    duration = Number(hashURI.first('duration'));
+class Dispatcher {
+  constructor() {
+    _.bindAll(this, '_updateFilterFromURI', '_updateFilterFromURI', '_updateURIFromTimeScale', '_updateURIFromFilter');
   }
-  var end = timeScale.range().end;
-  if (/^\d+$/.test(hashURI.first('end'))) {
-    end = new Date(Number(hashURI.first('end')*1000));
+  enable() {
+    hashURI.onUpdate(this._updateTimeScaleFromURI, true);
+    hashURI.onUpdate(this._updateFilterFromURI, true)
+    timeScale.onUpdate(this._updateURIFromTimeScale);
+    filter.onUpdate(this._updateURIFromFilter);
+    window.addEventListener("hashchange", hashURI.parseHash);
   }
-  timeScale.range({duration: duration, end: end});
-}, true);
-hashURI.onUpdate(function() {
-  var params = hashURI.params();
-  var newFilter = {};
-  _.each(params, function(values, key) {
-    if (key.startsWith(filterPrefix)) {
-      newFilter[key.substr(filterPrefix.length)] = values[0];
-    } else {
+  _updateTimeScaleFromURI() {
+    var duration = timeScale.range().duration;
+    if (/^\d+$/.test(hashURI.first('duration'))) {
+      duration = Number(hashURI.first('duration'));
     }
-  });
-  filter._reset(newFilter);
-}, true)
-timeScale.onUpdate(function() {
-  var uri = hashURI.formatWith({
-    duration: timeScale.range().duration,
-    end: Math.round(timeScale.range().end.getTime()/1000),
-  });
-  window.location.hash = '#' + uri;
-});
-filter.onUpdate(function() {
-  var params = {};
-  _.each(filter.filter(), function(value, key) {
-    params[filterPrefix+key] = value;
-  });
-  var oldParams = hashURI.params();
-  _.each(oldParams, function(values, key) {
-    if (key.startsWith(filterPrefix) && !_.has(params, key)) {
-      params[key] = null;
+    var end = timeScale.range().end;
+    if (/^\d+$/.test(hashURI.first('end'))) {
+      end = new Date(Number(hashURI.first('end')*1000));
     }
-  });
-  var uri = hashURI.formatWith(params);
-  window.location.hash = "#" + uri;
-});
-window.addEventListener("hashchange", hashURI.parseHash);
+    timeScale.range({duration: duration, end: end});
+  }
+  _updateFilterFromURI() {
+    var params = hashURI.params();
+    var newFilter = {};
+    _.each(params, function(values, key) {
+      if (key.startsWith(filterPrefix)) {
+        newFilter[key.substr(filterPrefix.length)] = values[0];
+      } else {
+      }
+    });
+    filter._reset(newFilter);
+  }
+  _updateURIFromTimeScale() {
+    var uri = hashURI.formatWith({
+      duration: timeScale.range().duration,
+      end: Math.round(timeScale.range().end.getTime()/1000),
+    });
+    window.location.hash = '#' + uri;
+  }
+  _updateURIFromFilter() {
+    var params = {};
+    _.each(filter.filter(), function(value, key) {
+      params[filterPrefix+key] = value;
+    });
+    var oldParams = hashURI.params();
+    _.each(oldParams, function(values, key) {
+      if (key.startsWith(filterPrefix) && !_.has(params, key)) {
+        params[key] = null;
+      }
+    });
+    var uri = hashURI.formatWith(params);
+    window.location.hash = "#" + uri;
+  }
+}
+var dispatcher = new Dispatcher();
 
+export { dispatcher as Dispatcher };
 export { hashURI as HashURI };
 export { timeScale as TimeScale };
 export { filter as Filter };
