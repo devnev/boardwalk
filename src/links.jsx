@@ -4,7 +4,7 @@
 import _ from 'underscore';
 import React from 'react';
 import { FormatTemplate, MatchFilter } from './utils.jsx';
-import { Filter } from './stores.jsx';
+import { Filter } from './dispatch.jsx';
 
 export default class LinksPanel extends React.Component {
   render() {

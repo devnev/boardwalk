@@ -3,7 +3,7 @@
 
 import React from 'react';
 import moment from 'moment';
-import { PickDuration, PickEnd, TimeScale } from './stores.jsx';
+import { PickDuration, PickEnd, TimeScale } from './dispatch.jsx';
 
 function ParseDuration(durationString) {
   if (!durationString) {

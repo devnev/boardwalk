@@ -5,7 +5,7 @@ import React from 'react';
 import _ from 'underscore';
 import $ from 'jquery';
 import QuerySet from './selectorquery.jsx';
-import { Filter, SetFilter } from './stores.jsx';
+import { Filter, SetFilter } from './dispatch.jsx';
 import { SetSubState } from './utils.jsx';
 
 export default class FilterSelectControl extends React.Component {

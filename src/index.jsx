@@ -3,7 +3,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Dispatcher } from './stores.jsx';
+import { Dispatcher } from './dispatch.jsx';
 import App from './app.jsx';
 
 Dispatcher.enable();
