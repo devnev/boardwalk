@@ -54,10 +54,15 @@ class RangeQuery {
       this._updateDatasets([]);
       return;
     }
+
+    var source = FormatTemplate(this.options.source, filter);
     var query = FormatTemplate(this.options.query, filter);
     var step = Math.floor((end - start) / 200).toString() + "s";
     if (this.loading) {
-      if (this.loading.query == query && this.loading.start == start && this.loading.end == end) {
+      if (this.loading.source == source &&
+          this.loading.query == query &&
+          this.loading.start == start &&
+          this.loading.end == end) {
         console.log("cached", query);
         return;
       }
@@ -65,8 +70,9 @@ class RangeQuery {
         this.loading.req.abort();
       }
     }
+
     console.log("loading", query);
-    var req = $.get("http://localhost:9090/api/v1/query_range", {
+    var req = $.get(source, {
       query: query,
       start: start,
       end: end,
@@ -78,6 +84,7 @@ class RangeQuery {
     }.bind(this));
     this.loading = {
       req: req,
+      source: source,
       query: query,
       start: start,
       end: end,

@@ -8,8 +8,7 @@ import { FormatTemplate, MatchFilter } from './utils.jsx';
 export default class SelectorQuerySet {
   constructor(queries, onData) {
     this.queries = queries.map(function(options, index) {
-      return new SelectorQuery(
-          options.label, options.query, options.match, this._onQueryData.bind(this, index));
+      return new SelectorQuery(options, this._onQueryData.bind(this, index));
     }.bind(this));
     this.labelsets = Array(this.queries.length);
     this.onData = onData.bind(undefined);
@@ -30,19 +29,18 @@ export default class SelectorQuerySet {
 }
 
 class SelectorQuery {
-  constructor(label, query, match, onData) {
-    this.label = label;
-    this.query = query;
-    this.match = match;
+  constructor(options, onData) {
+    this.options = options;
     this.onData = onData.bind(undefined);
     this.loading = {};
   }
   updateData(time, filter) {
-    if (!MatchFilter(this.match, filter)) {
+    if (!MatchFilter(this.options.match, filter)) {
       this.onData([]);
       return;
     }
-    var query = FormatTemplate(this.query, filter);
+    var source = FormatTemplate(this.options.source, filter);
+    var query = FormatTemplate(this.options.query, filter);
     if (this.loading.query == query && this.loading.time == time) {
       console.log("cached", query);
       return;
@@ -51,7 +49,7 @@ class SelectorQuery {
       this.loading.req.abort();
     }
     console.log("loading", query);
-    var req = $.get("http://localhost:9090/api/v1/query", {
+    var req = $.get(source, {
       query: query,
       time: time,
     }).always(function() {
@@ -61,6 +59,7 @@ class SelectorQuery {
     }.bind(this));
     this.loading = {
       req: req,
+      source: source,
       query: query,
       time: time,
     }
@@ -77,7 +76,7 @@ class SelectorQuery {
       return;
     }
     var values = response.data.result.map(function(result) {
-      return result.metric[this.label];
+      return result.metric[this.options.label];
     }.bind(this)).filter(_.identity);
     this.onData(values)
   }
