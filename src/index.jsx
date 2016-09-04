@@ -67,6 +67,20 @@ class App extends React.Component {
 App.propTypes = {};
 
 class ConsoleNav extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+    this._update = this._update.bind(this);
+  }
+  componentDidMount() {
+    HashURI.onUpdate(this._update);
+  }
+  componentWillUnmount() {
+    HashURI.offUpdate(this._update);
+  }
+  _update() {
+    this.setState({});
+  }
   render() {
     return (
       <nav><ul>
