@@ -2,15 +2,28 @@ var webpack = require('webpack');
 
 module.exports = function (config) {
   config.set({
-    browsers: [ 'Chrome' ],
-    frameworks: [ 'tap' ],
+    plugins: [
+      'karma-webpack',
+      'karma-tap',
+      'karma-chrome-launcher',
+      'karma-sourcemap-loader',
+    ],
+    browsers: [
+      'Chrome',
+    ],
+    frameworks: [
+      'tap',
+    ],
     files: [
       'tests.webpack.js',
     ],
+    reporters: [
+      'dots',
+    ],
+
     preprocessors: {
       'tests.webpack.js': [ 'webpack', 'sourcemap' ],
     },
-    reporters: [ 'dots' ],
     webpack: {
       devtool: 'inline-source-map',
       node: {
@@ -35,6 +48,6 @@ module.exports = function (config) {
     },
     webpackMiddleware: {
       noInfo: true
-    }
+    },
   });
 };
