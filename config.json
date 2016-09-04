@@ -1,6 +1,6 @@
 {
   "": {
-    "title": "Requests",
+    "title": "RPCs",
     "selectors": [
       {
         "label": "job",
@@ -14,6 +14,20 @@
       }
     ],
     "contents": [
+      {
+        "section": {
+          "title": "Handled",
+          "links": [
+            {
+              "match": {
+                "job": ".+"
+              },
+              "url": "https://localhost/${job}",
+              "text": "${job} redirect"
+            }
+          ]
+        }
+      },
       {
         "graph": {
           "queries": [
@@ -31,17 +45,6 @@
             }
           ]
         }
-      },
-      {
-        "links": [
-          {
-            "match": {
-              "job": ".+"
-            },
-            "url": "https://localhost/${job}",
-            "text": "${job} redirect"
-          }
-        ]
       },
       {
         "graph": {

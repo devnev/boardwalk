@@ -6,18 +6,33 @@ import React from 'react';
 import { FormatTemplate, MatchFilter } from './utils.jsx';
 import { Filter } from './dispatch.jsx';
 
-export default class LinksPanel extends React.Component {
+export default class Section extends React.Component {
   render() {
     return (
       <div>
-        {this.props.links.map(function(link, index) {
-          return <Link key={index} match={link.match} url={link.url} text={link.text} />
-        }.bind(this))}
+        <h2>{this.props.title}</h2>
+        <LinksList links={this.props.links} />
       </div>
     );
   }
 }
-LinksPanel.propTypes = {
+Section.propTypes = {
+  title: React.PropTypes.string.isRequired,
+  links: React.PropTypes.array.isRequired,
+}
+
+class LinksList extends React.Component {
+  render() {
+    return (
+      <ul>
+        {this.props.links.map(function(link, index) {
+          return <Link key={index} match={link.match} url={link.url} text={link.text} />;
+        }.bind(this))}
+      </ul>
+    );
+  }
+}
+LinksList.propTypes = {
   links: React.PropTypes.array.isRequired,
 }
 
@@ -42,7 +57,7 @@ class Link extends React.Component {
     }
     var url = FormatTemplate(this.props.url, Filter.filter());
     var text = FormatTemplate(this.props.text, Filter.filter());
-    return <a href={url}>{text}</a>
+    return <li><a href={url}>{text}</a></li>
   }
 }
 Link.propTypes = {
