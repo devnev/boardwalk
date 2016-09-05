@@ -5,7 +5,6 @@ import _ from 'underscore';
 import React from 'react';
 import Plottable from 'plottable';
 import QuerySet from './range_query.jsx';
-import { FormatMetric, FormatTemplate, MatchFilter } from './utils.jsx';
 import { TimeScale, Filter } from './dispatch.jsx';
 
 export default class GraphPanel extends React.Component {
