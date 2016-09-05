@@ -6,6 +6,64 @@ import $ from 'jquery';
 import Plottable from 'plottable';
 import { FormatMetric, FormatTemplate, MatchFilter } from './utils.jsx';
 
+function _get(obj, key, def) {
+  return _.has(obj, key) ? obj[key] : def;
+}
+
+class QueryStore {
+  constructor() {
+    this._store = {};
+  }
+  load(source, query, start, end) {
+    var key = source + '?query=' + query;
+    var entry = _get(this._store, key);
+    if (entry) {
+      if (entry.source == source &&
+          entry.query == query &&
+          entry.start == start &&
+          entry.end == end) {
+        console.log("cached", query);
+        return entry.promise;
+      }
+      if (entry.request) {
+        entry.request.abort();
+        entry.request = null;
+      }
+    }
+
+    console.log("loading", query);
+    var step = Math.floor((end - start) / 200).toString() + "s";
+    var request = $.get(source, {
+      query: query,
+      start: start,
+      end: end,
+      step: step,
+    });
+    entry = this._store[key] = {
+      request: request,
+      query: query,
+      source: source,
+      start: start,
+      end: end,
+      promise: null,
+    };
+    entry.promise = request
+      .then(function(data) {
+        if (entry.request === request) {
+          entry.data = data.data.result;
+        }
+        return data.data.result;
+      })
+      .always(function() {
+        if (entry.request === request) {
+          entry.request = null;
+        }
+      });
+    return entry.promise;
+  }
+}
+var store = new QueryStore();
+
 export default class QuerySet {
   constructor(queries, onData) {
     this.queries = queries.map(function(query, index) {
@@ -30,7 +88,6 @@ class RangeQuery {
   constructor(options, onData) {
     this.options = options;
     this.onData = onData.bind(undefined);
-    this.loading = {};
   }
   _updateDatasets(results) {
     var datasets = results.map(function(result) {
@@ -57,37 +114,9 @@ class RangeQuery {
 
     var source = FormatTemplate(this.options.source, filter);
     var query = FormatTemplate(this.options.query, filter);
-    var step = Math.floor((end - start) / 200).toString() + "s";
-    if (this.loading) {
-      if (this.loading.source == source &&
-          this.loading.query == query &&
-          this.loading.start == start &&
-          this.loading.end == end) {
-        console.log("cached", query);
-        return;
-      }
-      if (this.loading.req) {
-        this.loading.req.abort();
-      }
-    }
-
-    console.log("loading", query);
-    var req = $.get(source, {
-      query: query,
-      start: start,
-      end: end,
-      step: step,
-    }).always(function() {
-      this.loading.req = null;
-    }.bind(this)).done(function(data) {
-      this._updateDatasets(data.data.result);
+    var request = store.load(source, query, start, end);
+    request.then(function(data) {
+      this._updateDatasets(data);
     }.bind(this));
-    this.loading = {
-      req: req,
-      source: source,
-      query: query,
-      start: start,
-      end: end,
-    }
   }
 }
