@@ -21,7 +21,6 @@ export default class TimeScaleStore {
   }
   _setScaleFromRange() {
     var range = this._range;
-    var scale = this._scale;
     var start = new Date(range.end.getTime() - range.duration*1000);
     this.scale([start, range.end]);
   }
