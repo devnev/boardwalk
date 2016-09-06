@@ -41,7 +41,7 @@ export default class App extends React.Component {
     if (!this.state.config) {
       return <p>Loading config...</p>
     }
-    var console = this.state.config[this.state.console];
+    var console = this.state.config.consoles[this.state.console];
     if (!console) {
       console = {
         title: "Console Not Found",

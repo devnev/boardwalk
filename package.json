@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "webpack -d --watch --progress",
     "build": "webpack --config webpack.config.js --progress --profile --colors",
-    "lint": "eslint --ext .js,.jsx src"
+    "lint": "eslint --ext .js,.jsx src",
+    "generate:schema": "protobuf-jsonschema src/config.proto > src/config.jsonschema && sed -i '2 i \\  \"$ref\": \"#/definitions/Config\",' src/config.jsonschema",
+    "lint:config": "z-schema --noTypeless --forceItems src/config.jsonschema config.json"
   },
   "devDependencies": {
     "babel-core": "6.13.2",
@@ -20,13 +22,16 @@
     "babel-preset-react": "^6.11.1",
     "babel-runtime": "^6.11.6",
     "eslint": "^3.4.0",
+    "jsonschema-protobuf": "^1.0.1",
     "karma": "^1.2.0",
     "karma-chrome-launcher": "^2.0.0",
     "karma-sourcemap-loader": "^0.3.7",
     "karma-tap": "^3.0.1",
     "karma-webpack": "^1.8.0",
+    "protobuf-jsonschema": "^1.0.0",
     "tape": "^4.6.0",
-    "webpack": "^1.13.2"
+    "webpack": "^1.13.2",
+    "z-schema": "^3.17.0"
   },
   "dependencies": {
     "d3": "^3.5.17",

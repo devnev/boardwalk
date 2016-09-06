@@ -1,0 +1,158 @@
+{
+  "$ref": "#/definitions/Config",
+  "definitions": {
+    "Config": {
+      "title": "Config",
+      "type": "object",
+      "properties": {
+        "consoles": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Console"
+          }
+        }
+      }
+    },
+    "Console": {
+      "title": "Console",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "selectors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Selector"
+          }
+        },
+        "contents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ConsoleContents"
+          }
+        }
+      }
+    },
+    "ConsoleContents": {
+      "title": "ConsoleContents",
+      "type": "object",
+      "properties": {
+        "graph": {
+          "$ref": "#/definitions/Graph"
+        },
+        "section": {
+          "$ref": "#/definitions/Section"
+        }
+      }
+    },
+    "Selector": {
+      "title": "Selector",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "queries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SelectorQuery"
+          }
+        }
+      }
+    },
+    "SelectorQuery": {
+      "title": "SelectorQuery",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "match": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Section": {
+      "title": "Section",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Link"
+          }
+        }
+      }
+    },
+    "Link": {
+      "title": "Link",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "match": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Graph": {
+      "title": "Graph",
+      "type": "object",
+      "properties": {
+        "queries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GraphQuery"
+          }
+        }
+      }
+    },
+    "GraphQuery": {
+      "title": "GraphQuery",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "match": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

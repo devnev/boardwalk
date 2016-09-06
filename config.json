@@ -1,119 +1,113 @@
 {
-  "": {
-    "title": "RPCs",
-    "selectors": [
-      {
-        "label": "job",
-        "options": ["server1", "server2"],
-        "queries": [
-          {
-            "label": "job",
-            "query": "count(grpc_server_handled_total::rate1m_sum) by (job)",
-            "source": "http://localhost:9090/api/v1/query"
+  "consoles": {
+    "": {
+      "title": "RPCs",
+      "selectors": [
+        {
+          "label": "job",
+          "options": ["server1", "server2"],
+          "queries": [
+            {
+              "label": "job",
+              "query": "count(grpc_server_handled_total::rate1m_sum) by (job)",
+              "source": "http://localhost:9090/api/v1/query"
+            }
+          ]
+        }
+      ],
+      "contents": [
+        {
+          "section": {
+            "title": "Handled",
+            "links": [
+              {
+                "match": {
+                  "job": ".+"
+                },
+                "url": "https://localhost/${job}",
+                "text": "${job} redirect"
+              }
+            ]
           }
-        ]
-      }
-    ],
-    "contents": [
-      {
-        "section": {
-          "title": "Handled",
-          "links": [
-            {
-              "match": {
-                "job": ".+"
+        },
+        {
+          "graph": {
+            "queries": [
+              {
+                "title": "rpcs",
+                "match": {},
+                "query": "sum(grpc_server_handled_total::rate1m_sum)",
+                "source": "http://localhost:9090/api/v1/query_range"
               },
-              "url": "https://localhost/${job}",
-              "text": "${job} redirect"
-            }
-          ]
-        }
-      },
-      {
-        "graph": {
-          "queries": [
-            {
-              "title": "rpcs",
-              "match": {},
-              "query": "sum(grpc_server_handled_total::rate1m_sum)",
-              "source": "http://localhost:9090/api/v1/query_range"
-            },
-            {
-              "title": "${job} rpcs",
-              "match": {
-                "job": ".+"
-              },
-              "query": "grpc_server_handled_total::rate1m_sum{job=\"${job}\"}",
-              "source": "http://localhost:9090/api/v1/query_range"
-            }
-          ]
-        }
-      },
-      {
-        "graph": {
-          "queries": [
-            {
-              "query": "grpc_server_handled_total::rate1m_sum",
-              "source": "http://localhost:9090/api/v1/query_range"
-            }
-          ]
-        }
-      },
-      {
-        "graph": {
-          "queries": [
-            {
-              "title": "count",
-              "query": "count(up)",
-              "source": "http://localhost:9090/api/v1/query_range"
-            },
-            {
-              "title": "up",
-              "query": "sum(up)",
-              "source": "http://localhost:9090/api/v1/query_range"
-            },
-            {
-              "title": "down",
-              "query": "sum(up == 0)",
-              "source": "http://localhost:9090/api/v1/query_range"
-            }
-          ]
-        }
-      }
-    ]
-  },
-  "/proc": {
-    "title": "Proc",
-    "selectors": [],
-    "contents": [
-      {
-        "graph": {
-          "queries": [
-            {
-              "query": "sum(increase(process_cpu_seconds_total{job=\"server1\"}[1m]))",
-              "source": "http://localhost:9090/api/v1/query_range"
-            }
-          ]
-        }
-      },
-      {
-        "graph": {
-          "queries": [
-            {
-              "query": "sum(process_resident_memory_bytes{job=\"server1\"})",
-              "source": "http://localhost:9090/api/v1/query_range"
-            }
-          ]
-        }
-      },
-      {
-        "links": [
-          {
-            "url": "http://localhost",
-            "text": "Localhost Link"
+              {
+                "title": "${job} rpcs",
+                "match": {
+                  "job": ".+"
+                },
+                "query": "grpc_server_handled_total::rate1m_sum{job=\"${job}\"}",
+                "source": "http://localhost:9090/api/v1/query_range"
+              }
+            ]
           }
-        ]
-      }
-    ]
+        },
+        {
+          "graph": {
+            "queries": [
+              {
+                "query": "grpc_server_handled_total::rate1m_sum",
+                "source": "http://localhost:9090/api/v1/query_range"
+              }
+            ]
+          }
+        },
+        {
+          "graph": {
+            "queries": [
+              {
+                "title": "count",
+                "query": "count(up)",
+                "source": "http://localhost:9090/api/v1/query_range"
+              },
+              {
+                "title": "up",
+                "query": "sum(up)",
+                "source": "http://localhost:9090/api/v1/query_range"
+              },
+              {
+                "title": "down",
+                "query": "sum(up == 0)",
+                "source": "http://localhost:9090/api/v1/query_range"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "/proc": {
+      "title": "Proc",
+      "selectors": [],
+      "contents": [
+        {
+          "graph": {
+            "queries": [
+              {
+                "query": "sum(increase(process_cpu_seconds_total{job=\"server1\"}[1m]))",
+                "source": "http://localhost:9090/api/v1/query_range"
+              }
+            ]
+          }
+        },
+        {
+          "graph": {
+            "queries": [
+              {
+                "query": "sum(process_resident_memory_bytes{job=\"server1\"})",
+                "source": "http://localhost:9090/api/v1/query_range"
+              }
+            ]
+          }
+        }
+      ]
+    }
   }
 }
