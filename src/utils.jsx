@@ -48,9 +48,9 @@ export function FormatTemplate(template, props) {
   return result;
 }
 
-export function MatchFilter(matches, filter) {
+export function StrictMatchFilter(matches, filter) {
   if (!matches) {
-    return true;
+    return false;
   }
   var matcherHasKeys = Object.keys(filter).every(function(key) {
     return matches.hasOwnProperty(key);
@@ -65,6 +65,19 @@ export function MatchFilter(matches, filter) {
   }.bind(this));
   return matches;
 }
+
+export function MatchFilter(matches, filter) {
+  if (!matches) {
+    return true;
+  }
+  var matches = Object.keys(matches).every(function(key) {
+    var r = new RegExp(matches[key]);
+    var v = _(filter).has(key) ? filter[key] : "";
+    return r.test(v);
+  }.bind(this));
+  return matches;
+}
+
 
 export function SetSubState(component, values) {
   var same = true;

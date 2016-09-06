@@ -4,7 +4,7 @@
 import _ from 'underscore';
 import $ from 'jquery';
 import Plottable from 'plottable';
-import { FormatMetric, FormatTemplate, MatchFilter } from './utils.jsx';
+import { FormatMetric, FormatTemplate, StrictMatchFilter } from './utils.jsx';
 
 function _get(obj, key, def) {
   return _.has(obj, key) ? obj[key] : def;
@@ -107,7 +107,7 @@ class RangeQuery {
     this.onData(datasets);
   }
   updateData(start, end, filter) {
-    if (!MatchFilter(this.options.match, filter)) {
+    if (!StrictMatchFilter(this.options.match, filter)) {
       this._updateDatasets([]);
       return;
     }
