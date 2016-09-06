@@ -9,7 +9,7 @@
           "queries": [
             {
               "label": "job",
-              "query": "count(grpc_server_handled_total::rate1m_sum) by (job)",
+              "query": "count(job:grpc_server_handled_total:rate1m) by (job)",
               "source": "http://localhost:9090/api/v1/query"
             }
           ]
@@ -36,7 +36,7 @@
               {
                 "title": "rpcs",
                 "match": {},
-                "query": "sum(grpc_server_handled_total::rate1m_sum)",
+                "query": "sum(job:grpc_server_handled_total:rate1m)",
                 "source": "http://localhost:9090/api/v1/query_range"
               },
               {
@@ -44,7 +44,7 @@
                 "match": {
                   "job": ".+"
                 },
-                "query": "grpc_server_handled_total::rate1m_sum{job=\"${job}\"}",
+                "query": "job:grpc_server_handled_total:rate1m{job=\"${job}\"}",
                 "source": "http://localhost:9090/api/v1/query_range"
               }
             ]
@@ -54,7 +54,7 @@
           "graph": {
             "queries": [
               {
-                "query": "grpc_server_handled_total::rate1m_sum",
+                "query": "job:grpc_server_handled_total:rate1m",
                 "source": "http://localhost:9090/api/v1/query_range"
               }
             ]
