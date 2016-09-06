@@ -235,7 +235,7 @@ class Legend extends React.Component {
 Legend.propTypes = {
   items: React.PropTypes.array.isRequired,
   cScale: React.PropTypes.object.isRequired,
-}
+};
 
 class Graph extends React.Component {
   constructor(props) {
@@ -267,7 +267,7 @@ class Graph extends React.Component {
       this._updateHighlight(nextProps.highlightTime);
     }
   }
-  shouldComponentUpdate(props, state) {
+  shouldComponentUpdate(props, state) {  // eslint-disable-line no-unused-vars
     return (
       this.props.cScale !== props.cScale ||
       !_.isEqual(this.props.options, props.options)
@@ -275,7 +275,7 @@ class Graph extends React.Component {
   }
   render() {
     this._setup();
-    return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.graph.renderTo(ref)} />
+    return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.graph.renderTo(ref)} />;
   }
   _timeForPoint(tAxis, point) {
     var position = point.x / tAxis.width();

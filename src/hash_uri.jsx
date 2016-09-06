@@ -123,7 +123,7 @@ export default class HashURIStore {
         } else {
           retParams[key] = values;
         }
-      })
+      });
     }
     return this.formatNew(retPath, retParams);
   }

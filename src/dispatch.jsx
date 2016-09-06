@@ -17,7 +17,7 @@ class Dispatcher {
   }
   enable() {
     hashURI.onUpdate(this._updateTimeScaleFromURI, true);
-    hashURI.onUpdate(this._updateFilterFromURI, true)
+    hashURI.onUpdate(this._updateFilterFromURI, true);
     timeScale.onUpdate(this._updateURIFromTimeScale);
     filter.onUpdate(this._updateURIFromFilter);
     window.addEventListener("hashchange", hashURI.parseHash);
@@ -39,7 +39,6 @@ class Dispatcher {
     _.each(params, function(values, key) {
       if (key.startsWith(filterPrefix)) {
         newFilter[key.substr(filterPrefix.length)] = values[0];
-      } else {
       }
     });
     filter._reset(newFilter);

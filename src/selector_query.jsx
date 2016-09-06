@@ -62,7 +62,7 @@ class SelectorQuery {
       source: source,
       query: query,
       time: time,
-    }
+    };
   }
   _handleResponse(response) {
     if (response.status != "success") {
@@ -78,7 +78,7 @@ class SelectorQuery {
     var values = response.data.result.map(function(result) {
       return result.metric[this.options.label];
     }.bind(this)).filter(_.identity);
-    this.onData(values)
+    this.onData(values);
   }
 }
 

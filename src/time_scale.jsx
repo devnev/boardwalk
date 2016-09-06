@@ -9,7 +9,7 @@ export default class TimeScaleStore {
     this._range = {
       duration: 1*60*60,
       end: new Date(),
-    }
+    };
     this._scale = new Plottable.Scales.Time();
     this._callbacks = new Plottable.Utils.CallbackSet();
 
@@ -31,7 +31,7 @@ export default class TimeScaleStore {
     var range = {
       duration: Math.round((end.getTime() - start.getTime())/1000),
       end: end,
-    }
+    };
     this.range(range);
   }
   range(range) {

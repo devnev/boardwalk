@@ -9,7 +9,7 @@ export function ConsoleTree(consoles) {
   var root = {console: null, children: {}, path: ""};
   _.each(consoles, function(console, path) {
     var parts = path.replace(/\/+/g, "/").replace(/\/$/, "").replace(/^\//, "").split("/");
-    if (parts[0] == "") {
+    if (parts[0] === "") {
       root.console = console;
       return;
     }

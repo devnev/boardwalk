@@ -9,8 +9,8 @@ function ParseDuration(durationString) {
   if (!durationString) {
     return 0;
   }
-  var [_, weeks, days, hours, minutes, seconds] = durationString.match(/^(?:(\d+)w)?(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/) || [];
-  var res = parseInt(weeks || '0')
+  var [weeks, days, hours, minutes, seconds] = (durationString.match(/^(?:(\d+)w)?(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/) || []).slice(1);
+  var res = parseInt(weeks || '0');
   res = res * 7 + parseInt(days || '0');
   res = res * 24 + parseInt(hours || '0');
   res = res * 60 + parseInt(minutes || '0');
@@ -52,7 +52,7 @@ function FormatDuration(seconds) {
 
 export default class RangePicker extends React.Component {
   render() {
-    return <div><DurationPicker /><TimePicker /></div>
+    return <div><DurationPicker /><TimePicker /></div>;
   }
 }
 RangePicker.propTypes = {};
@@ -68,7 +68,7 @@ class DurationPicker extends React.Component {
     this.state = {
       inputValue: FormatDuration(TimeScale.range().duration),
       dirty: false
-    }
+    };
     this._onIncreaseDuration = this._onIncreaseDuration.bind(this);
     this._onDecreaseDuration = this._onDecreaseDuration.bind(this);
     this._onFormSubmit = this._onFormSubmit.bind(this);
@@ -82,7 +82,7 @@ class DurationPicker extends React.Component {
     TimeScale.offUpdate(this._updateState);
   }
   _updateState() {
-    var nextDuration = FormatDuration(TimeScale.range().duration)
+    var nextDuration = FormatDuration(TimeScale.range().duration);
     if (nextDuration != this.state.inputValue || this.state.dirty) {
       this.setState({ inputValue: nextDuration, dirty: false });
     }
@@ -132,7 +132,7 @@ class TimePicker extends React.Component {
     this.state = {
       inputValue: moment(TimeScale.range().end).format("YYYY-MM-DD HH:mm:ssZZ"),
       dirty: false,
-    }
+    };
     this._onInputChange = this._onInputChange.bind(this);
     this._onPickNow = this._onPickNow.bind(this);
     this._onStepBack = this._onStepBack.bind(this);
@@ -150,7 +150,7 @@ class TimePicker extends React.Component {
     return moment(this.state.inputValue, moment.ISO_8601, true);
   }
   _updateState() {
-    var nextValue = moment(TimeScale.range().end).format("YYYY-MM-DD HH:mm:ssZZ")
+    var nextValue = moment(TimeScale.range().end).format("YYYY-MM-DD HH:mm:ssZZ");
     if (nextValue != this.state.inputValue || this.state.dirty) {
       this.setState({ inputValue: nextValue, dirty: false });
     } else {
@@ -187,4 +187,4 @@ class TimePicker extends React.Component {
     );
   }
 }
-TimePicker.propTypes = {}
+TimePicker.propTypes = {};

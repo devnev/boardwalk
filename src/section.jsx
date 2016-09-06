@@ -1,7 +1,6 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
-import _ from 'underscore';
 import React from 'react';
 import { FormatTemplate, MatchFilter } from './utils.jsx';
 import { Filter } from './dispatch.jsx';
@@ -19,7 +18,7 @@ export default class Section extends React.Component {
 Section.propTypes = {
   title: React.PropTypes.string.isRequired,
   links: React.PropTypes.array.isRequired,
-}
+};
 
 class LinksList extends React.Component {
   render() {
@@ -34,7 +33,7 @@ class LinksList extends React.Component {
 }
 LinksList.propTypes = {
   links: React.PropTypes.array.isRequired,
-}
+};
 
 class Link extends React.Component {
   constructor(props) {
@@ -57,11 +56,11 @@ class Link extends React.Component {
     }
     var url = FormatTemplate(this.props.url, Filter.filter());
     var text = FormatTemplate(this.props.text, Filter.filter());
-    return <li><a href={url}>{text}</a></li>
+    return <li><a href={url}>{text}</a></li>;
   }
 }
 Link.propTypes = {
   match: React.PropTypes.object,
   url: React.PropTypes.string.isRequired,
   text: React.PropTypes.string.isRequired,
-}
+};

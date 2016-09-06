@@ -2,7 +2,6 @@
 // you may not use this file except in compliance with the License.
 
 import React from 'react';
-import _ from 'underscore';
 import $ from 'jquery';
 import Plottable from 'plottable';
 import RangePicker from './range_controls.jsx';
@@ -39,7 +38,7 @@ export default class App extends React.Component {
   }
   render() {
     if (!this.state.config) {
-      return <p>Loading config...</p>
+      return <p>Loading config...</p>;
     }
     var console = this.state.config.consoles[this.state.console];
     if (!console) {
@@ -73,7 +72,7 @@ class Console extends React.Component {
       cScale: new Plottable.Scales.Color(),
       hoveredTime: null,
       selectedTime: null,
-    }
+    };
     this._setHoverTime = this._setHoverTime.bind(this);
     this._setSelectedTime = this._setSelectedTime.bind(this);
   }

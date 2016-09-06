@@ -77,8 +77,8 @@ export default class QuerySet {
       query.updateData(start, end, filter);
     }.bind(this));
   }
-  _onQueryData(queryIndex, datasets) {
-    this.datasets[queryIndex] = datasets;
+  _onQueryData(queryIndex, queryDatasets) {
+    this.datasets[queryIndex] = queryDatasets;
     var datasets = _.flatten(this.datasets, true).filter(function(d) { return d; });
     this.onData(datasets);
   }

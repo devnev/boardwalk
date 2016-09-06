@@ -3,7 +3,6 @@
 
 import React from 'react';
 import _ from 'underscore';
-import $ from 'jquery';
 import QuerySet from './selector_query.jsx';
 import { Filter, SetFilter } from './dispatch.jsx';
 import { SetSubState } from './utils.jsx';
@@ -41,7 +40,7 @@ export default class FilterSelectControl extends React.Component {
 FilterSelectControl.propTypes = {
   selectors: React.PropTypes.array.isRequired,
   time: React.PropTypes.number.isRequired,
-}
+};
 
 class FilterSelector extends React.Component {
   constructor(props) {
@@ -50,7 +49,7 @@ class FilterSelector extends React.Component {
     this.state = {
       value: Filter.value(props.label),
       values: [],
-    }
+    };
     this._onSelect = this._onSelect.bind(this);
     this._updateData = this._updateData.bind(this);
     this._updateValue = this._updateValue.bind(this);
@@ -104,4 +103,4 @@ FilterSelector.propTypes = {
   time: React.PropTypes.number.isRequired,
   label: React.PropTypes.string.isRequired,
   options: React.PropTypes.array.isRequired,
-}
+};

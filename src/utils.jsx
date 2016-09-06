@@ -6,10 +6,10 @@ import _ from 'underscore';
 export function FormatMetric(metric) {
   var title = "";
   Object.keys(metric).forEach(function(key) {
-    if (title == '') {
+    if (title === '') {
       title = '{';
     }
-    if (key == "__name__") {
+    if (key === "__name__") {
       title = metric[key] + title;
       return;
     }
@@ -20,7 +20,7 @@ export function FormatMetric(metric) {
   });
   if (title.endsWith('{')) {
     title = title.substr(0, title.length-1);
-  } else if (title != '') {
+  } else if (title !== '') {
     title = title + '}';
   }
   return title;
@@ -36,7 +36,7 @@ export function FormatTemplate(template, props) {
       continue;
     }
     var key = pieces[i];
-    if (key == "") {
+    if (key === "") {
       result += "$";
     } else if (props.hasOwnProperty(key)) {
       result += props[key];
@@ -48,30 +48,30 @@ export function FormatTemplate(template, props) {
   return result;
 }
 
-export function StrictMatchFilter(matches, filter) {
-  if (!matches) {
+export function StrictMatchFilter(matcher, filter) {
+  if (!matcher) {
     return false;
   }
   var matcherHasKeys = Object.keys(filter).every(function(key) {
-    return matches.hasOwnProperty(key);
+    return matcher.hasOwnProperty(key);
   }.bind(this));
   if (!matcherHasKeys) {
     return false;
   }
-  var matches = Object.keys(matches).every(function(key) {
-    var r = new RegExp(matches[key]);
+  var matches = Object.keys(matcher).every(function(key) {
+    var r = new RegExp(matcher[key]);
     var v = _(filter).has(key) ? filter[key] : "";
     return r.test(v);
   }.bind(this));
   return matches;
 }
 
-export function MatchFilter(matches, filter) {
-  if (!matches) {
+export function MatchFilter(matcher, filter) {
+  if (!matcher) {
     return true;
   }
-  var matches = Object.keys(matches).every(function(key) {
-    var r = new RegExp(matches[key]);
+  var matches = Object.keys(matcher).every(function(key) {
+    var r = new RegExp(matcher[key]);
     var v = _(filter).has(key) ? filter[key] : "";
     return r.test(v);
   }.bind(this));
