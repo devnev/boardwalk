@@ -9,7 +9,7 @@
     "build": "webpack --config webpack.config.js --progress --profile --colors",
     "lint": "eslint --ext .js,.jsx src",
     "generate:schema": "protobuf-jsonschema src/config.proto > src/config.jsonschema && sed -i '2 i \\  \"$ref\": \"#/definitions/Config\",' src/config.jsonschema",
-    "lint:config": "z-schema --noTypeless --forceItems src/config.jsonschema config.json"
+    "lint:config": "z-schema --noTypeless --forceItems --assumeAdditional src/config.jsonschema config.json"
   },
   "devDependencies": {
     "babel-core": "6.13.2",
