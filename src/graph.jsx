@@ -5,19 +5,20 @@ import _ from 'underscore';
 import React from 'react';
 import Plottable from 'plottable';
 import QuerySet from './range_query.jsx';
+import { QueryCaptions, QueryKey } from './query_key.jsx';
 import { TimeScale, Filter } from './dispatch.jsx';
 
 export default class GraphPanel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      legend: [],
+      captions: [],
     };
-    this._setLegend = this._setLegend.bind(this);
+    this._setCaptions = this._setCaptions.bind(this);
   }
-  _setLegend(legend) {
-    if (!_.isEqual(this.state.legend, legend)) {
-      this.setState({legend: legend});
+  _setCaptions(captions) {
+    if (!_.isEqual(this.state.captions, captions)) {
+      this.setState({captions: captions});
     }
   }
   render() {
@@ -25,9 +26,9 @@ export default class GraphPanel extends React.Component {
       <div>
         <Graph
           {...this.props}
-          onUpdateValues={this._setLegend} />
-        <Legend
-          items={this.state.legend}
+          onUpdateValues={this._setCaptions} />
+        <QueryKey
+          items={this.state.captions}
           cScale={this.props.cScale} />
       </div>
     );
@@ -152,50 +153,6 @@ var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
   ],
 ];
 
-class QueryCaptions {
-  constructor() {
-    this.nearest = new Plottable.Dataset();
-    this.dataset = new Plottable.Dataset();
-    this.sources = [];
-  }
-  target(targetTime) {
-    if (!targetTime) {
-      this.nearest.data([]);
-      this.dataset.data(this.sources.map(function(dataset) {
-        return {caption: dataset.metadata().title, value: ""};
-      }));
-      this._target = undefined;
-      return;
-    }
-
-    var points = [];
-    var values = [];
-    this.sources.forEach(function(dataset) {
-      var data = dataset.data();
-      if (data.length == 0 || data[0].t > targetTime) {
-        values.push({caption: dataset.metadata().title, value: ""});
-        return;
-      }
-      var index = _.sortedIndex(data, {t: targetTime}, 't');
-      if (!(index < data.length && data[index].t === targetTime)) {
-        index -= 1;
-      }
-      var point = data[index];
-      points.push(_({caption: dataset.metadata().title}).assign(point));
-      values.push({caption: dataset.metadata().title, value: point.y});
-    }.bind(this));
-    _.defer(function() {
-      this.nearest.data(points);
-      this.dataset.data(values);
-    }.bind(this));
-    this._target = targetTime;
-  }
-  setSources(datasets) {
-    this.sources = datasets || [];
-    this.target(this._target);
-  }
-}
-
 function NewDataPlot(tScale, yScale, cScale) {
   var plot = new Plottable.Plots.Line();
   plot.x(function(d) { return d.t; }, tScale);
@@ -213,29 +170,6 @@ function NewHighlightPlot(tScale, yScale, cScale) {
   plot.autorangeMode("none");
   return plot;
 }
-
-class Legend extends React.Component {
-  render() {
-    return (
-      <ul>
-        {this.props.items.map(function(item, index) {
-          var caption = item.caption;
-          var value = item.value;
-          var colorStyle = {color: this.props.cScale.scale(caption)};
-          return (<li key={caption+index}>
-            <span style={colorStyle}>&#x25cf;</span>
-            <span>{caption}</span>
-            <span>{value}</span>
-          </li>);
-        }.bind(this))}
-      </ul>
-    );
-  }
-}
-Legend.propTypes = {
-  items: React.PropTypes.array.isRequired,
-  cScale: React.PropTypes.object.isRequired,
-};
 
 class Graph extends React.Component {
   constructor(props) {
