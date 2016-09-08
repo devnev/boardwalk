@@ -50,7 +50,7 @@ export default class App extends React.Component {
     }
     return (
       <div>
-        <ConsoleNav consoles={this.state.config} />
+        <ConsoleNav consoles={this.state.config.consoles} />
         <h1>{console.title}</h1>
         <RangePicker />
         <FilterSelectControl
