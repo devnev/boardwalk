@@ -2,6 +2,7 @@
 // you may not use this file except in compliance with the License.
 
 import _ from 'underscore';
+import Plottable from 'plottable';
 import HashURIStore from './hash_uri.jsx';
 import TimeScaleStore from './time_scale.jsx';
 import FilterStore from './filter.jsx';
@@ -67,6 +68,7 @@ class Dispatcher {
 }
 var dispatcher = new Dispatcher();
 
+export var ColorScale = new Plottable.Scales.Color();
 export { dispatcher as Dispatcher };
 export { hashURI as HashURI };
 export { timeScale as TimeScale };

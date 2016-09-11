@@ -69,7 +69,6 @@ class Console extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      cScale: new Plottable.Scales.Color(),
       hoveredTime: null,
       selectedTime: null,
     };
@@ -100,7 +99,6 @@ class Console extends React.Component {
               <GraphPanel 
                 key={index}
                 options={item.graph}
-                cScale={this.state.cScale}
                 onHoverTime={this._setHoverTime}
                 onSelectTime={this._setSelectedTime}
                 highlightTime={targetTime} />

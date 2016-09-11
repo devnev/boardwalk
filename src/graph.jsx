@@ -6,7 +6,7 @@ import React from 'react';
 import Plottable from 'plottable';
 import QuerySet from './range_query.jsx';
 import { QueryCaptions, QueryKey } from './query_key.jsx';
-import { TimeScale, Filter } from './dispatch.jsx';
+import { ColorScale, TimeScale, Filter } from './dispatch.jsx';
 
 export default class GraphPanel extends React.Component {
   constructor(props) {
@@ -28,14 +28,12 @@ export default class GraphPanel extends React.Component {
           {...this.props}
           onUpdateValues={this._setCaptions} />
         <QueryKey
-          items={this.state.captions}
-          cScale={this.props.cScale} />
+          items={this.state.captions} />
       </div>
     );
   }
 }
 GraphPanel.propTypes = {
-  cScale: React.PropTypes.object.isRequired,
   options: React.PropTypes.object.isRequired,
   highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
@@ -202,10 +200,7 @@ class Graph extends React.Component {
     }
   }
   shouldComponentUpdate(props, state) {  // eslint-disable-line no-unused-vars
-    return (
-      this.props.cScale !== props.cScale ||
-      !_.isEqual(this.props.options, props.options)
-    );
+    return !_.isEqual(this.props.options, props.options);
   }
   render() {
     this._setup();
@@ -247,8 +242,8 @@ class Graph extends React.Component {
     this.guideline = new Plottable.Components.GuideLineLayer(
       Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
     ).scale(TimeScale.scale());
-    this.plot = NewDataPlot(TimeScale.scale(), yScale, this.props.cScale);
-    this.highlight = NewHighlightPlot(TimeScale.scale(), yScale, this.props.cScale);
+    this.plot = NewDataPlot(TimeScale.scale(), yScale, ColorScale);
+    this.highlight = NewHighlightPlot(TimeScale.scale(), yScale, ColorScale);
     var panel = new Plottable.Components.Group([this.guideline, this.plot, this.highlight]);
     this.graph = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
 
@@ -284,7 +279,6 @@ class Graph extends React.Component {
   }
 }
 Graph.propTypes = {
-  cScale: React.PropTypes.object.isRequired,
   options: React.PropTypes.object.isRequired,
   highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
