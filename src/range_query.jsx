@@ -78,6 +78,9 @@ export default class QuerySet {
     }.bind(this));
   }
   _onQueryData(queryIndex, queryDatasets) {
+    _.each(queryDatasets, function(dataset) {
+      dataset.metadata().queryIndex = queryIndex;
+    });
     this.datasets[queryIndex] = queryDatasets;
     var datasets = _.flatten(this.datasets, true).filter(function(d) { return d; });
     this.onData(datasets);
@@ -102,7 +105,7 @@ class RangeQuery {
           y: parseFloat(value[1]),
         };
       }.bind(this));
-      return new Plottable.Dataset(dataset, {title: title});
+      return new Plottable.Dataset(dataset, {title: title, metric: result.metric});
     }.bind(this));
     this.onData(datasets);
   }

@@ -42,7 +42,7 @@ export function FormatTemplate(template, props) {
       result += props[key];
     } else {
       // TODO: proper error handling
-      console.log("unknown key in tempate: ", key);
+      console.log("unknown key", key, "in temlpate", template);
     }
   }
   return result;

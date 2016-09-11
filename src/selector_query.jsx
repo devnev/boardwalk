@@ -81,4 +81,3 @@ class SelectorQuery {
     this.onData(values);
   }
 }
-

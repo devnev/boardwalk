@@ -50,4 +50,12 @@ message GraphQuery {
   string query = 2;
   string source = 3;
   map<string, string> match = 4;
+  SelectorGraph expanded = 5;
+}
+
+message SelectorGraph {
+  string title = 1;
+  string query = 2;
+  string source = 3;
+  map<string, string> labels = 4;
 }

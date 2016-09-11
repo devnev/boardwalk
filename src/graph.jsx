@@ -3,140 +3,9 @@
 
 import _ from 'underscore';
 import React from 'react';
-import Plottable from 'plottable';
 import QuerySet from './range_query.jsx';
-import { QueryCaptions, QueryKey } from './query_key.jsx';
-import { ColorScale, TimeScale, Filter } from './dispatch.jsx';
-import { TimeForPoint } from './utils.jsx';
-
-// Copied from Plottable.Axes.Time's default configuration, changing clocks from 12h with 24h.
-var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
-  [
-      { interval: Plottable.TimeInterval.second, step: 1, formatter: Plottable.Formatters.time("%H:%M:%S") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.second, step: 5, formatter: Plottable.Formatters.time("%H:%M:%S") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.second, step: 10, formatter: Plottable.Formatters.time("%H:%M:%S") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.second, step: 15, formatter: Plottable.Formatters.time("%H:%M:%S") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.second, step: 30, formatter: Plottable.Formatters.time("%H:%M:%S") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.minute, step: 1, formatter: Plottable.Formatters.time("%H:%M") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.minute, step: 5, formatter: Plottable.Formatters.time("%H:%M") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.minute, step: 10, formatter: Plottable.Formatters.time("%H:%M") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.minute, step: 15, formatter: Plottable.Formatters.time("%H:%M") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.minute, step: 30, formatter: Plottable.Formatters.time("%H:%M") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.hour, step: 1, formatter: Plottable.Formatters.time("%H") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.hour, step: 3, formatter: Plottable.Formatters.time("%H") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.hour, step: 6, formatter: Plottable.Formatters.time("%H") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.hour, step: 12, formatter: Plottable.Formatters.time("%H") },
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%B %e, %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%a %e") },
-      { interval: Plottable.TimeInterval.month, step: 1, formatter: Plottable.Formatters.time("%B %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.day, step: 1, formatter: Plottable.Formatters.time("%e") },
-      { interval: Plottable.TimeInterval.month, step: 1, formatter: Plottable.Formatters.time("%B %Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.month, step: 1, formatter: Plottable.Formatters.time("%B") },
-      { interval: Plottable.TimeInterval.year, step: 1, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.month, step: 1, formatter: Plottable.Formatters.time("%b") },
-      { interval: Plottable.TimeInterval.year, step: 1, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.month, step: 3, formatter: Plottable.Formatters.time("%b") },
-      { interval: Plottable.TimeInterval.year, step: 1, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.month, step: 6, formatter: Plottable.Formatters.time("%b") },
-      { interval: Plottable.TimeInterval.year, step: 1, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 1, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 1, formatter: Plottable.Formatters.time("%y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 5, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 25, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 50, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 100, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 200, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 500, formatter: Plottable.Formatters.time("%Y") },
-  ],
-  [
-      { interval: Plottable.TimeInterval.year, step: 1000, formatter: Plottable.Formatters.time("%Y") },
-  ],
-];
-
-function NewDataPlot(tScale, yScale, cScale) {
-  var plot = new Plottable.Plots.Line();
-  plot.x(function(d) { return d.t; }, tScale);
-  plot.y(function(d) { return d.y; }, yScale);
-  plot.attr("stroke", function(d, i, dataset) { return dataset.metadata().title; }, cScale);
-  return plot;
-}
-
-function NewHighlightPlot(tScale, yScale, cScale) {
-  var plot = new Plottable.Plots.Scatter();
-  plot.x(function(d) { return d.t; }, tScale);
-  plot.y(function(d) { return d.y; }, yScale);
-  plot.attr("fill", function(d) { return d.caption; }, cScale);
-  plot.size(10);
-  plot.autorangeMode("none");
-  return plot;
-}
+import { TimeScale, Filter } from './dispatch.jsx';
+import { SetupGraph } from './base_graph.jsx';
 
 export default class Graph extends React.Component {
   constructor(props) {
@@ -198,47 +67,17 @@ export default class Graph extends React.Component {
     this.captions.target(targetTime);
   }
   _setup() {
-    // axes and scales
-    var tAxis = new Plottable.Axes.Time(TimeScale.scale(), "bottom");
-    tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
-    var yScale = new Plottable.Scales.Linear();
-    yScale.domainMin(0);
-    var yAxis = new Plottable.Axes.Numeric(yScale, "left");
-    yAxis.formatter(Plottable.Formatters.siSuffix());
-    yAxis.usesTextWidthApproximation(true);
-
-    // the graph
-    this.guideline = new Plottable.Components.GuideLineLayer(
-      Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
-    ).scale(TimeScale.scale());
-    this.plot = NewDataPlot(TimeScale.scale(), yScale, ColorScale);
-    this.highlight = NewHighlightPlot(TimeScale.scale(), yScale, ColorScale);
-    var panel = new Plottable.Components.Group([this.guideline, this.plot, this.highlight]);
-    this.graph = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
-
-    // interactions
-    var panZoom = new Plottable.Interactions.PanZoom(TimeScale.scale(), null);
-    panZoom.attachTo(panel);
-    var pointer = new Plottable.Interactions.Pointer();
-    pointer.onPointerMove(function(point) {
-      this.props.onHoverTime(TimeForPoint(tAxis, TimeScale.scale(), point));
-    }.bind(this));
-    pointer.onPointerExit(function() {
-      this.props.onHoverTime();
-    }.bind(this));
-    pointer.attachTo(panel);
-    var click = new Plottable.Interactions.DoubleClick();
-    click.onDoubleClick(function(point) {
-      this.props.onSelectTime(TimeForPoint(tAxis, TimeScale.scale(), point));
-    }.bind(this));
-    click.attachTo(panel);
+    var components = SetupGraph(this.props.onHoverTime, this.props.onSelectTime);
+    this.guideline = components.guideline;
+    this.plot = components.dataplot;
+    this.highlight = components.highlight;
+    this.graph = components.graph;
+    this.captions = components.captions;
 
     // the data
-    this.captions = new QueryCaptions();
     this.captions.dataset.onUpdate(function(dataset) {
       this.props.onUpdateValues(dataset.data());
     }.bind(this));
-    this.highlight.datasets([this.captions.nearest]);
     this.queries = new QuerySet(this.props.options.queries, function(datasets) {
       this.plot.datasets(datasets);
       this.captions.setSources(datasets);
@@ -253,4 +92,3 @@ Graph.propTypes = {
   onHoverTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
 };
-
