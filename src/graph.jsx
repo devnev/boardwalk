@@ -8,38 +8,6 @@ import QuerySet from './range_query.jsx';
 import { QueryCaptions, QueryKey } from './query_key.jsx';
 import { ColorScale, TimeScale, Filter } from './dispatch.jsx';
 
-export default class GraphPanel extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      captions: [],
-    };
-    this._setCaptions = this._setCaptions.bind(this);
-  }
-  _setCaptions(captions) {
-    if (!_.isEqual(this.state.captions, captions)) {
-      this.setState({captions: captions});
-    }
-  }
-  render() {
-    return (
-      <div>
-        <Graph
-          {...this.props}
-          onUpdateValues={this._setCaptions} />
-        <QueryKey
-          items={this.state.captions} />
-      </div>
-    );
-  }
-}
-GraphPanel.propTypes = {
-  options: React.PropTypes.object.isRequired,
-  highlightTime: React.PropTypes.object.isRequired,
-  onHoverTime: React.PropTypes.func.isRequired,
-  onSelectTime: React.PropTypes.func.isRequired,
-};
-
 // Copied from Plottable.Axes.Time's default configuration, changing clocks from 12h with 24h.
 var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
   [
@@ -169,7 +137,7 @@ function NewHighlightPlot(tScale, yScale, cScale) {
   return plot;
 }
 
-class Graph extends React.Component {
+export default class Graph extends React.Component {
   constructor(props) {
     super(props);
     this.id = _.uniqueId('graph_');

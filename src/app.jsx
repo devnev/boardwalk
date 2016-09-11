@@ -6,10 +6,11 @@ import $ from 'jquery';
 import Plottable from 'plottable';
 import RangePicker from './range_controls.jsx';
 import FilterSelectControl from './filter_controls.jsx';
-import GraphPanel from './graph.jsx';
+import Graph from './graph.jsx';
 import Section from './section.jsx';
 import { SetSubState } from './utils.jsx';
 import { HashURI, TimeScale } from './dispatch.jsx';
+import { PanelWithKey } from './query_key.jsx';
 import ConsoleNav from './nav.jsx';
 
 export default class App extends React.Component {
@@ -96,12 +97,14 @@ class Console extends React.Component {
         {this.props.items.map(function(item, index) {
           if (item.graph) {
             return (
-              <GraphPanel 
-                key={index}
-                options={item.graph}
-                onHoverTime={this._setHoverTime}
-                onSelectTime={this._setSelectedTime}
-                highlightTime={targetTime} />
+              <PanelWithKey
+                key={index} >
+                <Graph
+                  options={item.graph}
+                  onHoverTime={this._setHoverTime}
+                  onSelectTime={this._setSelectedTime}
+                  highlightTime={targetTime} />
+              </PanelWithKey>
             );
           } else if (item.section) {
             return (

@@ -71,3 +71,29 @@ export class QueryKey extends React.Component {
 QueryKey.propTypes = {
   items: React.PropTypes.array.isRequired,
 };
+
+export class PanelWithKey extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      captions: [],
+    };
+    this._setCaptions = this._setCaptions.bind(this);
+  }
+  _setCaptions(captions) {
+    if (!_.isEqual(this.state.captions, captions)) {
+      this.setState({captions: captions});
+    }
+  }
+  render() {
+    return (
+      <div>
+        {React.Children.map(this.props.children, function(child) {
+          return React.cloneElement(child, {onUpdateValues: this._setCaptions});
+        }.bind(this))}
+        <QueryKey
+          items={this.state.captions} />
+      </div>
+    );
+  }
+}
