@@ -8,6 +8,19 @@ import { Filter, SetFilter } from './dispatch.jsx';
 import { SetSubState } from './utils.jsx';
 
 export default class FilterSelectControl extends React.Component {
+  constructor(props) {
+    super(props);
+    this._update = this._update.bind(this);
+  }
+  componentWillMount() {
+    Filter.onUpdate(this._update);
+  }
+  componentWillUnmount() {
+    Filter.offUpdate(this._update);
+  }
+  _update() {
+    this.setState(this.state);
+  }
   render() {
     var selectorLabels = this.props.selectors.map(function(s) { return s.label; });
     var unknown = _.difference(_.keys(Filter.filter()), selectorLabels);
