@@ -5,7 +5,7 @@ import _ from 'underscore';
 import React from 'react';
 import { SetupGraph } from './base_graph.jsx';
 import { TimeScale, Filter } from './dispatch.jsx';
-import QuerySet from './range_query.jsx';
+import { QuerySet } from './range_query.jsx';
 
 export default class SelectGraph extends React.Component {
   constructor(props) {

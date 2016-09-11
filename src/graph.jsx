@@ -3,7 +3,7 @@
 
 import _ from 'underscore';
 import React from 'react';
-import QuerySet from './range_query.jsx';
+import { QuerySet } from './range_query.jsx';
 import { TimeScale, Filter } from './dispatch.jsx';
 import { SetupGraph } from './base_graph.jsx';
 

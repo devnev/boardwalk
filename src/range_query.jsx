@@ -64,7 +64,7 @@ class QueryStore {
 }
 var store = new QueryStore();
 
-export default class QuerySet {
+export class QuerySet {
   constructor(queries, onData) {
     this.queries = queries.map(function(query, index) {
       return new RangeQuery(query, this._onQueryData.bind(this, index));
@@ -87,7 +87,7 @@ export default class QuerySet {
   }
 }
 
-class RangeQuery {
+export class RangeQuery {
   constructor(options, onData) {
     this.options = options;
     this.onData = onData.bind(undefined);
