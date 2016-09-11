@@ -100,3 +100,9 @@ export function SetSubState(component, values) {
     component.setState(state);
   }
 }
+
+export function TimeForPoint(tAxis, tScale, point) {
+  var position = point.x / tAxis.width();
+  var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
+  return new Date(tScale.domainMin().getTime() + timeWidth * position);
+}

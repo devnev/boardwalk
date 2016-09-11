@@ -7,6 +7,7 @@ import Plottable from 'plottable';
 import QuerySet from './range_query.jsx';
 import { QueryCaptions, QueryKey } from './query_key.jsx';
 import { ColorScale, TimeScale, Filter } from './dispatch.jsx';
+import { TimeForPoint } from './utils.jsx';
 
 // Copied from Plottable.Axes.Time's default configuration, changing clocks from 12h with 24h.
 var DEFAULT_TIME_AXIS_CONFIGURATIONS = [
@@ -220,7 +221,7 @@ export default class Graph extends React.Component {
     panZoom.attachTo(panel);
     var pointer = new Plottable.Interactions.Pointer();
     pointer.onPointerMove(function(point) {
-      this.props.onHoverTime(this._timeForPoint(tAxis, point));
+      this.props.onHoverTime(TimeForPoint(tAxis, TimeScale.scale(), point));
     }.bind(this));
     pointer.onPointerExit(function() {
       this.props.onHoverTime();
@@ -228,7 +229,7 @@ export default class Graph extends React.Component {
     pointer.attachTo(panel);
     var click = new Plottable.Interactions.DoubleClick();
     click.onDoubleClick(function(point) {
-      this.props.onSelectTime(this._timeForPoint(tAxis, point));
+      this.props.onSelectTime(TimeForPoint(tAxis, TimeScale.scale(), point));
     }.bind(this));
     click.attachTo(panel);
 
