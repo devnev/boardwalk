@@ -82,8 +82,8 @@ export default class Graph extends React.Component {
       this.plot.datasets(datasets);
       this.captions.setSources(datasets);
     }.bind(this));
-    this._updateData();
-    this._updateHighlight(this.props.highlightTime);
+    _.defer(() => this._updateData());
+    _.defer(() => this._updateHighlight(this.props.highlightTime));
   }
 }
 Graph.propTypes = {
