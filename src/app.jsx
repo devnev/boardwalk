@@ -84,6 +84,7 @@ class Console extends React.Component {
     };
     this._setHoverTime = this._setHoverTime.bind(this);
     this._setSelectedTime = this._setSelectedTime.bind(this);
+    this._onSelectMetric = this._onSelectMetric.bind(this);
   }
   componentWillReceiveProps(nextProps) {  // eslint-disable-line no-unused-vars
     SetSubState(this, {expanded: {graphIndex: null, queryIndex: null}});
@@ -99,20 +100,21 @@ class Console extends React.Component {
     return (
       <div>
         {this.props.items.map(function(item, index) {
+          var onSelect;
           if (item.graph) {
-            var expandedGraph = this._getActiveExpandedQuery(item.graph, index);
-            if (expandedGraph) {
-              return expandedGraph;
+            var expand = {};
+            if (index === this.state.expanded.graphIndex) {
+              expand = {index: this.state.expanded.queryIndex};
             }
             return (
-              <PanelWithKey
-                key={index}>
-                <Graph
-                  options={item.graph}
-                  onHoverTime={this._setHoverTime}
-                  onSelectTime={this._setSelectedTime.bind(null, index)}
-                  highlightTime={targetTime} />
-              </PanelWithKey>
+              <GraphPanel
+                key={index}
+                graph={item.graph}
+                expand={expand}
+                onSelectMetric={this._onSelectMetric.bind(null, index)}
+                onHoverTime={this._setHoverTime}
+                onSelectTime={this._setSelectedTime.bind(null, index)}
+                highlightTime={targetTime} />
             );
           } else if (item.section) {
             return (
@@ -135,36 +137,53 @@ class Console extends React.Component {
       SetSubState(this, {expanded: {graphIndex: graphIndex, queryIndex: queryIndex}});
     }
   }
-  _getActiveExpandedQuery(graph, index) {
-    var expanded = this.state.expanded;
-    if (index !== expanded.graphIndex) {
-      return;
-    }
-    var expandedQuery = graph.queries[expanded.queryIndex];
-    if (!StrictMatchFilter(expandedQuery.match, Filter.filter())) {
-      return;
-    }
-    var options = expandedQuery.expanded;
-    if (!options || !options.query) {
-      return;
-    }
-    options.match = expandedQuery.match;
-    var onSelect = function(dataset) {
-      var metric = dataset.metadata().metric;
-      _.each(options.labels, function(filterName, labelName) {
-        SetFilter(filterName, _get(metric, labelName));
-      });
-      SetSubState(this, {expanded: {graphIndex: null, queryIndex: null}}); 
-    }.bind(this);
-    return (
-      <PanelWithKey key={index}>
-        <SelectorGraph
-          query={expandedQuery.expanded}
-          onSelect={onSelect} />
-      </PanelWithKey>
-    );
+  _onSelectMetric(graphIndex, labelMap, dataset) {
+    var metric = dataset.metadata().metric;
+    _.each(labelMap, function(selectorName, labelName) {
+      SetFilter(selectorName, _get(metric, labelName));
+    });
+    SetSubState(this, {expanded: {graphIndex: null, queryIndex: null}}); 
   }
 }
 Console.propTypes = {
   items: React.PropTypes.array.isRequired,
 };
+
+class GraphPanel extends React.Component {
+  _expandedQuery() {
+    var query = this.props.graph.queries[this.props.expand.index];
+    if (!query || !query.expanded) {
+      return;
+    }
+    var options = query.expanded;
+    options.match = query.match;
+    return options;
+  }
+  render() {
+    var expanded = this._expandedQuery();
+    if (expanded) {
+      var graph = (
+        <SelectorGraph
+          query={expanded}
+          onSelect={this.props.onSelectMetric.bind(null, expanded.labels)} />
+      );
+    } else {
+      var graph = (
+        <Graph
+          options={this.props.graph}
+          onHoverTime={this.props.onHoverTime}
+          onSelectTime={this.props.onSelectTime}
+          highlightTime={this.props.highlightTime} />
+      );
+    }
+    return <PanelWithKey>{graph}</PanelWithKey>
+  }
+}
+GraphPanel.propTypes = {
+  graph: React.PropTypes.object,
+  expand: React.PropTypes.object,
+  onSelectMetric: React.PropTypes.func.isRequired,
+  onHoverTime: React.PropTypes.func.isRequired,
+  onSelectTime: React.PropTypes.func.isRequired,
+  highlightTime: React.PropTypes.object.isRequired,
+}
