@@ -4,7 +4,7 @@
 import React from 'react';  // eslint-disable-line no-unused-vars
 import ReactDOM from 'react-dom';
 import { Dispatcher } from './dispatch.jsx';
-import App from './app.jsx';
+import Dashboard from './dashboard.jsx';
 
 Dispatcher.enable();
-ReactDOM.render(<App />, document.getElementById('boardwalk-app'));
+ReactDOM.render(<Dashboard />, document.getElementById('boardwalk-app'));

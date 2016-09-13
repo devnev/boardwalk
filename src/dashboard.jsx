@@ -13,7 +13,7 @@ import { PanelWithKey } from './query_key.jsx';
 import ConsoleNav from './nav.jsx';
 import SelectorGraph from './selector_graph.jsx';
 
-export default class App extends React.Component {
+export default class Dashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -65,7 +65,7 @@ export default class App extends React.Component {
     );
   }
 }
-App.propTypes = {};
+Dashboard.propTypes = {};
 
 class Console extends React.Component {
   constructor(props) {
