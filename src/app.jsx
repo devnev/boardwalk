@@ -14,10 +14,6 @@ import { PanelWithKey } from './query_key.jsx';
 import ConsoleNav from './nav.jsx';
 import SelectorGraph from './selector_graph.jsx';
 
-function _get(obj, key, def) {
-  return _.has(obj, key) ? obj[key] : def;
-}
-
 export default class App extends React.Component {
   constructor(props) {
     super(props);
@@ -84,10 +80,19 @@ class Console extends React.Component {
     };
     this._setHoverTime = this._setHoverTime.bind(this);
     this._setSelectedTime = this._setSelectedTime.bind(this);
-    this._onSelectMetric = this._onSelectMetric.bind(this);
+    this._clearSelect = this._clearSelect.bind(this);
+  }
+  _clearSelect() {
+    SetSubState(this, {expanded: {graphIndex: null, queryIndex: null}});
+  }
+  componentDidMount() {
+    Filter.onUpdate(this._clearSelect);
+  }
+  componentWillUnmount() {
+    Filter.offUpdate(this._clearSelect);
   }
   componentWillReceiveProps(nextProps) {  // eslint-disable-line no-unused-vars
-    SetSubState(this, {expanded: {graphIndex: null, queryIndex: null}});
+    this._clearSelect();
   }
   render() {
     var targetTime = this.state.selectedTime;
@@ -111,7 +116,6 @@ class Console extends React.Component {
                 key={index}
                 graph={item.graph}
                 expand={expand}
-                onSelectMetric={this._onSelectMetric.bind(null, index)}
                 onHoverTime={this._setHoverTime}
                 onSelectTime={this._setSelectedTime.bind(null, index)}
                 highlightTime={targetTime} />
@@ -137,13 +141,6 @@ class Console extends React.Component {
       SetSubState(this, {expanded: {graphIndex: graphIndex, queryIndex: queryIndex}});
     }
   }
-  _onSelectMetric(graphIndex, labelMap, dataset) {
-    var metric = dataset.metadata().metric;
-    _.each(labelMap, function(selectorName, labelName) {
-      SetFilter(selectorName, _get(metric, labelName));
-    });
-    SetSubState(this, {expanded: {graphIndex: null, queryIndex: null}}); 
-  }
 }
 Console.propTypes = {
   items: React.PropTypes.array.isRequired,
@@ -164,8 +161,7 @@ class GraphPanel extends React.Component {
     if (expanded) {
       var graph = (
         <SelectorGraph
-          query={expanded}
-          onSelect={this.props.onSelectMetric.bind(null, expanded.labels)} />
+          query={expanded} />
       );
     } else {
       var graph = (
@@ -182,7 +178,6 @@ class GraphPanel extends React.Component {
 GraphPanel.propTypes = {
   graph: React.PropTypes.object,
   expand: React.PropTypes.object,
-  onSelectMetric: React.PropTypes.func.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
   onSelectTime: React.PropTypes.func.isRequired,
   highlightTime: React.PropTypes.object.isRequired,

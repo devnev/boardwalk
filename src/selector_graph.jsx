@@ -4,8 +4,12 @@
 import _ from 'underscore';
 import React from 'react';
 import { SetupGraph } from './base_graph.jsx';
-import { TimeScale, Filter } from './dispatch.jsx';
+import { TimeScale, Filter, SetFilter } from './dispatch.jsx';
 import { QuerySet } from './range_query.jsx';
+
+function _get(obj, key, def) {
+  return _.has(obj, key) ? obj[key] : def;
+}
 
 export default class SelectGraph extends React.Component {
   constructor(props) {
@@ -52,11 +56,13 @@ export default class SelectGraph extends React.Component {
     this.components.captions.target(time);
   }
   _selected(time, point, nearest) {
-    this.props.onSelect(nearest.dataset);
+    var metric = nearest.dataset.metadata().metric;
+    _.each(this.props.query.labels, function(selectorName, labelName) {
+      SetFilter(selectorName, _get(metric, labelName));
+    });
   }
 }
 SelectGraph.PropTypes = {
   query: React.PropTypes.string.isRequired,
-  onSelect: React.PropTypes.func.isRequired,
   onUpdateValues: React.PropTypes.func.isRequired,
 };
