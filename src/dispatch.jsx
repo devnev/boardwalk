@@ -68,6 +68,38 @@ class Dispatcher {
 }
 var dispatcher = new Dispatcher();
 
+export var ExpandedMetric = {
+  console: null,
+  graphIndex: null,
+  queryIndex: null,
+  metricLabels: null,
+  _callbacks: new Plottable.Utils.CallbackSet(),
+  onUpdate: function onUpdate(callback) {
+    this._callbacks.add(callback);
+  },
+  offUpdate: function offUpdate(callback) {
+    this._callbacks.delete(callback);
+  },
+};
+export function ExpandMetric(console, graphIndex, queryIndex, metricLabels) {
+  _.assign(ExpandedMetric, {
+    console: console,
+    graphIndex: graphIndex,
+    queryIndex: queryIndex,
+    metricLabels: metricLabels,
+  });
+  ExpandedMetric._callbacks.callCallbacks(ExpandedMetric);
+}
+export function CollapseExpansion() {
+  _.assign(ExpandedMetric, {
+    console: null,
+    graphIndex: null,
+    queryIndex: null,
+    metricLabels: null,
+  });
+  ExpandedMetric._callbacks.callCallbacks(ExpandedMetric);
+}
+
 export var ColorScale = new Plottable.Scales.Color();
 export { dispatcher as Dispatcher };
 export { hashURI as HashURI };
@@ -86,4 +118,5 @@ export function SetFilter(name, value) {
   newParams[filterPrefix+name] = (value ? value : null);
   var uri = hashURI.formatWith(newParams);
   window.location.hash = '#' + uri;
+  CollapseExpansion();
 }

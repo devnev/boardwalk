@@ -20,6 +20,7 @@ export default class Graph extends React.Component {
     // binds
     this._redraw = this._redraw.bind(this);
     this._onParamsUpdate = _.debounce(this._onParamsUpdate.bind(this), 500);
+    this._onSelect = this._onSelect.bind(this);
   }
   componentDidMount() {
     window.addEventListener("resize", this._redraw);
@@ -66,8 +67,12 @@ export default class Graph extends React.Component {
     this.guideline.value(targetTime);
     this.captions.target(targetTime);
   }
+  _onSelect(time, point, nearest) {
+    var metadata = nearest.dataset.metadata();
+    this.props.expandMetric(metadata.queryIndex, metadata.metric);
+  }
   _setup() {
-    var components = SetupGraph(this.props.onHoverTime, this.props.onSelectTime);
+    var components = SetupGraph(this.props.onHoverTime, this._onSelect);
     this.guideline = components.guideline;
     this.plot = components.dataplot;
     this.highlight = components.highlight;
@@ -90,5 +95,5 @@ Graph.propTypes = {
   options: React.PropTypes.object.isRequired,
   highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
-  onSelectTime: React.PropTypes.func.isRequired,
+  expandMetric: React.PropTypes.func.isRequired,
 };

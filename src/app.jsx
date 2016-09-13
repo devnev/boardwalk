@@ -1,15 +1,14 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
-import _ from 'underscore';
 import React from 'react';
 import $ from 'jquery';
 import RangePicker from './range_controls.jsx';
 import FilterSelectControl from './filter_controls.jsx';
 import Graph from './graph.jsx';
 import Section from './section.jsx';
-import { SetSubState, StrictMatchFilter } from './utils.jsx';
-import { HashURI, TimeScale, Filter, SetFilter } from './dispatch.jsx';
+import { SetSubState } from './utils.jsx';
+import { HashURI, TimeScale, ExpandedMetric, ExpandMetric } from './dispatch.jsx';
 import { PanelWithKey } from './query_key.jsx';
 import ConsoleNav from './nav.jsx';
 import SelectorGraph from './selector_graph.jsx';
@@ -60,7 +59,8 @@ export default class App extends React.Component {
           time={Math.floor(TimeScale.range().end.getTime()/1000)} />
         <Console
           key={this.state.console}
-          items={console.contents} />
+          items={console.contents}
+          expandMetric={ExpandMetric.bind(null, this.state.console)} />
       </div>
     );
   }
@@ -72,52 +72,39 @@ class Console extends React.Component {
     super(props);
     this.state = {
       hoveredTime: null,
-      selectedTime: null,
-      expanded: {
-        graphIndex: null,
-        queryIndex: null,
-      },
     };
     this._setHoverTime = this._setHoverTime.bind(this);
-    this._setSelectedTime = this._setSelectedTime.bind(this);
-    this._clearSelect = this._clearSelect.bind(this);
+    this._forceUpdate = this._forceUpdate.bind(this);
   }
-  _clearSelect() {
-    SetSubState(this, {expanded: {graphIndex: null, queryIndex: null}});
+  _forceUpdate() {
+    this.forceUpdate();
   }
   componentDidMount() {
-    Filter.onUpdate(this._clearSelect);
+    ExpandedMetric.onUpdate(this._forceUpdate);
   }
   componentWillUnmount() {
-    Filter.offUpdate(this._clearSelect);
-  }
-  componentWillReceiveProps(nextProps) {  // eslint-disable-line no-unused-vars
-    this._clearSelect();
+    ExpandedMetric.offUpdate(this._forceUpdate);
   }
   render() {
-    var targetTime = this.state.selectedTime;
-    if (!targetTime) {
-      targetTime = this.state.hoveredTime;
-    }
+    var targetTime = this.state.hoveredTime;
     if (!targetTime) {
       targetTime = TimeScale.scale().domainMax();
     }
     return (
       <div>
         {this.props.items.map(function(item, index) {
-          var onSelect;
+          var expand = {};
+          if (index === ExpandedMetric.graphIndex) {
+            expand = ExpandedMetric;
+          }
           if (item.graph) {
-            var expand = {};
-            if (index === this.state.expanded.graphIndex) {
-              expand = {index: this.state.expanded.queryIndex};
-            }
             return (
               <GraphPanel
                 key={index}
                 graph={item.graph}
                 expand={expand}
                 onHoverTime={this._setHoverTime}
-                onSelectTime={this._setSelectedTime.bind(null, index)}
+                expandMetric={this.props.expandMetric.bind(null, index)}
                 highlightTime={targetTime} />
             );
           } else if (item.section) {
@@ -135,20 +122,15 @@ class Console extends React.Component {
   _setHoverTime(hoveredTime) {
     SetSubState(this, {hoveredTime: hoveredTime});
   }
-  _setSelectedTime(graphIndex, selectedTime, point, nearest) {
-    if (nearest) {
-      var queryIndex = nearest.dataset.metadata().queryIndex;
-      SetSubState(this, {expanded: {graphIndex: graphIndex, queryIndex: queryIndex}});
-    }
-  }
 }
 Console.propTypes = {
   items: React.PropTypes.array.isRequired,
+  expandMetric: React.PropTypes.func.isRequired,
 };
 
 class GraphPanel extends React.Component {
   _expandedQuery() {
-    var query = this.props.graph.queries[this.props.expand.index];
+    var query = this.props.graph.queries[this.props.expand.queryIndex];
     if (!query || !query.expanded) {
       return;
     }
@@ -158,27 +140,28 @@ class GraphPanel extends React.Component {
   }
   render() {
     var expanded = this._expandedQuery();
+    var graph;
     if (expanded) {
-      var graph = (
+      graph = (
         <SelectorGraph
           query={expanded} />
       );
     } else {
-      var graph = (
+      graph = (
         <Graph
           options={this.props.graph}
           onHoverTime={this.props.onHoverTime}
-          onSelectTime={this.props.onSelectTime}
+          expandMetric={this.props.expandMetric}
           highlightTime={this.props.highlightTime} />
       );
     }
-    return <PanelWithKey>{graph}</PanelWithKey>
+    return <PanelWithKey>{graph}</PanelWithKey>;
   }
 }
 GraphPanel.propTypes = {
   graph: React.PropTypes.object,
   expand: React.PropTypes.object,
   onHoverTime: React.PropTypes.func.isRequired,
-  onSelectTime: React.PropTypes.func.isRequired,
+  expandMetric: React.PropTypes.func.isRequired,
   highlightTime: React.PropTypes.object.isRequired,
-}
+};
