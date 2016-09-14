@@ -4,7 +4,6 @@
 import _ from 'underscore';
 import React from 'react';
 import Plottable from 'plottable';
-import { ColorScale } from './dispatch.jsx';
 
 export class QueryCaptions {
   constructor() {
@@ -57,7 +56,7 @@ export class QueryKey extends React.Component {
         {this.props.items.map(function(item, index) {
           var caption = item.caption;
           var value = item.value;
-          var colorStyle = {color: ColorScale.scale(caption)};
+          var colorStyle = {color: this.context.colorScale.scale(caption)};
           return (<li key={caption+index}>
             <span style={colorStyle}>&#x25cf;</span>
             <span>{caption}</span>
@@ -70,6 +69,9 @@ export class QueryKey extends React.Component {
 }
 QueryKey.propTypes = {
   items: React.PropTypes.array.isRequired,
+};
+QueryKey.contextTypes = {
+  colorScale: React.PropTypes.object.isRequired,
 };
 
 export class PanelWithKey extends React.Component {

@@ -1,9 +1,9 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
+import { connect } from 'react-redux';
 import React from 'react';
 import moment from 'moment';
-import { PickDuration, PickEnd, TimeScale } from './dispatch.jsx';
 
 function ParseDuration(durationString) {
   if (!durationString) {
@@ -50,6 +50,9 @@ function FormatDuration(seconds) {
   return res;
 }
 
+const StrSteps = ['10s', '30s', '1m', '5m', '15m', '30m', '1h', '3h', '6h', '12h', '1d', '3d', '1w', '2w', '4w', '12w', '53w'];
+const Steps = StrSteps.map(ParseDuration);
+
 export default class RangePicker extends React.Component {
   render() {
     return <div><DurationPicker /><TimePicker /></div>;
@@ -57,49 +60,35 @@ export default class RangePicker extends React.Component {
 }
 RangePicker.propTypes = {};
 
-class DurationPicker extends React.Component {
+class _DurationPicker extends React.Component {
   constructor(props) {
     super(props);
-    var m = 60;
-    var h = m*60;
-    var d = h*24;
-    var w = 7*d;
-    this.steps = [10, 30, m, 5*m, 15*m, 30*m, h, 3*h, 6*h, 12*h, d, 3*d, w, 2*w, 4*w, 12*w, 53*w];
     this.state = {
-      inputValue: FormatDuration(TimeScale.range().duration),
+      inputValue: FormatDuration(this.props.duration),
       dirty: false
     };
     this._onIncreaseDuration = this._onIncreaseDuration.bind(this);
     this._onDecreaseDuration = this._onDecreaseDuration.bind(this);
     this._onFormSubmit = this._onFormSubmit.bind(this);
     this._onInputChange = this._onInputChange.bind(this);
-    this._updateState = this._updateState.bind(this);
   }
-  componentWillMount() {
-    TimeScale.onUpdate(this._updateState);
-  }
-  componentWillUnmount() {
-    TimeScale.offUpdate(this._updateState);
-  }
-  _updateState() {
-    var nextDuration = FormatDuration(TimeScale.range().duration);
-    if (nextDuration != this.state.inputValue || this.state.dirty) {
-      this.setState({ inputValue: nextDuration, dirty: false });
-    }
+  willReceiveProps(nextProps) {
+    var nextDuration = FormatDuration(nextProps.duration);
+    this.setState({ inputValue: nextDuration, dirty: false });
   }
   _onIncreaseDuration() {
-    for (var i = 0; i < this.steps.length; i++) {
-      if (this.steps[i] > TimeScale.range().duration) {
-        PickDuration(this.steps[i]);
+    for (var i = 0; i < Steps.length; i++) {
+      if (Steps[i] > this.props.duration) {
+        this.props.pickDuration(Steps[i]);
         return;
       }
     }
-    PickDuration(TimeScale.range().duration * 2);
+    this.props.pickDuration(this.props.duration * 2);
   }
   _onDecreaseDuration() {
-    for (var i = this.steps.length; i > 0; i--) {
-      if (this.steps[i-1] < TimeScale.range().duration) {
-        PickDuration(this.steps[i-1]);
+    for (var i = Steps.length; i > 0; i--) {
+      if (Steps[i-1] < this.props.duration) {
+        this.props.pickDuration(Steps[i-1]);
         return;
       }
     }
@@ -108,7 +97,7 @@ class DurationPicker extends React.Component {
     event.preventDefault();
     var duration = ParseDuration(this.state.inputValue);
     if (duration != 0) {
-      PickDuration(duration);
+      this.props.pickDuration(duration);
     }
   }
   _onInputChange(event) {
@@ -124,67 +113,91 @@ class DurationPicker extends React.Component {
     );
   }
 }
-DurationPicker.propTypes = {};
+_DurationPicker.propTypes = {
+  duration: React.PropTypes.number.isRequired,
+  pickDuration: React.PropTypes.func.isRequired,
+};
+const DurationPicker = connect(
+  (state) => ({
+    duration: state.range.duration,
+  }),
+  (dispatch) => ({
+    pickDuration: (duration) => dispatch({
+      type: 'PICK_DURATION',
+      duration: duration,
+    }),
+  })
+)(_DurationPicker);
 
-class TimePicker extends React.Component {
+const timeFormat = "YYYY-MM-DD HH:mm:ssZZ";
+
+class _TimePicker extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      inputValue: moment(TimeScale.range().end).format("YYYY-MM-DD HH:mm:ssZZ"),
+      inputValue: moment(this.props.end).format(timeFormat),
       dirty: false,
     };
     this._onInputChange = this._onInputChange.bind(this);
-    this._onPickNow = this._onPickNow.bind(this);
     this._onStepBack = this._onStepBack.bind(this);
     this._onStepForward = this._onStepForward.bind(this);
     this._onFormSubmit = this._onFormSubmit.bind(this);
-    this._updateState = this._updateState.bind(this);
   }
-  componentWillMount() {
-    TimeScale.onUpdate(this._updateState);
-  }
-  componentWillUnmount() {
-    TimeScale.offUpdate(this._updateState);
+  componentWillReceiveProps(nextProps) {
+    var nextValue = moment(nextProps.end).format(timeFormat);
+    if (nextValue != this.state.inputValue || this.state.dirty) {
+      this.setState({ inputValue: nextValue, dirty: false });
+    }
   }
   _parsedInput() {
     return moment(this.state.inputValue, moment.ISO_8601, true);
   }
-  _updateState() {
-    var nextValue = moment(TimeScale.range().end).format("YYYY-MM-DD HH:mm:ssZZ");
-    if (nextValue != this.state.inputValue || this.state.dirty) {
-      this.setState({ inputValue: nextValue, dirty: false });
-    } else {
-      this.setState(this.state);
-    }
-  }
   _onInputChange(event) {
     this.setState({inputValue: event.target.value, dirty: true});
   }
-  _onPickNow() {
-    PickEnd(new Date());
-  }
   _onStepBack() {
-    PickEnd(new Date(TimeScale.range().end.getTime() - TimeScale.range().duration*1000));
+    this.props.pickEnd(new Date(this.props.end.getTime() - this.props.step*1000));
   }
   _onStepForward() {
-    PickEnd(new Date(TimeScale.range().end.getTime() + TimeScale.range().duration*1000));
+    this.props.pickEnd(new Date(this.props.end.getTime() + this.props.step*1000));
   }
   _onFormSubmit(event) {
     event.preventDefault();
     var value = this._parsedInput();
     if (value.isValid()) {
-      PickEnd(value.toDate());
+      this.props.pickEnd(value.toDate());
     }
   }
   render() {
     return (
       <form action="" onSubmit={this._onFormSubmit}>
-        <button type="button" onClick={this._onStepBack}>-{FormatDuration(TimeScale.range().duration)}</button>
+        <button type="button" onClick={this._onStepBack}>-{FormatDuration(this.props.step)}</button>
         <input type="text" value={this.state.inputValue} onChange={this._onInputChange} className={(this._parsedInput().isValid() ? "valid" : "error") + (this.state.dirty ? " dirty" : "")}/>
-        <button type="button" onClick={this._onStepForward}>+{FormatDuration(TimeScale.range().duration)}</button>
-        <button type="button" onClick={this._onPickNow}>now</button>
+        <button type="button" onClick={this._onStepForward}>+{FormatDuration(this.props.step)}</button>
+        <button type="button" onClick={this.props.pickNow}>now</button>
       </form>
     );
   }
 }
-TimePicker.propTypes = {};
+_TimePicker.propTypes = {
+  end: React.PropTypes.object.isRequired,
+  step: React.PropTypes.number.isRequired,
+  pickNow: React.PropTypes.func.isRequired,
+  pickEnd: React.PropTypes.func.isRequired,
+};
+const TimePicker = connect(
+  (state) => ({
+    end: state.range.end,
+    step: state.range.duration,
+  }),
+  (dispatch) => ({
+    pickNow: () => dispatch({
+      type: 'PICK_END',
+      end: new Date(),
+    }),
+    pickEnd: (end) => dispatch({
+      type: 'PICK_END',
+      end: end,
+    }),
+  })
+)(_TimePicker);

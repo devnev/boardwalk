@@ -3,8 +3,14 @@
 
 import React from 'react';  // eslint-disable-line no-unused-vars
 import ReactDOM from 'react-dom';
-import { Dispatcher } from './dispatch.jsx';
+import { Provider } from 'react-redux';
+import { syncHistoryWithStore } from 'react-router-redux';
+import { hashHistory } from 'react-router';
 import Dashboard from './dashboard.jsx';
+import { store } from './reducers.js';
+import { syncScaleWithStore } from './time_scale.jsx';
 
-Dispatcher.enable();
-ReactDOM.render(<Dashboard />, document.getElementById('boardwalk-app'));
+syncHistoryWithStore(hashHistory, store);
+syncScaleWithStore(store);
+
+ReactDOM.render(<Provider store={store}><Dashboard /></Provider>, document.getElementById('boardwalk-app'));

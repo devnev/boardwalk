@@ -1,9 +1,9 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
+import { connect } from 'react-redux';
 import React from 'react';
 import { FormatTemplate, MatchFilter } from './utils.jsx';
-import { Filter } from './dispatch.jsx';
 
 export default class Section extends React.Component {
   render() {
@@ -35,32 +35,28 @@ LinksList.propTypes = {
   links: React.PropTypes.array.isRequired,
 };
 
-class Link extends React.Component {
+class _Link extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
-    this._update = this._update.bind(this);
-  }
-  componentWillMount() {
-    Filter.onUpdate(this._update);
-  }
-  componentWillUnmount() {
-    Filter.offUpdate(this._update);
-  }
-  _update() {
-    this.setState({});
   }
   render() {
-    if (!MatchFilter(this.props.match, Filter.filter())) {
+    if (!MatchFilter(this.props.match, this.props.filter)) {
       return false;
     }
-    var url = FormatTemplate(this.props.url, Filter.filter());
-    var text = FormatTemplate(this.props.text, Filter.filter());
+    var url = FormatTemplate(this.props.url, this.props.filter);
+    var text = FormatTemplate(this.props.text, this.props.filter);
     return <li><a href={url}>{text}</a></li>;
   }
 }
-Link.propTypes = {
+_Link.propTypes = {
   match: React.PropTypes.object,
   url: React.PropTypes.string.isRequired,
   text: React.PropTypes.string.isRequired,
+  filter: React.PropTypes.object.isRequired,
 };
+const Link = connect(
+  (state) => ({
+    filter: state.filter,
+  })
+)(_Link);

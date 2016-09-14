@@ -1,29 +1,19 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
+import { connect } from 'react-redux';
 import React from 'react';
 import _ from 'underscore';
 import QuerySet from './selector_query.jsx';
-import { Filter, SetFilter } from './dispatch.jsx';
-import { SetSubState } from './utils.jsx';
 
-export default class FilterSelectControl extends React.Component {
-  constructor(props) {
-    super(props);
-    this._update = this._update.bind(this);
-  }
-  componentWillMount() {
-    Filter.onUpdate(this._update);
-  }
-  componentWillUnmount() {
-    Filter.offUpdate(this._update);
-  }
-  _update() {
-    this.setState(this.state);
-  }
+function _get(obj, key, def) {
+  return _.has(obj, key) ? obj[key] : def;
+}
+
+class _FilterSelectControl extends React.Component {
   render() {
     var selectorLabels = this.props.selectors.map(function(s) { return s.label; });
-    var unknown = _.difference(_.keys(Filter.filter()), selectorLabels);
+    var unknown = _.difference(_.keys(this.props.filter), selectorLabels);
     return (
       <ul>
         {this.props.selectors.map(function(selector) {
@@ -32,17 +22,17 @@ export default class FilterSelectControl extends React.Component {
               <span>{selector.label}</span>
               <FilterSelector
                 queries={selector.queries || []}
-                time={this.props.time}
                 label={selector.label}
                 options={selector.options} />
             </li>
           );
         }.bind(this))}
         {unknown.map(function(label) {
+          const clear = this.props.onRemoveFilter.bind(null, label);
           return (
             <li key={label}>
               <span>{label}</span>
-              <button type="button" onClick={SetFilter.bind(undefined, label, "")}>X</button>
+              <button type="button" onClick={clear}>X</button>
             </li>
           );
         }.bind(this))}
@@ -50,29 +40,37 @@ export default class FilterSelectControl extends React.Component {
     );
   }
 }
-FilterSelectControl.propTypes = {
+_FilterSelectControl.propTypes = {
   selectors: React.PropTypes.array.isRequired,
-  time: React.PropTypes.number.isRequired,
+  filter: React.PropTypes.object.isRequired,
+  onRemoveFilter: React.PropTypes.func.isRequired,
 };
+export const FilterSelectControl = connect(
+  (state) => ({
+    selectors: state.config.consoles[state.console].selectors,
+    filter: state.filter,
+  }),
+  (dispatch) => ({
+    onRemoveFilter: (name) => dispatch({
+      type: 'SET_FILTERS',
+      filters: {[name]: null},
+    }),
+  }),
+  undefined,
+  {pure: false}
+)(_FilterSelectControl);
+export { FilterSelectControl as default };
 
-class FilterSelector extends React.Component {
+class _FilterSelector extends React.Component {
   constructor(props) {
     super(props);
     this.queries = null;
     this.state = {
-      value: Filter.value(props.label),
       values: [],
     };
-    this._onSelect = this._onSelect.bind(this);
-    this._updateData = this._updateData.bind(this);
-    this._updateValue = this._updateValue.bind(this);
   }
-  componentWillMount() {
+  componentDidMount() {
     this._setupQueries(this.props);
-    Filter.onUpdate(this._updateValue);
-  }
-  componentWillUnmount() {
-    Filter.offUpdate(this._updateValue);
   }
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.queries, nextProps.queries)) {
@@ -81,29 +79,27 @@ class FilterSelector extends React.Component {
   }
   _setupQueries(props) {
     this.queries = new QuerySet(props.queries, function(values) {
-      SetSubState(this, {values: values});
+      this.setState({values: values});
     }.bind(this));
-  }
-  _updateValue() {
-    SetSubState(this, {value: Filter.value(this.props.label)});
+    _.defer(() => this._updateData());
   }
   _updateData() {
-    this.queries.updateData(this.props.time, Filter.filter());
-  }
-  _onSelect(event) {
-    SetFilter(this.props.label, event.target.value);
+    this.queries.updateData(this.props.time, this.props.filter);
   }
   render() {
-    this._updateData();
+    const select = (event) => this.props.onSelect(this.props.label, event.target.value);
+    const value = _get(this.props.filter, this.props.label, "");
+
     var options = _.union(this.props.options, this.state.values);
-    if (!_(options).contains(this.state.value)) {
-      options = [this.state.value].concat(options);
+    if (!_(options).contains(value)) {
+      options = [value].concat(options);
     }
     if (!_(options).contains("")) {
       options = [""].concat(options);
     }
+
     return (
-      <select value={this.state.value} onChange={this._onSelect}>
+      <select value={value} onChange={select}>
         {options.map(function(option) {
           return <option key={option} value={option}>{option}</option>;
         }.bind(this))}
@@ -111,9 +107,24 @@ class FilterSelector extends React.Component {
     );
   }
 }
-FilterSelector.propTypes = {
+_FilterSelector.propTypes = {
   queries: React.PropTypes.array.isRequired,
-  time: React.PropTypes.number.isRequired,
   label: React.PropTypes.string.isRequired,
   options: React.PropTypes.array.isRequired,
+  filter: React.PropTypes.object.isRequired,
+  time: React.PropTypes.number.isRequired,
 };
+const FilterSelector = connect(
+  (state) => ({
+    time: Math.floor(state.range.end.getTime()/1000),
+    filter: state.filter,
+  }),
+  (dispatch) => ({
+    onSelect: (label, value) => dispatch({
+      type: 'SET_FILTERS',
+      filters: {[label]: value},
+    }),
+  }),
+  undefined,
+  {pure: false}
+)(_FilterSelector);

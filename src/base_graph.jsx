@@ -2,7 +2,6 @@
 // you may not use this file except in compliance with the License.
 
 import Plottable from 'plottable';
-import { ColorScale, TimeScale } from './dispatch.jsx';
 import { TimeForPoint } from './utils.jsx';
 import { QueryCaptions } from './query_key.jsx';
 
@@ -26,9 +25,9 @@ function NewHighlightPlot(tScale, yScale, cScale) {
   return plot;
 }
 
-export function SetupGraph(onHoverTime, onDoubleClick) {
+export function SetupGraph(timeScale, colorScale, onHoverTime, onDoubleClick) {
   // axes and scales
-  var tAxis = new Plottable.Axes.Time(TimeScale.scale(), "bottom");
+  var tAxis = new Plottable.Axes.Time(timeScale, "bottom");
   tAxis.axisConfigurations(DEFAULT_TIME_AXIS_CONFIGURATIONS);
   var yScale = new Plottable.Scales.Linear();
   yScale.domainMin(0);
@@ -39,20 +38,20 @@ export function SetupGraph(onHoverTime, onDoubleClick) {
   // the graph
   var guideline = new Plottable.Components.GuideLineLayer(
     Plottable.Components.GuideLineLayer.ORIENTATION_VERTICAL
-  ).scale(TimeScale.scale());
-  var plot = NewDataPlot(TimeScale.scale(), yScale, ColorScale);
-  var highlight = NewHighlightPlot(TimeScale.scale(), yScale, ColorScale);
+  ).scale(timeScale);
+  var plot = NewDataPlot(timeScale, yScale, colorScale);
+  var highlight = NewHighlightPlot(timeScale, yScale, colorScale);
   var panel = new Plottable.Components.Group([guideline, plot, highlight]);
   var graph = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
   var captions = new QueryCaptions();
   highlight.datasets([captions.nearest]);
 
   // interactions
-  var panZoom = new Plottable.Interactions.PanZoom(TimeScale.scale(), null);
+  var panZoom = new Plottable.Interactions.PanZoom(timeScale, null);
   panZoom.attachTo(panel);
   var pointer = new Plottable.Interactions.Pointer();
   pointer.onPointerMove(function(point) {
-    onHoverTime(TimeForPoint(tAxis, TimeScale.scale(), point), point);
+    onHoverTime(TimeForPoint(tAxis, timeScale, point), point);
   });
   pointer.onPointerExit(function() {
     onHoverTime();
@@ -65,7 +64,7 @@ export function SetupGraph(onHoverTime, onDoubleClick) {
     if (nearest && Plottable.Utils.Math.distanceSquared(nearest.position, point) <= selectRadius) {
       selected = nearest;
     }
-    onDoubleClick(TimeForPoint(tAxis, TimeScale.scale(), point), point, selected);
+    onDoubleClick(TimeForPoint(tAxis, timeScale, point), point, selected);
   });
   click.attachTo(panel);
 

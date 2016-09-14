@@ -1,9 +1,9 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
+import { connect } from 'react-redux';
 import React from 'react';
 import _ from 'underscore';
-import { HashURI } from './dispatch.jsx';
 
 export function ConsoleTree(consoles) {
   var root = {console: null, children: {}, path: ""};
@@ -26,21 +26,7 @@ export function ConsoleTree(consoles) {
   return root;
 }
 
-export default class ConsoleNav extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {};
-    this._update = this._update.bind(this);
-  }
-  componentDidMount() {
-    HashURI.onUpdate(this._update);
-  }
-  componentWillUnmount() {
-    HashURI.offUpdate(this._update);
-  }
-  _update() {
-    this.setState({});
-  }
+class _ConsoleNav extends React.Component {
   render() {
     var root = ConsoleTree(this.props.consoles);
     var rootNode;
@@ -55,9 +41,15 @@ export default class ConsoleNav extends React.Component {
     );
   }
 }
-ConsoleNav.propTypes = {
+_ConsoleNav.propTypes = {
   consoles: React.PropTypes.object.isRequired,
 };
+export const ConsoleNav = connect(
+  (state) => ({
+    consoles: state.config.consoles
+  })
+)(_ConsoleNav);
+export { ConsoleNav as default };
 
 class NavNodeList extends React.Component {
   render() {
@@ -91,12 +83,21 @@ NavNode.propTypes = {
   node: React.PropTypes.object.isRequired,
 };
 
-class NodeLink extends React.Component {
+class _NodeLink extends React.Component {
   render() {
-    var url = "#" + HashURI.formatWith(this.props.node.path);
-    return <a href={url}>{this.props.node.console.title}</a>;
+    return <a onClick={() => this.props.onSwitch(this.props.node.path)}>{this.props.node.console.title}</a>;
   }
 }
-NodeLink.propTypes = {
+_NodeLink.propTypes = {
   node: React.PropTypes.object.isRequired,
+  onSwitch: React.PropTypes.func.isRequired,
 };
+const NodeLink = connect(
+  () => ({}),
+  (dispatch) => ({
+    onSwitch: (console) => dispatch({
+      type: 'SELECT_CONSOLE',
+      console: console,
+    }),
+  })
+)(_NodeLink);

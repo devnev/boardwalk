@@ -1,15 +1,15 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
+import { connect } from 'react-redux';
 import _ from 'underscore';
 import React from 'react';
 import { QuerySet } from './range_query.jsx';
-import { TimeScale, Filter } from './dispatch.jsx';
 import { SetupGraph } from './base_graph.jsx';
 
-export default class Graph extends React.Component {
-  constructor(props) {
-    super(props);
+class _Graph extends React.Component {
+  constructor(props, context) {
+    super(props, context);
     this.id = _.uniqueId('graph_');
     this.guideline = null;
     this.plot = null;
@@ -19,49 +19,38 @@ export default class Graph extends React.Component {
 
     // binds
     this._redraw = this._redraw.bind(this);
-    this._onParamsUpdate = _.debounce(this._onParamsUpdate.bind(this), 500);
     this._onSelect = this._onSelect.bind(this);
+    this._setup();
+    this._updateData = _.debounce(this._updateData.bind(this), 500);
   }
   componentDidMount() {
     window.addEventListener("resize", this._redraw);
-    TimeScale.onUpdate(this._onParamsUpdate);
-    Filter.onUpdate(this._onParamsUpdate);
+    this._updateData();
   }
   componentWillUnmount() {
     window.removeEventListener("resize", this._redraw);
-    TimeScale.offUpdate(this._onParamsUpdate);
-    Filter.offUpdate(this._onParamsUpdate);
-    this.graph.destroy();
   }
   componentWillReceiveProps(nextProps) {
     if (!_.isEqual(this.props.highlightTime, nextProps.highlightTime)) {
       this._updateHighlight(nextProps.highlightTime);
     }
+    this._updateData();
   }
-  shouldComponentUpdate(props, state) {  // eslint-disable-line no-unused-vars
+  shouldComponentUpdate(props, state) {
     return !_.isEqual(this.props.options, props.options);
   }
   render() {
-    this._setup();
-    return <svg id={this.id} width="100%" height="300px" ref={(ref) => this.graph.renderTo(ref)} />;
-  }
-  _timeForPoint(tAxis, point) {
-    var position = point.x / tAxis.width();
-    var timeWidth = TimeScale.scale().domainMax().getTime() - TimeScale.scale().domainMin().getTime();
-    return new Date(TimeScale.scale().domainMin().getTime() + timeWidth * position);
+    return <svg id={this.id} width="100%" height="300px" ref={(ref) => ref ? this.graph.renderTo(ref) : this.graph.detach()} />;
   }
   _redraw() {
     if (this.graph) {
       this.graph.redraw();
     }
   }
-  _onParamsUpdate() {
-    this._updateData();
-  }
   _updateData() {
-    var start = Math.floor(TimeScale.scale().domainMin().getTime()/1000);
-    var end = Math.floor(TimeScale.scale().domainMax().getTime()/1000);
-    this.queries.updateData(start, end, Filter.filter());
+    var end = Math.floor(this.props.range.end.getTime()/1000);
+    var start = end - this.props.range.duration;
+    this.queries.updateData(start, end, this.props.filter);
   }
   _updateHighlight(targetTime) {
     this.guideline.value(targetTime);
@@ -72,7 +61,7 @@ export default class Graph extends React.Component {
     this.props.expandMetric(metadata.queryIndex, metadata.metric);
   }
   _setup() {
-    var components = SetupGraph(this.props.onHoverTime, this._onSelect);
+    var components = SetupGraph(this.context.timeScale, this.context.colorScale, this.props.onHoverTime, this._onSelect);
     this.guideline = components.guideline;
     this.plot = components.dataplot;
     this.highlight = components.highlight;
@@ -87,13 +76,32 @@ export default class Graph extends React.Component {
       this.plot.datasets(datasets);
       this.captions.setSources(datasets);
     }.bind(this));
-    _.defer(() => this._updateData());
-    _.defer(() => this._updateHighlight(this.props.highlightTime));
   }
 }
-Graph.propTypes = {
+_Graph.propTypes = {
   options: React.PropTypes.object.isRequired,
+  range: React.PropTypes.object.isRequired,
+  filter: React.PropTypes.object.isRequired,
+  expandMetric: React.PropTypes.func.isRequired,
   highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
-  expandMetric: React.PropTypes.func.isRequired,
 };
+_Graph.contextTypes = {
+  timeScale: React.PropTypes.object.isRequired,
+  colorScale: React.PropTypes.object.isRequired,
+};
+export const Graph = connect(
+  (state) => ({
+    range: state.range,
+    highlightTime: state.hover.time,
+    filter: state.filter,
+  }),
+  (dispatch) => ({
+    onHoverTime: (time, point) => dispatch({
+      type: 'HOVER',
+      time: time,
+      point: point,
+    }),
+  })
+)(_Graph);
+export { Graph as default };

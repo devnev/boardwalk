@@ -4,64 +4,58 @@
 import _ from 'underscore';
 import Plottable from 'plottable';
 
-export default class TimeScaleStore {
-  constructor() {
-    this._range = {
-      duration: 1*60*60,
-      end: new Date(),
-    };
-    this._scale = new Plottable.Scales.Time();
-    this._callbacks = new Plottable.Utils.CallbackSet();
+export const scale = new Plottable.Scales.Time();
 
-    this._setScaleFromRange = this._setScaleFromRange.bind(this);
-    this._setRangeFromScale = _.debounce(this._setRangeFromScale.bind(this), 100);
-    this._scale.onUpdate(this._setRangeFromScale);
+function scaleDomainFromRange(range) {
+  const max = range.end;
+  const min = new Date(range.end.getTime() - range.duration*1000);
+  return {min, max};
+}
 
-    this._setScaleFromRange();
-  }
-  _setScaleFromRange() {
-    var range = this._range;
-    var start = new Date(range.end.getTime() - range.duration*1000);
-    this.scale([start, range.end]);
-  }
-  _setRangeFromScale() {
-    var scale = this._scale;
-    var end = new Date(Math.round(scale.domainMax().getTime()/1000)*1000);
-    var start = new Date(Math.round(scale.domainMin().getTime()/1000)*1000);
-    var range = {
-      duration: Math.round((end.getTime() - start.getTime())/1000),
-      end: end,
-    };
-    this.range(range);
-  }
-  range(range) {
-    if (!range) {
-      return this._range;
-    } else if (!_.isEqual(range, this._range)) {
-      this._range = range;
-      this._setScaleFromRange();
+function createSetRangeAction(domain) {
+  return {
+    type: 'MODIFY_TIME_SCALE',
+    start: domain.min,
+    end: domain.max,
+  };
+}
+
+export function syncScaleWithStore(store, options = {}) {
+  const getDomain = options.scaleDomainFromRange || scaleDomainFromRange;
+  const createAction = options.createSetRangeAction || createSetRangeAction;
+  let dirty = false;
+  const unsub = store.subscribe(() => {
+    if (dirty) {
+      console.log('dirty scale');
+      return;
     }
-  }
-  scale(domain) {
-    if (!domain) {
-      return this._scale;
-    } else if (
-        domain[0].getTime() !== this._scale.domainMin().getTime() ||
-        domain[1].getTime() !== this._scale.domainMax().getTime()) {
-      this._scale.domain([domain[0], domain[1]]);
-      this._setRangeFromScale();
-      this._callbacks.callCallbacks(this);
+    const domain = getDomain(store.getState().range);
+    if (domain.min.getTime() === scale.domainMin().getTime() &&
+        domain.max.getTime() === scale.domainMax().getTime()) {
+      return;
     }
-  }
-  onUpdate(callback, immediate) {
-    this._callbacks.add(callback);
-    if (immediate) {
-      callback(this);
+    console.log('setting scale to', domain.min.getTime(), domain.max.getTime(), 'from', scale.domainMin().getTime(), scale.domainMax().getTime());
+    scale.domain([domain.min, domain.max]);
+  });
+  const dispatchScaleChange = _.debounce(() => {
+    const end = new Date(Math.round(scale.domainMax().getTime()/1000)*1000);
+    const start = new Date(Math.round(scale.domainMin().getTime()/1000)*1000);
+    console.log('setting range to', start.getTime(), end.getTime());
+    dirty = false;
+    store.dispatch(createAction({min: start, max: end}));
+  }, 500);
+  const onUpdate = () => {
+    const storeDomain = scaleDomainFromRange(store.getState().range);
+    if (storeDomain.min.getTime() === scale.domainMin().getTime() &&
+        storeDomain.max.getTime() === scale.domainMax().getTime()) {
+      return;
     }
-    return this;
-  }
-  offUpdate(callback) {
-    this._callbacks.delete(callback);
-    return this;
-  }
+    dirty = true;
+    dispatchScaleChange();
+  };
+  scale.onUpdate(onUpdate);
+  return () => {
+    unsub();
+    scale.offUpdate(onUpdate);
+  };
 }

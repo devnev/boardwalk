@@ -1,136 +1,160 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
+import { connect } from 'react-redux';
 import React from 'react';
 import $ from 'jquery';
 import RangePicker from './range_controls.jsx';
 import FilterSelectControl from './filter_controls.jsx';
 import Graph from './graph.jsx';
 import Section from './section.jsx';
-import { SetSubState } from './utils.jsx';
-import { HashURI, TimeScale, ExpandedMetric, ExpandMetric } from './dispatch.jsx';
 import { PanelWithKey } from './query_key.jsx';
 import ConsoleNav from './nav.jsx';
 import SelectorGraph from './selector_graph.jsx';
+import { ScaleProvider } from './scale_context.jsx';
 
-export default class Dashboard extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      config: null,
-      console: "/",
-    };
-    this._navigate = this._navigate.bind(this);
+class _Dashboard extends React.Component {
+  componentDidMount() {
+    this.props.onInitialize({duration: 60*60, end: new Date()});
   }
-  componentWillMount() {
-    HashURI.onUpdate(this._navigate, true);
+  render() {
+    if (!this.props.range.duration || !this.props.range.end) {
+      return false;
+    }
+    return (
+      <Loader>
+        <ConsoleNav />
+        <ConsolePage />
+      </Loader>
+    );
+  }
+}
+_Dashboard.propTypes = {
+  onInitialize: React.PropTypes.func.isRequired,
+};
+const Dashboard = connect(
+  (state) => ({
+    range: state.range,
+  }),
+  (dispatch) => ({
+    onInitialize: (range) => dispatch({
+      type: 'INITIALIZE',
+      range: range,
+    }),
+  })
+)(_Dashboard);
+export { Dashboard as default };
+
+class _Loader extends React.Component {
+  componentDidMount() {
     this.req = $.get("/config.json");
-    this.req.done(function(data) { SetSubState(this, {config: data}); }.bind(this));
+    this.req.done((data) => this.props.onConfigLoaded(data));
   }
   componentWillUnmount() {
     if (this.req) {
       this.req.abort();
     }
-    HashURI.offUpdate(this._navigate);
-  }
-  _navigate() {
-    var console = HashURI.path().replace(/\/+$/, "");
-    SetSubState(this, {console: console});
   }
   render() {
-    if (!this.state.config) {
+    if (!this.props.loaded) {
       return <p>Loading config...</p>;
     }
-    var console = this.state.config.consoles[this.state.console];
-    if (!console) {
-      console = {
-        title: "Console Not Found",
-        selectors: [],
-        contents: [],
-      };
-    }
+    return <div>{this.props.children}</div>;
+  }
+}
+_Loader.propTypes = {
+  loaded: React.PropTypes.bool.isRequired,
+  onConfigLoaded: React.PropTypes.func.isRequired,
+};
+const Loader = connect(
+  (state) => ({
+    loaded: !!state.config,
+  }),
+  (dispatch) => ({
+    onConfigLoaded: (config) => dispatch({
+      type: 'RECEIVE_CONFIG',
+      config: config,
+    }),
+    onInitialize: (range) => dispatch({
+      type: 'INITIALIZE',
+      range: range,
+    }),
+  })
+)(_Loader);
+
+class _ConsolePage extends React.Component {
+  render() {
+    const config = this.props.config;
+    const title = config ? config.title : "Console Not Found";
+    const console = config ? <Console key={this.props.console} /> : false;
     return (
       <div>
-        <ConsoleNav consoles={this.state.config.consoles} />
-        <h1>{console.title}</h1>
-        <RangePicker />
-        <FilterSelectControl
-          selectors={console.selectors}
-          time={Math.floor(TimeScale.range().end.getTime()/1000)} />
-        <Console
-          key={this.state.console}
-          items={console.contents}
-          expandMetric={ExpandMetric.bind(null, this.state.console)} />
+        <h1>{title}</h1>
+        <ScaleProvider>
+          <div>
+            <RangePicker />
+            <FilterSelectControl />
+            {console}
+          </div>
+        </ScaleProvider>
       </div>
     );
   }
 }
-Dashboard.propTypes = {};
+_ConsolePage.propTypes = {
+  console: React.PropTypes.string.isRequired,
+  config: React.PropTypes.object.isRequired,
+};
+const ConsolePage = connect(
+  (state) => ({
+    console: state.console,
+    config: state.config.consoles[state.console],
+  })
+)(_ConsolePage);
 
-class Console extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      hoveredTime: null,
-    };
-    this._setHoverTime = this._setHoverTime.bind(this);
-    this._forceUpdate = this._forceUpdate.bind(this);
-  }
-  _forceUpdate() {
-    this.forceUpdate();
-  }
-  componentDidMount() {
-    ExpandedMetric.onUpdate(this._forceUpdate);
-  }
-  componentWillUnmount() {
-    ExpandedMetric.offUpdate(this._forceUpdate);
+class _Console extends React.Component {
+  _renderItem(index) {
+    let item = this.props.contents[index];
+    if (item.graph) {
+      return (
+        <GraphPanel
+          key={index}
+          index={index}
+          graph={item.graph} />
+      );
+    } else if (item.section) {
+      return (
+        <Section
+          key={index}
+          index={index}
+          title={item.section.title}
+          links={item.section.links} />
+      );
+    }
   }
   render() {
-    var targetTime = this.state.hoveredTime;
-    if (!targetTime) {
-      targetTime = TimeScale.scale().domainMax();
-    }
     return (
       <div>
-        {this.props.items.map(function(item, index) {
-          var expand = {};
-          if (index === ExpandedMetric.graphIndex) {
-            expand = ExpandedMetric;
-          }
-          if (item.graph) {
-            return (
-              <GraphPanel
-                key={index}
-                graph={item.graph}
-                expand={expand}
-                onHoverTime={this._setHoverTime}
-                expandMetric={this.props.expandMetric.bind(null, index)}
-                highlightTime={targetTime} />
-            );
-          } else if (item.section) {
-            return (
-              <Section
-                key={index}
-                title={item.section.title}
-                links={item.section.links} />
-            );
-          }
-        }.bind(this))}
+        {this.props.contents.map((item, index) => this._renderItem(index))}
       </div>
     );
   }
-  _setHoverTime(hoveredTime) {
-    SetSubState(this, {hoveredTime: hoveredTime});
-  }
 }
-Console.propTypes = {
-  items: React.PropTypes.array.isRequired,
-  expandMetric: React.PropTypes.func.isRequired,
+_Console.propTypes = {
+  contents: React.PropTypes.array.isRequired,
 };
+const Console = connect(
+  (state) => ({
+    contents: state.config.consoles[state.console].contents,
+  })
+)(_Console);
 
-class GraphPanel extends React.Component {
+class _GraphPanel extends React.Component {
   _expandedQuery() {
-    var query = this.props.graph.queries[this.props.expand.queryIndex];
+    if (this.props.expanded.panelIndex !== this.props.index) {
+      return;
+    }
+    var query = this.props.graph.queries[this.props.expanded.queryIndex];
     if (!query || !query.expanded) {
       return;
     }
@@ -140,6 +164,7 @@ class GraphPanel extends React.Component {
   }
   render() {
     var expanded = this._expandedQuery();
+    var expand = this.props.expandMetric.bind(null, this.props.index);
     var graph;
     if (expanded) {
       graph = (
@@ -149,19 +174,30 @@ class GraphPanel extends React.Component {
     } else {
       graph = (
         <Graph
+          index={this.props.index}
           options={this.props.graph}
-          onHoverTime={this.props.onHoverTime}
-          expandMetric={this.props.expandMetric}
-          highlightTime={this.props.highlightTime} />
+          expandMetric={expand} />
       );
     }
     return <PanelWithKey>{graph}</PanelWithKey>;
   }
 }
-GraphPanel.propTypes = {
-  graph: React.PropTypes.object,
-  expand: React.PropTypes.object,
-  onHoverTime: React.PropTypes.func.isRequired,
+_GraphPanel.propTypes = {
+  index: React.PropTypes.number.isRequired,
+  graph: React.PropTypes.object.isRequired,
+  expanded: React.PropTypes.object.isRequired,
   expandMetric: React.PropTypes.func.isRequired,
-  highlightTime: React.PropTypes.object.isRequired,
 };
+const GraphPanel = connect(
+  (state) => ({
+    expanded: state.expanded,
+  }),
+  (dispatch) => ({
+    expandMetric: (panelIndex, queryIndex, metricLabels) => dispatch({
+      type: 'EXPAND_METRIC',
+      panelIndex: panelIndex,
+      queryIndex: queryIndex,
+      metricLabels: metricLabels,
+    }),
+  })
+)(_GraphPanel);

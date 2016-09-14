@@ -134,15 +134,16 @@
         }
       ]
     },
-    "/proc": {
-      "title": "Proc",
+    "/res": {
+      "title": "Resources",
       "selectors": [],
       "contents": [
         {
           "graph": {
             "queries": [
               {
-                "query": "sum(increase(process_cpu_seconds_total{job=\"server1\"}[1m]))",
+                "match": {},
+                "query": "sum(increase(process_cpu_seconds_total[1m]))",
                 "source": "http://localhost:9090/api/v1/query_range"
               }
             ]
@@ -152,7 +153,8 @@
           "graph": {
             "queries": [
               {
-                "query": "sum(process_resident_memory_bytes{job=\"server1\"})",
+                "match": {},
+                "query": "sum(process_resident_memory_bytes)",
                 "source": "http://localhost:9090/api/v1/query_range"
               }
             ]
