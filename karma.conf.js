@@ -40,7 +40,13 @@ module.exports = function (config) {
             loader: 'babel-loader',
             query: {
               presets: ['es2015', 'react'],
-              plugins: ['transform-runtime', 'transform-decorators-legacy', 'transform-class-properties'],
+              plugins: [
+                'transform-runtime',
+                'transform-decorators-legacy',
+                'transform-class-properties',
+                'transform-es2015-destructuring',
+                'transform-object-rest-spread',
+              ],
             },
           }
         ]
