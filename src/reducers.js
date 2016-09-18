@@ -181,6 +181,14 @@ function routerReducer(state = { locationBeforeTransitions: null }, action) {
   }
   case LOCATION_CHANGE:
     return Object.assign({}, state, { locationBeforeTransitions: action.payload });
+  case 'SELECT_CONSOLE':
+    return {
+      ...state,
+      locationBeforeTransitions: {
+        ...state.locationBeforeTransitions,
+        pathname: action.console,
+      },
+    };
   case 'MODIFY_TIME_SCALE': {
     let {start, end} = action;
     let duration = Math.round((end.getTime() - start.getTime())/1000);
