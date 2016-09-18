@@ -4,7 +4,7 @@
 import { connect } from 'react-redux';
 import _ from 'underscore';
 import React from 'react';
-import { QuerySet } from './range_query.jsx';
+import { QuerySet } from './query_set.jsx';
 import { SetupGraph } from './base_graph.jsx';
 
 class _Graph extends React.Component {
@@ -15,17 +15,14 @@ class _Graph extends React.Component {
     this.plot = null;
     this.highlight = null;
     this.graph = null;
-    this.queries = null;
 
     // binds
     this._redraw = this._redraw.bind(this);
     this._onSelect = this._onSelect.bind(this);
     this._setup();
-    this._updateData = _.debounce(this._updateData.bind(this), 500);
   }
   componentDidMount() {
     window.addEventListener("resize", this._redraw);
-    this._updateData();
   }
   componentWillUnmount() {
     window.removeEventListener("resize", this._redraw);
@@ -34,23 +31,26 @@ class _Graph extends React.Component {
     if (!_.isEqual(this.props.highlightTime, nextProps.highlightTime)) {
       this._updateHighlight(nextProps.highlightTime);
     }
-    this._updateData();
   }
   shouldComponentUpdate(props, state) {
     return !_.isEqual(this.props.options, props.options);
   }
   render() {
-    return <svg id={this.id} width="100%" height="300px" ref={(ref) => ref ? this.graph.renderTo(ref) : this.graph.detach()} />;
+    const onQueryData = (datasets) => {
+      this.plot.datasets(datasets);
+      this.captions.setSources(datasets);
+    };
+    return (
+      <div>
+        <QuerySet queries={this.props.options.queries} onQueryData={onQueryData} />
+        <svg id={this.id} width="100%" height="300px" ref={(ref) => ref ? this.graph.renderTo(ref) : this.graph.detach()} />
+      </div>
+    );
   }
   _redraw() {
     if (this.graph) {
       this.graph.redraw();
     }
-  }
-  _updateData() {
-    var end = Math.floor(this.props.range.end.getTime()/1000);
-    var start = end - this.props.range.duration;
-    this.queries.updateData(start, end, this.props.filter);
   }
   _updateHighlight(targetTime) {
     this.guideline.value(targetTime);
@@ -72,16 +72,10 @@ class _Graph extends React.Component {
     this.captions.dataset.onUpdate(function(dataset) {
       this.props.onUpdateValues(dataset.data());
     }.bind(this));
-    this.queries = new QuerySet(this.props.options.queries, function(datasets) {
-      this.plot.datasets(datasets);
-      this.captions.setSources(datasets);
-    }.bind(this));
   }
 }
 _Graph.propTypes = {
   options: React.PropTypes.object.isRequired,
-  range: React.PropTypes.object.isRequired,
-  filter: React.PropTypes.object.isRequired,
   expandMetric: React.PropTypes.func.isRequired,
   highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
@@ -92,9 +86,7 @@ _Graph.contextTypes = {
 };
 export const Graph = connect(
   (state) => ({
-    range: state.range,
     highlightTime: state.hover.time,
-    filter: state.filter,
   }),
   (dispatch) => ({
     onHoverTime: (time, point) => dispatch({

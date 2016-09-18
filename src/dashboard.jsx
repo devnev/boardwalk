@@ -12,6 +12,7 @@ import { PanelWithKey } from './query_key.jsx';
 import ConsoleNav from './nav.jsx';
 import SelectorGraph from './selector_graph.jsx';
 import { ScaleProvider } from './scale_context.jsx';
+import { Provider as QueryStoreProvider } from './query_store.jsx';
 
 class _Dashboard extends React.Component {
   componentDidMount() {
@@ -94,7 +95,9 @@ class _ConsolePage extends React.Component {
           <div>
             <RangePicker />
             <FilterSelectControl />
-            {console}
+            <QueryStoreProvider>
+              {console}
+            </QueryStoreProvider>
           </div>
         </ScaleProvider>
       </div>

@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import _ from 'underscore';
 import React from 'react';
 import { SetupGraph } from './base_graph.jsx';
-import { QuerySet } from './range_query.jsx';
+import { RangeQuerySet } from './range_query.jsx';
 
 function _get(obj, key, def) {
   return _.has(obj, key) ? obj[key] : def;
@@ -23,7 +23,7 @@ class _SelectGraph extends React.Component {
     this.components.captions.dataset.onUpdate(function(dataset) {
       this.props.onUpdateValues(dataset.data());
     }.bind(this));
-    this.queries = new QuerySet([this.props.query], function(datasets) {
+    this.queries = new RangeQuerySet([this.props.query], this.context.queryStore, function(datasets) {
       this.components.dataplot.datasets(datasets);
       this.components.captions.setSources(datasets);
     }.bind(this));
@@ -72,6 +72,7 @@ _SelectGraph.PropTypes = {
 _SelectGraph.contextTypes = {
   timeScale: React.PropTypes.object.isRequired,
   colorScale: React.PropTypes.object.isRequired,
+  queryStore: React.PropTypes.object.isRequired,
 };
 export const SelectorGraph = connect(
   (state) => ({

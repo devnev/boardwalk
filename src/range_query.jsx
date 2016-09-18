@@ -2,72 +2,13 @@
 // you may not use this file except in compliance with the License.
 
 import _ from 'underscore';
-import $ from 'jquery';
 import Plottable from 'plottable';
 import { FormatMetric, FormatTemplate, StrictMatchFilter } from './utils.jsx';
 
-function _get(obj, key, def) {
-  return _.has(obj, key) ? obj[key] : def;
-}
-
-class QueryStore {
-  constructor() {
-    this._store = {};
-  }
-  load(source, query, start, end) {
-    var key = source + '?query=' + query;
-    var entry = _get(this._store, key);
-    if (entry) {
-      if (entry.source == source &&
-          entry.query == query &&
-          entry.start == start &&
-          entry.end == end) {
-        console.log("cached", query);
-        return entry.promise;
-      }
-      if (entry.request) {
-        entry.request.abort();
-        entry.request = null;
-      }
-    }
-
-    console.log("loading", query);
-    var step = Math.floor((end - start) / 200).toString() + "s";
-    var request = $.get(source, {
-      query: query,
-      start: start,
-      end: end,
-      step: step,
-    });
-    entry = this._store[key] = {
-      request: request,
-      query: query,
-      source: source,
-      start: start,
-      end: end,
-      promise: null,
-    };
-    entry.promise = request
-      .then(function(data) {
-        if (entry.request === request) {
-          entry.data = data.data.result;
-        }
-        return data.data.result;
-      })
-      .always(function() {
-        if (entry.request === request) {
-          entry.request = null;
-        }
-      });
-    return entry.promise;
-  }
-}
-var store = new QueryStore();
-
-export class QuerySet {
-  constructor(queries, onData) {
+export class RangeQuerySet {
+  constructor(queries, store, onData) {
     this.queries = queries.map(function(query, index) {
-      return new RangeQuery(query, this._onQueryData.bind(this, index));
+      return new RangeQuery(query, store, this._onQueryData.bind(this, index));
     }.bind(this));
     this.datasets = Array(this.queries.length);
     this.onData = onData.bind(undefined);
@@ -88,8 +29,9 @@ export class QuerySet {
 }
 
 export class RangeQuery {
-  constructor(options, onData) {
+  constructor(options, store, onData) {
     this.options = options;
+    this.store = store;
     this.onData = onData.bind(undefined);
   }
   _updateDatasets(results) {
@@ -117,7 +59,7 @@ export class RangeQuery {
 
     var source = FormatTemplate(this.options.source, filter);
     var query = FormatTemplate(this.options.query, filter);
-    var request = store.load(source, query, start, end);
+    var request = this.store.load(source, query, start, end);
     request.then(function(data) {
       this._updateDatasets(data);
     }.bind(this));
