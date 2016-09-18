@@ -19,6 +19,12 @@ export class RangeQuerySet {
     }.bind(this));
   }
   _onQueryData(queryIndex, queryDatasets) {
+    if (_.isEmpty(queryDatasets)) {
+      const oldDatasets = this.datasets[queryIndex];
+      if (!oldDatasets || _.isEmpty(oldDatasets)) {
+        return;
+      }
+    }
     _.each(queryDatasets, function(dataset) {
       dataset.metadata().queryIndex = queryIndex;
     });
