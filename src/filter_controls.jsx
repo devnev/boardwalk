@@ -32,6 +32,7 @@ class _FilterSelectControl extends React.Component {
           return (
             <li key={label}>
               <span>{label}</span>
+              <span>{this.props.filter[label]}</span>
               <button type="button" onClick={clear}>X</button>
             </li>
           );
