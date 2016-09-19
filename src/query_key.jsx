@@ -1,53 +1,7 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
-import _ from 'underscore';
 import React from 'react';
-import Plottable from 'plottable';
-
-export class QueryCaptions {
-  constructor() {
-    this.nearest = new Plottable.Dataset();
-    this.dataset = new Plottable.Dataset();
-    this.sources = [];
-  }
-  target(targetTime) {
-    if (!targetTime) {
-      this.nearest.data([]);
-      this.dataset.data(this.sources.map(function(dataset) {
-        return {caption: dataset.metadata().title, value: ""};
-      }));
-      this._target = undefined;
-      return;
-    }
-
-    var points = [];
-    var values = [];
-    this.sources.forEach(function(dataset) {
-      var data = dataset.data();
-      if (data.length == 0 || data[0].t > targetTime) {
-        values.push({caption: dataset.metadata().title, value: ""});
-        return;
-      }
-      var index = _.sortedIndex(data, {t: targetTime}, 't');
-      if (!(index < data.length && data[index].t === targetTime)) {
-        index -= 1;
-      }
-      var point = data[index];
-      points.push(_({caption: dataset.metadata().title}).assign(point));
-      values.push({caption: dataset.metadata().title, value: point.y});
-    }.bind(this));
-    _.defer(function() {
-      this.nearest.data(points);
-      this.dataset.data(values);
-    }.bind(this));
-    this._target = targetTime;
-  }
-  setSources(datasets) {
-    this.sources = datasets || [];
-    this.target(this._target);
-  }
-}
 
 export class QueryKey extends React.Component {
   render() {
