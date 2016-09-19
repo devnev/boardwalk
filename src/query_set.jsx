@@ -8,21 +8,21 @@ import { RangeQuerySet } from './range_query.jsx';
 class _QuerySet extends React.Component {
   componentDidMount() {
     this._setupQueries(this.props.queries);
-    this._updateData();
+    this._updateData(this.props);
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.queries !== nextProps.queries) {
       this._setupQueries(nextProps.queries);
     }
-    this._updateData();
+    this._updateData(nextProps);
   }
   _setupQueries(queries) {
     this.queries = new RangeQuerySet(queries, this.context.queryStore, (datasets) => this.props.onQueryData(datasets));
   }
-  _updateData() {
-    const end = Math.round(this.props.range.end.getTime()/1000);
-    const start = end - this.props.range.duration;
-    this.queries.updateData(start, end, this.props.filter);
+  _updateData(props) {
+    const end = Math.round(props.range.end.getTime()/1000);
+    const start = end - props.range.duration;
+    this.queries.updateData(start, end, props.filter);
   }
   render() {
     return false;
