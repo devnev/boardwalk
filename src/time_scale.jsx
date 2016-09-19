@@ -26,7 +26,6 @@ export function syncScaleWithStore(store, options = {}) {
   let dirty = false;
   const unsub = store.subscribe(() => {
     if (dirty) {
-      console.log('dirty scale');
       return;
     }
     const domain = getDomain(store.getState().range);
@@ -34,13 +33,11 @@ export function syncScaleWithStore(store, options = {}) {
         domain.max.getTime() === scale.domainMax().getTime()) {
       return;
     }
-    console.log('setting scale to', domain.min.getTime(), domain.max.getTime(), 'from', scale.domainMin().getTime(), scale.domainMax().getTime());
     scale.domain([domain.min, domain.max]);
   });
   const dispatchScaleChange = _.debounce(() => {
     const end = new Date(Math.round(scale.domainMax().getTime()/1000)*1000);
     const start = new Date(Math.round(scale.domainMin().getTime()/1000)*1000);
-    console.log('setting range to', start.getTime(), end.getTime());
     dirty = false;
     store.dispatch(createAction({min: start, max: end}));
   }, 500);
