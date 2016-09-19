@@ -3,7 +3,7 @@
 
 import _ from 'underscore';
 import querystring from 'querystring';
-import { combineReducers, createStore, applyMiddleware } from 'redux';
+import { combineReducers } from 'redux';
 import { LOCATION_CHANGE } from 'react-router-redux';
 
 const filterPrefix = "filter.";
@@ -217,14 +217,14 @@ function routerReducer(state = { locationBeforeTransitions: null }, action) {
   return state;
 }
 
-const actionTimeMiddleware = store => next => action => {
+export const actionTimeMiddleware = store => next => action => {
   if (action) {
     action.now = new Date();
   }
   return next(action);
 };
 
-const reducer = combineReducers({
+export const reducer = combineReducers({
   console: consoleReducer,
   config: configReducer,
   range: rangeReducer,
@@ -233,5 +233,3 @@ const reducer = combineReducers({
   filter: filterReducer,
   routing: routerReducer,
 });
-
-export const store = createStore(reducer, applyMiddleware(actionTimeMiddleware));
