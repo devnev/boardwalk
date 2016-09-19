@@ -11,20 +11,19 @@ import { Graph } from './graph.jsx';
 function computeHighlights(datasets, target) {
   if (!target) {
     return {
-      nearest: [],
-      captions: datasets.map((dataset) => ({
-        caption: dataset.metadata().title,
-        value: "",
+      points: [],
+      series: datasets.map((dataset) => ({
+        ...dataset.metadata(), value: "",
       })),
     };
   }
 
   let points = [];
-  let values = [];
+  let series = [];
   datasets.forEach((dataset) => {
     var data = dataset.data();
     if (data.length == 0 || data[0].t > target) {
-      values.push({caption: dataset.metadata().title, value: ""});
+      series.push({...dataset.metadata().title, value: ""});
       return;
     }
     var index = _.sortedIndex(data, {t: target}, 't');
@@ -32,12 +31,12 @@ function computeHighlights(datasets, target) {
       index -= 1;
     }
     var point = data[index];
-    points.push(Object.assign({caption: dataset.metadata().title}, point));
-    values.push({caption: dataset.metadata().title, value: point.y});
+    points.push({...dataset.metadata(), ...point});
+    series.push({...dataset.metadata(), value: point.y});
   });
   return {
-    nearest: points,
-    captions: values,
+    points: points,
+    series: series,
   };
 }
 
@@ -46,8 +45,8 @@ class _MetricsPanel extends React.Component {
     super(props);
     this.state = {
       datasets: [],
-      nearest: [],
-      captions: [],
+      points: [],
+      series: [],
     };
     this._onData = this._onData.bind(this);
   }
@@ -61,8 +60,8 @@ class _MetricsPanel extends React.Component {
     return (
       <div>
         <QuerySet queries={this.props.queries} onQueryData={this._onData} />
-        <Graph datasets={this.state.datasets} highlights={this.state.nearest} onSelectMetric={this.props.onSelectMetric} height={this.props.graphHeight} />
-        <QueryKey items={this.state.captions} onSelectMetric={this.props.onSelectMetric} />
+        <Graph datasets={this.state.datasets} highlights={this.state.points} onSelectMetric={this.props.onSelectMetric} height={this.props.graphHeight} />
+        <QueryKey series={this.state.series} onSelectMetric={this.props.onSelectMetric} />
       </div>
     );
   }

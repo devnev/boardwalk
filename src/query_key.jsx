@@ -5,24 +5,25 @@ import React from 'react';
 
 export class QueryKey extends React.Component {
   render() {
+    const renderItem = (item, index) => {
+      const color = this.context.colorScale.scale(item.title);
+      return (
+        <li key={index+"-"+item.title}>
+          <span style={{color: color}}>&#x25cf;</span>
+          <span>{item.title}</span>
+          <span>{item.value}</span>
+        </li>
+      );
+    };
     return (
       <ul>
-        {this.props.items.map(function(item, index) {
-          var caption = item.caption;
-          var value = item.value;
-          var colorStyle = {color: this.context.colorScale.scale(caption)};
-          return (<li key={caption+index}>
-            <span style={colorStyle}>&#x25cf;</span>
-            <span>{caption}</span>
-            <span>{value}</span>
-          </li>);
-        }.bind(this))}
+        {this.props.series.map(renderItem)}
       </ul>
     );
   }
 }
 QueryKey.propTypes = {
-  items: React.PropTypes.array.isRequired,
+  series: React.PropTypes.array.isRequired,
 };
 QueryKey.contextTypes = {
   colorScale: React.PropTypes.object.isRequired,

@@ -18,7 +18,7 @@ function NewHighlightPlot(tScale, yScale, cScale) {
   var plot = new Plottable.Plots.Scatter();
   plot.x(function(d) { return d.t; }, tScale);
   plot.y(function(d) { return d.y; }, yScale);
-  plot.attr("fill", function(d) { return d.caption; }, cScale);
+  plot.attr("fill", function(d) { return d.title; }, cScale);
   plot.size(10);
   plot.autorangeMode("none");
   return plot;
