@@ -3,7 +3,6 @@
 
 import Plottable from 'plottable';
 import { TimeForPoint } from './utils.jsx';
-import { QueryCaptions } from './query_key.jsx';
 
 const selectRadius = 50;
 
@@ -43,8 +42,6 @@ export function SetupGraph(timeScale, colorScale, onHoverTime, onDoubleClick) {
   var highlight = NewHighlightPlot(timeScale, yScale, colorScale);
   var panel = new Plottable.Components.Group([guideline, plot, highlight]);
   var graph = new Plottable.Components.Table([[yAxis, panel], [null, tAxis]]);
-  var captions = new QueryCaptions();
-  highlight.datasets([captions.nearest]);
 
   // interactions
   var panZoom = new Plottable.Interactions.PanZoom(timeScale, null);
@@ -72,7 +69,6 @@ export function SetupGraph(timeScale, colorScale, onHoverTime, onDoubleClick) {
     guideline: guideline,
     highlight: highlight,
     dataplot: plot,
-    captions: captions,
     graph: graph,
   };
 }

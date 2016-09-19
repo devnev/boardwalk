@@ -6,13 +6,11 @@ import React from 'react';
 import $ from 'jquery';
 import RangePicker from './range_controls.jsx';
 import FilterSelectControl from './filter_controls.jsx';
-import Graph from './graph.jsx';
 import Section from './section.jsx';
-import { PanelWithKey } from './query_key.jsx';
 import ConsoleNav from './nav.jsx';
-import SelectorGraph from './selector_graph.jsx';
 import { ScaleProvider } from './scale_context.jsx';
 import { Provider as QueryStoreProvider } from './query_store.jsx';
+import { GraphPanel } from './graph_panel.jsx';
 
 class _Dashboard extends React.Component {
   componentDidMount() {
@@ -151,56 +149,3 @@ const Console = connect(
     contents: state.config.consoles[state.console].contents,
   })
 )(_Console);
-
-class _GraphPanel extends React.Component {
-  _expandedQuery() {
-    if (this.props.expanded.panelIndex !== this.props.index) {
-      return;
-    }
-    var query = this.props.graph.queries[this.props.expanded.queryIndex];
-    if (!query || !query.expanded) {
-      return;
-    }
-    var options = query.expanded;
-    options.match = query.match;
-    return options;
-  }
-  render() {
-    var expanded = this._expandedQuery();
-    var expand = this.props.expandMetric.bind(null, this.props.index);
-    var graph;
-    if (expanded) {
-      graph = (
-        <SelectorGraph
-          query={expanded} />
-      );
-    } else {
-      graph = (
-        <Graph
-          index={this.props.index}
-          options={this.props.graph}
-          expandMetric={expand} />
-      );
-    }
-    return <PanelWithKey>{graph}</PanelWithKey>;
-  }
-}
-_GraphPanel.propTypes = {
-  index: React.PropTypes.number.isRequired,
-  graph: React.PropTypes.object.isRequired,
-  expanded: React.PropTypes.object.isRequired,
-  expandMetric: React.PropTypes.func.isRequired,
-};
-const GraphPanel = connect(
-  (state) => ({
-    expanded: state.expanded,
-  }),
-  (dispatch) => ({
-    expandMetric: (panelIndex, queryIndex, metricLabels) => dispatch({
-      type: 'EXPAND_METRIC',
-      panelIndex: panelIndex,
-      queryIndex: queryIndex,
-      metricLabels: metricLabels,
-    }),
-  })
-)(_GraphPanel);

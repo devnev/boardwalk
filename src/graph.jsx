@@ -4,7 +4,7 @@
 import { connect } from 'react-redux';
 import _ from 'underscore';
 import React from 'react';
-import { QuerySet } from './query_set.jsx';
+import Plottable from 'plottable';
 import { SetupGraph } from './base_graph.jsx';
 
 class _Graph extends React.Component {
@@ -20,6 +20,7 @@ class _Graph extends React.Component {
     this._redraw = this._redraw.bind(this);
     this._onSelect = this._onSelect.bind(this);
     this._setup();
+    this._receiveProps(null, this.props);
   }
   componentDidMount() {
     window.addEventListener("resize", this._redraw);
@@ -28,23 +29,14 @@ class _Graph extends React.Component {
     window.removeEventListener("resize", this._redraw);
   }
   componentWillReceiveProps(nextProps) {
-    if (!_.isEqual(this.props.highlightTime, nextProps.highlightTime)) {
-      this._updateHighlight(nextProps.highlightTime);
-    }
+    this._receiveProps(this.props, nextProps);
   }
   shouldComponentUpdate(props, state) {
-    return !_.isEqual(this.props.options, props.options);
+    return false;
   }
   render() {
-    const onQueryData = (datasets) => {
-      this.plot.datasets(datasets);
-      this.captions.setSources(datasets);
-    };
     return (
-      <div>
-        <QuerySet queries={this.props.options.queries} onQueryData={onQueryData} />
-        <svg id={this.id} width="100%" height="300px" ref={(ref) => ref ? this.graph.renderTo(ref) : this.graph.detach()} />
-      </div>
+      <svg id={this.id} width="100%" height={this.props.height} ref={(ref) => ref ? this.graph.renderTo(ref) : this.graph.detach()} />
     );
   }
   _redraw() {
@@ -52,33 +44,37 @@ class _Graph extends React.Component {
       this.graph.redraw();
     }
   }
-  _updateHighlight(targetTime) {
-    this.guideline.value(targetTime);
-    this.captions.target(targetTime);
-  }
   _onSelect(time, point, nearest) {
+    console.log('selected', time, point, nearest);
+    if (!nearest) {
+      return;
+    }
     var metadata = nearest.dataset.metadata();
-    this.props.expandMetric(metadata.queryIndex, metadata.metric);
+    this.props.onSelectMetric(metadata.queryIndex, metadata.metric);
   }
   _setup() {
     var components = SetupGraph(this.context.timeScale, this.context.colorScale, this.props.onHoverTime, this._onSelect);
     this.guideline = components.guideline;
     this.plot = components.dataplot;
     this.highlight = components.highlight;
+    this.highlight.datasets([new Plottable.Dataset()]);
     this.graph = components.graph;
-    this.captions = components.captions;
-
-    // the data
-    this.captions.dataset.onUpdate(function(dataset) {
-      this.props.onUpdateValues(dataset.data());
-    }.bind(this));
+  }
+  _receiveProps(old, props) {
+    if (!old || old.datasets !== props.datasets) {
+      this.plot.datasets(props.datasets);
+    }
+    this.highlight.datasets()[0].data(props.highlights);
+    this.guideline.value(props.highlightTime);
   }
 }
 _Graph.propTypes = {
-  options: React.PropTypes.object.isRequired,
-  expandMetric: React.PropTypes.func.isRequired,
+  datasets: React.PropTypes.array.isRequired,
+  onSelectMetric: React.PropTypes.func.isRequired,
+  highlights: React.PropTypes.array.isRequired,
   highlightTime: React.PropTypes.object.isRequired,
   onHoverTime: React.PropTypes.func.isRequired,
+  height: React.PropTypes.string.isRequired,
 };
 _Graph.contextTypes = {
   timeScale: React.PropTypes.object.isRequired,
@@ -96,4 +92,3 @@ export const Graph = connect(
     }),
   })
 )(_Graph);
-export { Graph as default };
