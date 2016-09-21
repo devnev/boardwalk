@@ -72,7 +72,7 @@ class _DurationPicker extends React.Component {
     this._onFormSubmit = this._onFormSubmit.bind(this);
     this._onInputChange = this._onInputChange.bind(this);
   }
-  willReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     var nextDuration = FormatDuration(nextProps.duration);
     this.setState({ inputValue: nextDuration, dirty: false });
   }
