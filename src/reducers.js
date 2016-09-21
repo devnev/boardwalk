@@ -5,6 +5,8 @@ import _ from 'underscore';
 import querystring from 'querystring';
 import { combineReducers } from 'redux';
 import { LOCATION_CHANGE } from 'react-router-redux';
+import { queryDataReducer, queryRequestMiddleware } from './query_data.jsx';
+import { querySubscriptionsReducer, queryDispatchMiddleware } from './query_subscriptions.jsx';
 
 const filterPrefix = "filter.";
 
@@ -242,4 +244,16 @@ export const reducer = combineReducers({
   hover: hoverReducer,
   filter: filterReducer,
   routing: routerReducer,
+  data: queryDataReducer,
+  queries: querySubscriptionsReducer,
 });
+
+export const middlewares = [
+  actionTimeMiddleware,
+  queryRequestMiddleware,
+  queryDispatchMiddleware({
+    getRange: (state) => state.range,
+    getData: (state) => state.data,
+    getSubs: (state) => state.queries,
+  })
+];

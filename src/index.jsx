@@ -8,10 +8,10 @@ import { createStore, applyMiddleware } from 'redux';
 import { syncHistoryWithStore } from 'react-router-redux';
 import { hashHistory } from 'react-router';
 import Dashboard from './dashboard.jsx';
-import { reducer, actionTimeMiddleware } from './reducers.js';
+import { reducer, middlewares } from './reducers.js';
 import { syncScaleWithStore } from './time_scale.jsx';
 
-const store = createStore(reducer, applyMiddleware(actionTimeMiddleware));
+const store = createStore(reducer, applyMiddleware(...middlewares));
 syncHistoryWithStore(hashHistory, store);
 syncScaleWithStore(store);
 

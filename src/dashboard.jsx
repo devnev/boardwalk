@@ -9,7 +9,6 @@ import FilterSelectControl from './filter_controls.jsx';
 import Section from './section.jsx';
 import ConsoleNav from './nav.jsx';
 import { ScaleProvider } from './scale_context.jsx';
-import { Provider as QueryStoreProvider } from './query_store.jsx';
 import { GraphPanel } from './graph_panel.jsx';
 
 class _Dashboard extends React.Component {
@@ -93,9 +92,7 @@ class _ConsolePage extends React.Component {
           <div>
             <RangePicker />
             <FilterSelectControl />
-            <QueryStoreProvider>
-              {console}
-            </QueryStoreProvider>
+            {console}
           </div>
         </ScaleProvider>
       </div>
