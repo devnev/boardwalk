@@ -23,6 +23,7 @@
     "babel-preset-react": "^6.11.1",
     "babel-runtime": "^6.11.6",
     "eslint": "^3.4.0",
+    "eslint-plugin-import": "^1.15.0",
     "eslint-plugin-react": "^6.2.0",
     "jsonschema-protobuf": "^1.0.1",
     "karma": "^1.2.0",
