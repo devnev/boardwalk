@@ -25,7 +25,7 @@ const reload = (entries, range, dispatch) => {
       });
     }
   });
-}
+};
 
 export const queryDispatchMiddleware = ({getRange, getData, getSubs}) => ({ getState, dispatch }) => (next) => (action) => {
   switch (action.type) {
@@ -62,12 +62,12 @@ export const queryDispatchMiddleware = ({getRange, getData, getSubs}) => ({ getS
     case 'PICK_DURATION': {
       const result = next(action);
       reload(getSubs(getState()), getRange(getState()), dispatch);
-      return result
+      return result;
     }
     case 'PICK_END': {
       const result = next(action);
       reload(getSubs(getState()), getRange(getState()), dispatch);
-      return result
+      return result;
     }
     default: {
       return next(action);
