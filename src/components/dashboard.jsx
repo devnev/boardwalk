@@ -3,7 +3,7 @@
 
 import { connect } from 'react-redux';
 import React from 'react';
-import $ from 'jquery';
+import axios from 'axios';
 import RangePicker from './range_controls.jsx';
 import { FilterSelectControl } from './filter_controls.jsx';
 import Section from './section.jsx';
@@ -45,8 +45,8 @@ export { Dashboard as default };
 
 class _Loader extends React.Component {
   componentDidMount() {
-    this.req = $.get("/config.json");
-    this.req.done((data) => this.props.onConfigLoaded(data));
+    this.req = axios.get("/config.json");
+    this.req.then((response) => this.props.onConfigLoaded(response.data));
   }
   componentWillUnmount() {
     if (this.req) {

@@ -2,7 +2,7 @@
 // you may not use this file except in compliance with the License.
 
 import _ from 'underscore';
-import $ from 'jquery';
+import axios from 'axios';
 
 const _get = (obj, key, def) => (
   _.has(obj, key) ? obj[key] : def
@@ -16,17 +16,17 @@ export const queryRequestMiddleware = ({ dispatch }) => (next) => (action) => {
   switch (action.type) {
     case 'LOAD_QUERY': {
       const step = Math.floor((action.end.getTime()/1000 - action.start.getTime()/1000) / 200);
-      const request = $.get(action.source, {
+      const request = axios.get(action.source, {params: {
         query: action.query,
         start: Math.round(action.start.getTime()/1000),
         end: Math.round(action.end.getTime()/1000),
         step: step.toString() + "s",
-      });
-      request.then((data) => dispatch({
+      }});
+      request.then((response) => dispatch({
         ...action,
         type: 'QUERY_DATA',
         request: request,
-        data: data.data.result,
+        data: response.data.data.result,
       }));
       return next({...action, request: request});
     }

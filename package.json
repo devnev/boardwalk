@@ -37,8 +37,8 @@
     "z-schema": "^3.17.0"
   },
   "dependencies": {
+    "axios": "^0.14.0",
     "d3": "^3.5.17",
-    "jquery": "^3.1.0",
     "moment": "^2.14.1",
     "plottable": "^2.2.0",
     "querystring": "^0.2.0",
