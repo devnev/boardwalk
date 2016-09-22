@@ -3,7 +3,7 @@
 
 import { connect } from 'react-redux';
 import React from 'react';
-import { FormatTemplate, MatchFilter } from './utils.jsx';
+import { FormatTemplate, MatchFilter } from '../utils.jsx';
 
 export default class Section extends React.Component {
   render() {

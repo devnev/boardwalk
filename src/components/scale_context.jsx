@@ -2,7 +2,7 @@
 // you may not use this file except in compliance with the License.
 
 import React from 'react';
-import { scale as timeScale } from './time_scale.jsx';
+import { scale as timeScale } from '../time_scale.jsx';
 import storeShape from 'react-redux/lib/utils/storeShape';
 import Plottable from 'plottable';
 
