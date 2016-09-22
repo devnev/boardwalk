@@ -2,8 +2,8 @@
 // you may not use this file except in compliance with the License.
 
 import { combineReducers } from 'redux';
-import { queryDataReducer, queryRequestMiddleware } from './query_data.jsx';
-import { querySubscriptionsReducer, queryDispatchMiddleware } from './query_subscriptions.jsx';
+import { queryDataReducer, queryRequestMiddleware } from './reducers/query_data.jsx';
+import { querySubscriptionsReducer, queryDispatchMiddleware } from './reducers/query_subscriptions.jsx';
 import { consoleReducer } from './reducers/console.js';
 import { configReducer } from './reducers/config.js';
 import { rangeReducer } from './reducers/range.js';
