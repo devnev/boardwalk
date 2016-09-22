@@ -4,7 +4,7 @@
 import _ from 'underscore';
 import React from 'react';
 import { connect } from 'react-redux';
-import { FormatMetric, FormatTemplate, StrictMatchFilter, MatchFilter } from '../utils.jsx';
+import { FormatMetric, FormatTemplate, StrictMatchFilter, MatchFilter } from '../utils.js';
 
 function formatResults(options, results) {
   return results.map((result) => {

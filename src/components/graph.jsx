@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import _ from 'underscore';
 import React from 'react';
 import Plottable from 'plottable';
-import { SetupGraph } from '../base_graph.jsx';
+import { SetupGraph } from '../base_graph.js';
 
 class _Graph extends React.Component {
   constructor(props, context) {

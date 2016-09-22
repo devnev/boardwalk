@@ -2,7 +2,7 @@
 // you may not use this file except in compliance with the License.
 
 import Plottable from 'plottable';
-import { TimeForPoint } from './utils.jsx';
+import { TimeForPoint } from './utils.js';
 
 const selectRadius = 50;
 

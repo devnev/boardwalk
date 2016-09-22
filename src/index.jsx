@@ -9,7 +9,7 @@ import { syncHistoryWithStore } from 'react-router-redux';
 import { hashHistory } from 'react-router';
 import Dashboard from './components/dashboard.jsx';
 import { reducer, middlewares } from './reducers.js';
-import { syncScaleWithStore } from './time_scale.jsx';
+import { syncScaleWithStore } from './time_scale.js';
 
 const store = createStore(reducer, applyMiddleware(...middlewares));
 syncHistoryWithStore(hashHistory, store);
