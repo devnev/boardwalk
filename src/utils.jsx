@@ -78,28 +78,6 @@ export function MatchFilter(matcher, filter) {
   return matches;
 }
 
-export function SetSubState(component, values) {
-  var same = true;
-  var state = _.clone(component.state);
-  for (var key in values) {
-    if (!_.has(values, key)) {
-      continue;
-    }
-    if (_.has(component.state, key)) {
-      if (component.state[key] === values[key]) {
-        continue;
-      } else if (_.isEqual(component.state[key], values[key])) {
-        continue;
-      }
-    }
-    same = false;
-    state[key] = values[key];
-  }
-  if (!same) {
-    component.setState(state);
-  }
-}
-
 export function TimeForPoint(tAxis, tScale, point) {
   var position = point.x / tAxis.width();
   var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
