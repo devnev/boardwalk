@@ -4,10 +4,18 @@
 import { connect } from 'react-redux';
 import React from 'react';
 import _ from 'underscore';
-import QuerySet from './selector_query.jsx';
+import { QuerySet } from './query_set.jsx';
 
 function _get(obj, key, def) {
   return _.has(obj, key) ? obj[key] : def;
+}
+
+function labelsFromResults(results) {
+  var labels = _.map(results, (result) => (result.metric[result.queryOptions.label]));
+  labels = _.filter(labels, _.identity);
+  labels = _.sortBy(labels, _.identity);
+  labels = _.uniq(labels, true);
+  return labels;
 }
 
 class _FilterSelectControl extends React.Component {
@@ -56,55 +64,33 @@ export const FilterSelectControl = connect(
       type: 'SET_FILTERS',
       filters: {[name]: null},
     }),
-  }),
-  undefined,
-  {pure: false}
+  })
 )(_FilterSelectControl);
-export { FilterSelectControl as default };
 
 class _FilterSelector extends React.Component {
   constructor(props) {
     super(props);
-    this.queries = null;
     this.state = {
-      values: [],
+      labels: [],
     };
+    this._onData = this._onData.bind(this);
   }
-  componentDidMount() {
-    this._setupQueries(this.props);
-  }
-  componentWillReceiveProps(nextProps) {
-    if (!_.isEqual(this.props.queries, nextProps.queries)) {
-      this._setupQueries(nextProps);
-    }
-  }
-  _setupQueries(props) {
-    this.queries = new QuerySet(props.queries, function(values) {
-      this.setState({values: values});
-    }.bind(this));
-    _.defer(() => this._updateData());
-  }
-  _updateData() {
-    this.queries.updateData(this.props.time, this.props.filter);
+  _onData(results) {
+    const labels = labelsFromResults(results);
+    this.setState({
+      ...this.state,
+      labels,
+    });
   }
   render() {
-    const select = (event) => this.props.onSelect(this.props.label, event.target.value);
+    const select = (value) => this.props.onSelect(this.props.label, value);
     const value = _get(this.props.filter, this.props.label, "");
-
-    var options = _.union(this.props.options, this.state.values);
-    if (!_(options).contains(value)) {
-      options = [value].concat(options);
-    }
-    if (!_(options).contains("")) {
-      options = [""].concat(options);
-    }
-
+    const options = _.union(this.props.options, this.state.labels);
     return (
-      <select value={value} onChange={select}>
-        {options.map(function(option) {
-          return <option key={option} value={option}>{option}</option>;
-        }.bind(this))}
-      </select>
+      <div>
+        <QuerySet queries={this.props.queries} strictMatch={false} onQueryData={this._onData} />
+        <Selector value={value} options={options} onSelect={select} />
+      </div>
     );
   }
 }
@@ -113,11 +99,10 @@ _FilterSelector.propTypes = {
   label: React.PropTypes.string.isRequired,
   options: React.PropTypes.array.isRequired,
   filter: React.PropTypes.object.isRequired,
-  time: React.PropTypes.number.isRequired,
+  onSelect: React.PropTypes.func.isRequired,
 };
 const FilterSelector = connect(
   (state) => ({
-    time: Math.floor(state.range.end.getTime()/1000),
     filter: state.filter,
   }),
   (dispatch) => ({
@@ -126,6 +111,33 @@ const FilterSelector = connect(
       filters: {[label]: value},
     }),
   }),
-  undefined,
+  null,
   {pure: false}
 )(_FilterSelector);
+
+class Selector extends React.Component {
+  render() {
+    const select = (event) => this.props.onSelect(event.target.value);
+
+    var options = this.props.options;
+    if (!_(options).contains(this.props.value)) {
+      options = [this.props.value].concat(options);
+    }
+    if (!_(options).contains("")) {
+      options = [""].concat(options);
+    }
+
+    return (
+      <select value={this.props.value} onChange={select}>
+        {options.map(function(option) {
+          return <option key={option} value={option}>{option}</option>;
+        }.bind(this))}
+      </select>
+    );
+  }
+}
+Selector.propTypes = {
+  options: React.PropTypes.array.isRequired,
+  value: React.PropTypes.string.isRequired,
+  onSelect: React.PropTypes.func.isRequired,
+};

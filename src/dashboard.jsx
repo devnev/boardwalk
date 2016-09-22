@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import React from 'react';
 import $ from 'jquery';
 import RangePicker from './range_controls.jsx';
-import FilterSelectControl from './filter_controls.jsx';
+import { FilterSelectControl } from './filter_controls.jsx';
 import Section from './section.jsx';
 import ConsoleNav from './nav.jsx';
 import { ScaleProvider } from './scale_context.jsx';

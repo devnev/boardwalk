@@ -78,7 +78,6 @@ export function MatchFilter(matcher, filter) {
   return matches;
 }
 
-
 export function SetSubState(component, values) {
   var same = true;
   var state = _.clone(component.state);

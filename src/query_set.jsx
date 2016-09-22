@@ -3,35 +3,28 @@
 
 import _ from 'underscore';
 import React from 'react';
-import Plottable from 'plottable';
 import { connect } from 'react-redux';
-import { FormatMetric, FormatTemplate, StrictMatchFilter } from './utils.jsx';
+import { FormatMetric, FormatTemplate, StrictMatchFilter, MatchFilter } from './utils.jsx';
 
-const formatDatasets = (options, data) => {
-  return data.map((result) => {
+function formatResults(options, results) {
+  return results.map((result) => {
     var title = (
       options.title ?
         FormatTemplate(options.title, result.metric) :
         FormatMetric(result.metric)
     );
-    var dataset = _.map(result.values, (value) => {
-      return {
-        t: new Date(value[0]*1000),
-        y: parseFloat(value[1]),
-      };
-    });
-    return new Plottable.Dataset(dataset, {title: title, metric: result.metric});
+    return {...result, title, queryOptions: options};
   });
-};
+}
 
 export class QuerySet extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {datasets: new Array(this.props.queries.length)};
+    this.state = {results: new Array(this.props.queries.length)};
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.queries !== nextProps.queries) {
-      this.setState({datasts: new Array(nextProps.queries.length)});
+      this.setState({results: new Array(nextProps.queries.length)});
     }
   }
   render() {
@@ -39,27 +32,27 @@ export class QuerySet extends React.Component {
       <Query
         key={index}
         options={queryOptions}
-        updated={(datasets) => this._onQueryData(index, datasets)} />
+        strictMatch={this.props.strictMatch}
+        updated={(results) => this._onQueryData(index, results)} />
     ));
     return <div>{queries}</div>;
   }
-  _onQueryData(queryIndex, queryDatasets) {
-    if (_.isEmpty(queryDatasets)) {
-      const oldDatasets = this.state.datasets[queryIndex];
-      if (!oldDatasets || _.isEmpty(oldDatasets)) {
+  _onQueryData(queryIndex, queryResults) {
+    if (_.isEmpty(queryResults)) {
+      const oldResults = this.state.results[queryIndex];
+      if (!oldResults || _.isEmpty(oldResults)) {
         return;
       }
     }
-    _.each(queryDatasets, function(dataset) {
-      dataset.metadata().queryIndex = queryIndex;
-    });
-    this.state.datasets[queryIndex] = queryDatasets;
-    var datasets = _.flatten(this.state.datasets, true).filter(function(d) { return d; });
-    this.props.onQueryData(datasets);
+    const fixedResults = _.map(queryResults, (result) => ({...result, queryIndex}));
+    this.state.results[queryIndex] = fixedResults;
+    const results = _.flatten(this.state.results, true).filter(_.identity);
+    this.props.onQueryData(results);
   }
 }
 QuerySet.propTypes = {
   queries: React.PropTypes.array.isRequired,
+  strictMatch: React.PropTypes.bool.isRequired,
   onQueryData: React.PropTypes.func.isRequired,
 };
 
@@ -68,13 +61,14 @@ class _Query extends React.Component {
     return false;
   }
   componentDidMount() {
-    if (StrictMatchFilter(this.props.options.match, this.props.filter)) {
+    const matchFn = this.props.strictMatch ? StrictMatchFilter : MatchFilter;
+    if (matchFn(this.props.options.match, this.props.filter)) {
       const source = FormatTemplate(this.props.options.source, this.props.filter);
       const query = FormatTemplate(this.props.options.query, this.props.filter);
       this.props.subscribe(query, source, this);
-      const data = this.props.data.get(query, source, {}).data;
-      if (data) {
-        this.props.updated(formatDatasets(this.props.options, data));
+      const results = this.props.data.get(query, source, {}).data;
+      if (results) {
+        this.props.updated(formatResults(this.props.options, results));
       }
     }
   }
@@ -82,7 +76,8 @@ class _Query extends React.Component {
     let data = null;
     let query = null;
     let source = null;
-    if (StrictMatchFilter(this.props.options.match, this.props.filter)) {
+    const matchFn = this.props.strictMatch ? StrictMatchFilter : MatchFilter;
+    if (matchFn(this.props.options.match, this.props.filter)) {
       source = FormatTemplate(this.props.options.source, this.props.filter);
       query = FormatTemplate(this.props.options.query, this.props.filter);
       data = this.props.data.get(query, source, {}).data;
@@ -90,7 +85,8 @@ class _Query extends React.Component {
     let nextData = null;
     let nextQuery = null;
     let nextSource = null;
-    if (StrictMatchFilter(nextProps.options.match, nextProps.filter)) {
+    const nextMatchFn = nextProps.strictMatch ? StrictMatchFilter : MatchFilter;
+    if (nextMatchFn(nextProps.options.match, nextProps.filter)) {
       nextSource = FormatTemplate(nextProps.options.source, nextProps.filter);
       nextQuery = FormatTemplate(nextProps.options.query, nextProps.filter);
       nextData = nextProps.data.get(query, source, {}).data;
@@ -100,12 +96,13 @@ class _Query extends React.Component {
       this.props.subscribe(nextQuery, nextSource, this);
     }
     if (data !== nextData) {
-      nextProps.updated(formatDatasets(nextProps.options, nextData || []));
+      nextProps.updated(formatResults(nextProps.options, nextData || []));
     }
   }
 }
 _Query.propTypes = {
   options: React.PropTypes.object.isRequired,
+  strictMatch: React.PropTypes.bool.isRequired,
   filter: React.PropTypes.object.isRequired,
   data: React.PropTypes.object.isRequired,
   updated: React.PropTypes.func.isRequired,

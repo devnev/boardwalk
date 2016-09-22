@@ -4,6 +4,7 @@
 import _ from 'underscore';
 import { connect } from 'react-redux';
 import React from 'react';
+import Plottable from 'plottable';
 import { QuerySet } from './query_set.jsx';
 import { QueryKey } from './query_key.jsx';
 import { Graph } from './graph.jsx';
@@ -40,6 +41,22 @@ function computeHighlights(datasets, target) {
   };
 }
 
+function datasetsFromResults(results) {
+  return results.map((result) => {
+    var dataset = _.map(result.values, (value) => {
+      return {
+        t: new Date(value[0]*1000),
+        y: parseFloat(value[1]),
+      };
+    });
+    return new Plottable.Dataset(dataset, {
+      title: result.title,
+      metric: result.metric,
+      queryIndex: result.queryIndex,
+    });
+  });
+}
+
 class _MetricsPanel extends React.Component {
   constructor(props) {
     super(props);
@@ -50,16 +67,24 @@ class _MetricsPanel extends React.Component {
     };
     this._onData = this._onData.bind(this);
   }
-  _onData(datasets) {
-    this.setState({...this.state, datasets, ...computeHighlights(datasets, this.props.highlightTime)});
+  _onData(results) {
+    const datasets = datasetsFromResults(results);
+    this.setState({
+      ...this.state,
+      datasets,
+      ...computeHighlights(datasets, this.props.highlightTime),
+    });
   }
   componentWillReceiveProps(nextProps) {
-    this.setState({...this.state, ...computeHighlights(this.state.datasets, nextProps.highlightTime)});
+    this.setState({
+      ...this.state,
+      ...computeHighlights(this.state.datasets, nextProps.highlightTime),
+    });
   }
   render() {
     return (
       <div>
-        <QuerySet queries={this.props.queries} onQueryData={this._onData} />
+        <QuerySet queries={this.props.queries} strictMatch={true} onQueryData={this._onData} />
         <Graph datasets={this.state.datasets} highlights={this.state.points} onSelectMetric={this.props.onSelectMetric} height={this.props.graphHeight} />
         <QueryKey series={this.state.series} onSelectMetric={this.props.onSelectMetric} />
       </div>
