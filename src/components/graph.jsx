@@ -45,7 +45,6 @@ class _Graph extends React.Component {
     }
   }
   _onSelect(time, point, nearest) {
-    console.log('selected', time, point, nearest);
     if (!nearest) {
       return;
     }
