@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import React from 'react';
 import _ from 'underscore';
 
-export function ConsoleTree(consoles) {
+function ConsoleTree(consoles) {
   var root = {console: null, children: {}, path: ""};
   _.each(consoles, function(console, path) {
     var parts = path.replace(/\/+/g, "/").replace(/\/$/, "").replace(/^\//, "").split("/");
@@ -44,7 +44,7 @@ class _ConsoleNav extends React.Component {
 _ConsoleNav.propTypes = {
   consoles: React.PropTypes.object.isRequired,
 };
-export const ConsoleNav = connect(
+const ConsoleNav = connect(
   (state) => ({
     consoles: state.config.consoles
   })
