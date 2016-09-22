@@ -83,3 +83,48 @@ export function TimeForPoint(tAxis, tScale, point) {
   var timeWidth = tScale.domainMax().getTime() - tScale.domainMin().getTime();
   return new Date(tScale.domainMin().getTime() + timeWidth * position);
 }
+
+export function ParseDuration(durationString) {
+  if (!durationString) {
+    return 0;
+  }
+  var [weeks, days, hours, minutes, seconds] = (durationString.match(/^(?:(\d+)w)?(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/) || []).slice(1);
+  var res = parseInt(weeks || '0');
+  res = res * 7 + parseInt(days || '0');
+  res = res * 24 + parseInt(hours || '0');
+  res = res * 60 + parseInt(minutes || '0');
+  res = res * 60 + parseInt(seconds || '0');
+  return res;
+}
+
+export function FormatDuration(seconds) {
+  var week = 7*24*60*60;
+  var day = 24*60*60;
+  var hour = 60*60;
+  var minute = 60;
+  var res = "";
+  if (seconds >= week) {
+    var weeks = Math.floor(seconds / week);
+    res = res + weeks.toString() + "w";
+    seconds = seconds - weeks * week;
+  }
+  if (seconds >= day) {
+    var days = Math.floor(seconds / day);
+    res = res + days.toString() + "d";
+    seconds = seconds - days * day;
+  }
+  if (seconds >= hour) {
+    var hours = Math.floor(seconds / hour);
+    res = res + hours.toString() + "h";
+    seconds = seconds - hours * hour;
+  }
+  if (seconds >= minute) {
+    var minutes = Math.floor(seconds / minute);
+    res = res + minutes.toString() + "m";
+    seconds = seconds - minutes * minute;
+  }
+  if (seconds > 0) {
+    res = res + seconds.toString() + "s";
+  }
+  return res;
+}
