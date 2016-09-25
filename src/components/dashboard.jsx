@@ -45,7 +45,7 @@ export { Dashboard as default };
 
 class _Loader extends React.Component {
   componentDidMount() {
-    this.req = axios.get("/config.json");
+    this.req = axios.get("config.json");
     this.req.then((response) => this.props.onConfigLoaded(response.data));
   }
   componentWillUnmount() {
