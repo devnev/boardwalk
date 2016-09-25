@@ -93,7 +93,11 @@ class _Query extends React.Component {
     }
     if (query !== nextQuery || source !== nextSource) {
       this.props.unsubscribe(query, source, this);
-      this.props.subscribe(nextQuery, nextSource, this);
+      if (!nextQuery || !nextSource) {
+        console.warn("unexpected empty query %s or empty source %s", nextSource, nextQuery);
+      } else {
+        this.props.subscribe(nextQuery, nextSource, this);
+      }
     }
     if (data !== nextData) {
       nextProps.updated(formatResults(nextProps.options, nextData || []));
