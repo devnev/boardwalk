@@ -1,4 +1,4 @@
-import { combineReducers } from 'redux';
+import { combineReducers, Middleware } from 'redux';
 import * as config from './config';
 import * as filter from './filter';
 import * as query_data from './query_data';
@@ -12,6 +12,11 @@ export const reducer = combineReducers({
   range: range.reducer,
   subscriptions: query_subscriptions.reducer,
 });
+
+export const middleware: Middleware[] = [
+  query_data.queryRequestMiddleware,
+  query_subscriptions.queryDispatchMiddleware,
+];
 
 export interface State {
   config: config.State;
