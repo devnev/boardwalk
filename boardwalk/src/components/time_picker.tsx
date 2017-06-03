@@ -1,6 +1,10 @@
 import * as moment from 'moment';
 import * as React from 'react';
+import * as redux from 'redux';
+import { connect } from 'react-redux';
 import { FormatDuration, FormatDate } from '../fmt';
+import { State } from '../reducers';
+import * as time from '../actions/time';
 
 interface TimePickerFormProps {
   value: string;
@@ -40,7 +44,8 @@ function TimePickerForm(props: TimePickerFormProps): JSX.Element {
 interface TimePickerProps {
   end: Date;
   step: number;
-  onPickEnd: (d: Date) => void;
+  onPickEnd: (end: Date) => void;
+  onPickNow: () => void;
 }
 
 interface TimePickerState {
@@ -78,7 +83,7 @@ export class TimePicker extends React.Component<TimePickerProps, TimePickerState
     }
   }
   _onPickNow() {
-    this.props.onPickEnd(new Date());
+    this.props.onPickNow();
   }
 
   render(): JSX.Element {
@@ -96,3 +101,20 @@ export class TimePicker extends React.Component<TimePickerProps, TimePickerState
       />);
   }
 }
+
+export const DashboardTimePicker = connect(
+  (state: State) => ({
+    end: state.range.end,
+    step: state.range.duration,
+  }),
+  (dispatch: redux.Dispatch<time.PickEndAction>) => ({
+    onPickNow: () => dispatch({
+      type: time.PICK_END,
+      end: new Date(),
+    }),
+    onPickEnd: (end: Date) => dispatch({
+      type: time.PICK_END,
+      end: end,
+    }),
+  })
+)(TimePicker);
