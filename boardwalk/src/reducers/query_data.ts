@@ -64,7 +64,7 @@ export interface QueryState {
   start: Date|null;
   end: Date|null;
   request: actions.QueryRequest|null;
-  data: any;
+  data: any; // tslint:disable-line
 }
 
 export interface State {
