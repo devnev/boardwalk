@@ -1,29 +1,6 @@
 import * as _ from 'underscore';
-
-export const FILTER_CHANGE = 'FILTER_CHANGE';
-export type FILTER_CHANGE = typeof FILTER_CHANGE;
-
-export type OtherAction = { type: '' };
-export const OtherAction: OtherAction = { type: '' };
-
-export interface Action {
-  type: FILTER_CHANGE;
-  filters: { [label: string]: string | null; };
-}
-
-export function setLabelFilter(label: string, value: string): Action {
-  return {
-    type: FILTER_CHANGE,
-    filters: {label: value},
-  };
-}
-
-export function clearLabelFilter(label: string): Action {
-  return {
-    type: FILTER_CHANGE,
-    filters: {label: null},
-  };
-}
+import { Action, FILTER_CHANGE } from '../actions/filter';
+import { UnknownAction } from '../actions';
 
 export interface State {
   filters: { [label: string]: string };
@@ -35,7 +12,7 @@ function initialState(): State {
   };
 }
 
-export function reducer(state: State = initialState(), action: Action|OtherAction = OtherAction): State {
+export function reducer(state: State = initialState(), action: Action|UnknownAction = UnknownAction): State {
   switch (action.type) {
     case FILTER_CHANGE:
       let filters = { ...state.filters };
