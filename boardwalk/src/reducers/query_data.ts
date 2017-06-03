@@ -61,10 +61,10 @@ export const queryRequestMiddleware =
 export interface QueryState {
   query: string;
   source: string;
-  start: Date|null;
-  end: Date|null;
-  request: actions.QueryRequest|null;
-  data: any; // tslint:disable-line
+  start?: Date;
+  end?: Date;
+  request?: actions.QueryRequest;
+  data?: any; // tslint:disable-line
 }
 
 export interface State {
@@ -88,10 +88,6 @@ export function reducer(state: State, action: Actions = UnknownAction): State {
           [key]: {
             query: action.query,
             source: action.source,
-            start: null,
-            end: null,
-            request: null,
-            data: null,
           },
         },
       };
@@ -119,7 +115,7 @@ export function reducer(state: State, action: Actions = UnknownAction): State {
     }
     case actions.QUERY_DATA: {
       const key = queryKey(action.query, action.source);
-      const entry = get(state.queries, key, {request: null});
+      const entry = get(state.queries, key, {request: undefined});
       return {
         ...state,
         queries: {
@@ -129,7 +125,7 @@ export function reducer(state: State, action: Actions = UnknownAction): State {
             source: action.source,
             start: action.start,
             end: action.end,
-            request: action.request === entry.request ? null : entry.request,
+            request: action.request === entry.request ? undefined : entry.request,
             data: action.data,
           }
         }

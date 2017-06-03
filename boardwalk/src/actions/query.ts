@@ -5,6 +5,17 @@ export interface SubscribeQueryAction {
   type: SUBSCRIBE_QUERY;
   query: string;
   source: string;
+  object: {};
+}
+
+export const UNSUBSCRIBE_QUERY = 'UNSUBSCRIBE_QUERY';
+export type UNSUBSCRIBE_QUERY = typeof UNSUBSCRIBE_QUERY;
+
+export interface UnsubscribeQueryAction {
+  type: UNSUBSCRIBE_QUERY;
+  query: string;
+  source: string;
+  object: {};
 }
 
 export const LOAD_QUERY = 'LOAD_QUERY';
@@ -18,7 +29,7 @@ export interface LoadQueryAction {
   type: LOAD_QUERY;
   query: string;
   source: string;
-  request: QueryRequest;
+  request?: QueryRequest;
   start: Date;
   end: Date;
 }
