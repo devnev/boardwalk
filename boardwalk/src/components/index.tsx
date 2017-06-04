@@ -8,3 +8,5 @@ import { FilterSelectControlContainer } from './filter_controls';
 export { FilterSelectControlContainer };
 import { SetupGraph } from './base_graph';
 export { SetupGraph };
+import { GraphContainer } from './graph';
+export { GraphContainer as Graph };
