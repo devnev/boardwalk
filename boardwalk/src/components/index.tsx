@@ -24,3 +24,5 @@ import { Section } from './section';
 export { Section };
 import { DashboardNav } from './console_nav';
 export { DashboardNav };
+import { DashboardContainer } from './dashboard';
+export { DashboardContainer };

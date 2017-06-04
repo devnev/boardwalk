@@ -35,7 +35,7 @@ function FilterSelectControl(props: FilterSelectControlProps): JSX.Element {
   );
 }
 
-export const FilterSelectControlContainer = connect(
+export const FilterSelectControlContainer: React.ComponentClass<{}> = connect(
   (state) => ({
     selectors: state.config.consoles[state.console].selectors,
     filter: state.filter,

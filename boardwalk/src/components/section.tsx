@@ -6,7 +6,7 @@ import * as React from 'react';
 import { FormatTemplate } from '../fmt';
 import { MatchFilter } from '../match';
 
-interface Link {
+export interface Link {
   url: string;
   text: string;
   match: {[label: string]: string};

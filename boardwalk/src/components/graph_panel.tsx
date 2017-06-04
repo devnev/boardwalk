@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import * as React from 'react';
 import { MetricsPanelContainer as MetricsPanel } from './metrics_panel';
 
-interface GraphQuery {
+export interface GraphQuery {
   title: string;
   query: string;
   source: string;
@@ -13,7 +13,7 @@ interface GraphQuery {
   expanded?: ExpandQuery;
 }
 
-interface ExpandQuery {
+export interface ExpandQuery {
   title: string;
   query: string;
   source: string;
