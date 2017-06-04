@@ -6,3 +6,5 @@ import { QuerySet } from './query_set';
 export { QuerySet };
 import { FilterSelectControlContainer } from './filter_controls';
 export { FilterSelectControlContainer };
+import { SetupGraph } from './base_graph';
+export { SetupGraph };

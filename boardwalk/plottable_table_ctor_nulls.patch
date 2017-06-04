@@ -1,0 +1,27 @@
+From 6e6b71813429d6c37c11fffecce7aa7d5d079b9f Mon Sep 17 00:00:00 2001
+From: devnev <mark.nevill@gmail.com>
+Date: Sun, 4 Jun 2017 17:01:50 +0100
+Subject: [PATCH] Allow null in Table constructor type.
+
+The documentation and implementation currently permit null, but the actual constructor type requires all cells to be valid components.
+---
+ src/components/table.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/components/table.ts b/src/components/table.ts
+index 624bf1280..ce1984848 100644
+--- a/src/components/table.ts
++++ b/src/components/table.ts
+@@ -50,10 +50,10 @@ export class Table extends ComponentContainer {
+    * ```
+    *
+    * @constructor
+-   * @param {Component[][]} [rows=[]] A 2-D array of Components to be added to the Table.
++   * @param {(Component|null)[][]} [rows=[]] A 2-D array of Components to be added to the Table.
+    *   null can be used if a cell is empty.
+    */
+-  constructor(rows: Component[][] = []) {
++  constructor(rows: (Component|null)[][] = []) {
+     super();
+     this.addClass("table");
+     rows.forEach((row, rowIndex) => {
