@@ -22,6 +22,7 @@ export interface QueryOptions {
   title: string;
   query: string;
   source: string;
+  label: string;
   match: {[key: string]: string};
 }
 

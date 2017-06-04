@@ -44,13 +44,13 @@ export const queryRequestMiddleware =
         step: step.toString() + 's',
         cancelToken: cancel.token,
       }});
-      request.then((response) => dispatch({
+      request.then((response) => dispatch<actions.QueryDataAction>({
         ...action,
-        type: 'QUERY_DATA',
+        type: actions.QUERY_DATA,
         request: cancel,
         data: response.data.data.result,
       }));
-      return next({...action, request: cancel});
+      return next<actions.LoadQueryAction>({...action, request: cancel});
     }
     default: {
       return next(action);
