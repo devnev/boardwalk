@@ -22,3 +22,5 @@ import { GraphPanelContainer } from './graph_panel';
 export { GraphPanelContainer as GraphPanel };
 import { Section } from './section';
 export { Section };
+import { DashboardNav } from './console_nav';
+export { DashboardNav };
