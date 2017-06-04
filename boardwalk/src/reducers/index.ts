@@ -7,6 +7,7 @@ import * as query_data from './query_data';
 import * as range from './range';
 import * as query_subscriptions from './query_subscriptions';
 import * as console from './console';
+import * as expand from './expand';
 
 export const history = createHistory();
 
@@ -18,6 +19,7 @@ export const reducer = combineReducers({
   subscriptions: query_subscriptions.reducer,
   router: routerReducer,
   console: console.reducer,
+  expanded: expand.reducer,
 });
 
 export const middleware: Middleware[] = [
@@ -34,4 +36,5 @@ export interface State {
   subscriptions: query_subscriptions.State;
   router: RouterState;
   console: console.State;
+  expanded: expand.State;
 }
