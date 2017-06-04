@@ -6,12 +6,13 @@ import * as _ from 'underscore';
 import * as React from 'react';
 import * as Plottable from 'plottable';
 import { SetupGraph, GraphInfo } from './base_graph';
+import * as types from './types';
 
 interface GraphProps {
   datasets: Plottable.Dataset[];
   onSelectMetric: (queryIndex: number, metricLabels: {[label: string]: string}) => void;
-  highlights: Plottable.Dataset[];
-  highlightTime: object; // TODO: type
+  highlights: types.SeriesHighlight[];
+  highlightTime: Date;
   onHoverTime: () => void; // TODO: type
   height: string;
 }
@@ -80,7 +81,14 @@ class Graph extends React.Component<GraphProps, {}> {
   }
 }
 
-export const GraphContainer = connect(
+interface GraphContainerProps {
+  datasets: Plottable.Dataset[];
+  onSelectMetric: (queryIndex: number, metricLabels: {[label: string]: string}) => void;
+  highlights: types.SeriesHighlight[];
+  height: string;
+}
+
+export const GraphContainer: React.ComponentClass<GraphContainerProps> = connect(
   (state) => ({
     highlightTime: state.hover.time,
   }),

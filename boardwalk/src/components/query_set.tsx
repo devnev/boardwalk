@@ -28,7 +28,7 @@ export interface QueryOptions {
 
 interface RawResult {
   metric: {[label: string]: string};
-  value: number;
+  values: number[];
 }
 
 export interface QueryResult {
@@ -36,7 +36,7 @@ export interface QueryResult {
   title: string;
   queryOptions: QueryOptions;
   queryIndex: number;
-  value: number;
+  values: number[];
 }
 
 interface QueryPullerProps {

@@ -14,3 +14,5 @@ import { ScaleProvider } from './scale_context';
 export { ScaleProvider };
 import { QueryKey } from './query_key';
 export { QueryKey };
+import { MetricsPanelContainer } from './metrics_panel';
+export { MetricsPanelContainer as MetricsPanel };
