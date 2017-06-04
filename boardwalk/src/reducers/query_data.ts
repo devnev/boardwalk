@@ -74,7 +74,7 @@ export interface State {
 type Actions = actions.SubscribeQueryAction|actions.LoadQueryAction|actions.QueryDataAction|UnknownAction;
 
 // query data reducer tracks all state from query actions in the store
-export function reducer(state: State, action: Actions = UnknownAction): State {
+export function reducer(state: State = {queries: {}}, action: Actions = UnknownAction): State {
   switch (action.type) {
     case actions.SUBSCRIBE_QUERY: {
       const key = queryKey(action.query, action.source);
