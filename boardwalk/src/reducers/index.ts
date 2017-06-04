@@ -8,6 +8,7 @@ import * as range from './range';
 import * as query_subscriptions from './query_subscriptions';
 import * as console from './console';
 import * as expand from './expand';
+import * as router from './router';
 
 export const history = createHistory();
 
@@ -26,6 +27,7 @@ export const middleware: Middleware[] = [
   query_data.queryRequestMiddleware,
   query_subscriptions.queryDispatchMiddleware,
   routerMiddleware(history),
+  router.locationMiddleware(history),
 ];
 
 export interface State {
