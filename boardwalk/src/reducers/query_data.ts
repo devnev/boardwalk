@@ -64,7 +64,7 @@ export interface QueryState {
   start?: Date;
   end?: Date;
   request?: actions.QueryRequest;
-  data?: any; // tslint:disable-line
+  data?: object;
 }
 
 export interface State {
@@ -112,7 +112,7 @@ export function reducer(state: State = initialState(), action: Actions = Unknown
         queries: {
           ...state.queries,
           [key]: {
-            ...get(state.queries, key, {data: null}),
+            ...get(state.queries, key, {}),
             query: action.query,
             source: action.source,
             start: action.start,

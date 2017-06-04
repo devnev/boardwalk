@@ -5,7 +5,7 @@ import * as _ from 'underscore';
 import { connect } from 'react-redux';
 import * as React from 'react';
 import * as Plottable from 'plottable';
-import { QuerySet, QueryOptions, QueryResult } from './query_set';
+import * as query_set from './query_set';
 import { QueryKey } from './query_key';
 import { GraphContainer } from './graph';
 import * as types from './types';
@@ -44,25 +44,16 @@ function computeHighlights(
   };
 }
 
-function datasetsFromResults(results: QueryResult[]) {
-  return results.map((result: QueryResult) => {
-    var dataset = _.map(result.values, (value) => {
-      return {
-        t: new Date(value[0] * 1000),
-        y: parseFloat(value[1]),
-      };
-    });
-    return new Plottable.Dataset(dataset, {
-      title: result.title,
-      metric: result.metric,
-      queryIndex: result.queryIndex,
-    });
-  });
+interface Query {
+  title: string;
+  query: string;
+  source: string;
+  match: {[key: string]: string};
 }
 
 interface MetricsPanelProps {
   highlightTime: Date;
-  queries: QueryOptions[];
+  queries: Query[];
   onSelectMetric: (queryIndex: number, metricLabels: {[label: string]: string}) => void;
   graphHeight: string;
 }
@@ -83,8 +74,23 @@ class MetricsPanel extends React.Component<MetricsPanelProps, MetricsPanelState>
     };
     this._onData = this._onData.bind(this);
   }
-  _onData(results: QueryResult[]): void {
-    const datasets = datasetsFromResults(results);
+  _datasetsFromResults(results: query_set.MatrixResult[]) {
+    return results.map((result: query_set.MatrixResult) => {
+      var dataset = _.map(result.values, (value) => {
+        return {
+          t: new Date(value[0] * 1000),
+          y: parseFloat(value[1]),
+        };
+      });
+      return new Plottable.Dataset(dataset, {
+        title: this.props.queries[result.queryIndex].title,
+        metric: result.metric,
+        queryIndex: result.queryIndex,
+      });
+    });
+  }
+  _onData(results: query_set.MatrixResult[]): void {
+    const datasets = this._datasetsFromResults(results);
     this.setState({
       ...this.state,
       datasets,
@@ -100,7 +106,7 @@ class MetricsPanel extends React.Component<MetricsPanelProps, MetricsPanelState>
   render() {
     return (
       <div>
-        <QuerySet queries={this.props.queries} strictMatch={true} onQueryData={this._onData} />
+        <query_set.MatrixQuerySet queries={this.props.queries} strictMatch={true} onData={this._onData} />
         <GraphContainer
           datasets={this.state.datasets}
           highlights={this.state.points}
@@ -114,7 +120,7 @@ class MetricsPanel extends React.Component<MetricsPanelProps, MetricsPanelState>
 }
 
 interface MetricsPanelContainerProps {
-  queries: QueryOptions[];
+  queries: Query[];
   onSelectMetric: (queryIndex: number, metricLabels: {[label: string]: string}) => void;
   graphHeight: string;
 }
