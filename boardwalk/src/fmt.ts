@@ -51,3 +51,48 @@ export function ParseDuration(durationString: string): number {
 export function FormatDate(date: Date): string {
   return moment(date).format(timeFormat);
 }
+
+export function FormatMetric(metric: {[label: string]: string}): string {
+  var title = '';
+  Object.keys(metric).forEach(function(key: string) {
+    if (title === '') {
+      title = '{';
+    }
+    if (key === '__name__') {
+      title = metric[key] + title;
+      return;
+    }
+    if (!title.endsWith('{')) {
+      title = title + ',';
+    }
+    title = title + key + '=' + JSON.stringify(metric[key]);
+  });
+  if (title.endsWith('{')) {
+    title = title.substr(0, title.length - 1);
+  } else if (title !== '') {
+    title = title + '}';
+  }
+  return title;
+}
+
+export function FormatTemplate(template: string, props: {[key: string]: string}): string {
+  var r = /([^$]|^)\$\{([^}]*)\}/;
+  var pieces = template.split(r);
+  var result = '';
+  for (var i = 0; i < pieces.length; i++) {
+    if (i % 3 !== 2) {
+      result += pieces[i];
+      continue;
+    }
+    var key = pieces[i];
+    if (key === '') {
+      result += '$';
+    } else if (props.hasOwnProperty(key)) {
+      result += props[key];
+    } else {
+      // TODO: proper error handling
+      console.warn('unknown key', key, 'in template', template);
+    }
+  }
+  return result;
+}

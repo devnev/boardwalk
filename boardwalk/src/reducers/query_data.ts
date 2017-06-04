@@ -68,13 +68,22 @@ export interface QueryState {
 }
 
 export interface State {
+  get: <D>(state: State, query: string, source: string, def: D) => QueryState|D;
   queries: {[key: string]: QueryState};
+}
+
+function initialState(): State {
+  const g = <D>(st: {}, q: string, s: string, def: D) => def;
+  const s: State = {get: g, queries: {}};
+  s.get = <D>(state: State, query: string, source: string, def: D): QueryState|D =>
+    get(s.queries, queryKey(query, source), def);
+  return s;
 }
 
 type Actions = actions.SubscribeQueryAction|actions.LoadQueryAction|actions.QueryDataAction|UnknownAction;
 
 // query data reducer tracks all state from query actions in the store
-export function reducer(state: State = {queries: {}}, action: Actions = UnknownAction): State {
+export function reducer(state: State = initialState(), action: Actions = UnknownAction): State {
   switch (action.type) {
     case actions.SUBSCRIBE_QUERY: {
       const key = queryKey(action.query, action.source);
