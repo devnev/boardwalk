@@ -19,7 +19,7 @@ interface TimePickerFormProps {
 }
 
 function TimePickerForm(props: TimePickerFormProps): JSX.Element {
-  let {value, step, valid, dirty, onStepBack, onStepForward, onChanged, onPick, onPickNow} = props;
+  const {value, step, valid, dirty, onStepBack, onStepForward, onChanged, onPick, onPickNow} = props;
   const cls = (valid ? 'valid' : 'error') + (dirty ? ' dirty' : '');
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); if (onPick) {
@@ -65,9 +65,15 @@ export class TimePicker extends React.Component<TimePickerProps, TimePickerState
   }
 
   _onStepBack() {
+    if (!this.props.onPickEnd) {
+      return;
+    }
     this.props.onPickEnd(new Date(this.props.end.getTime() - this.props.step * 1000));
   }
   _onStepForward() {
+    if (!this.props.onPickEnd) {
+      return;
+    }
     this.props.onPickEnd(new Date(this.props.end.getTime() + this.props.step * 1000));
   }
   _onChanged(value: string) {
@@ -78,11 +84,15 @@ export class TimePicker extends React.Component<TimePickerProps, TimePickerState
     });
   }
   _onPick() {
-    if (this.state.valid) {
-      this.props.onPickEnd(moment(this.state.value).toDate());
+    if (!this.state.valid || !this.props.onPickEnd) {
+      return;
     }
+    this.props.onPickEnd(moment(this.state.value).toDate());
   }
   _onPickNow() {
+    if (!this.props.onPickNow) {
+      return;
+    }
     this.props.onPickNow();
   }
 
@@ -102,17 +112,17 @@ export class TimePicker extends React.Component<TimePickerProps, TimePickerState
   }
 }
 
-export const DashboardTimePicker = connect(
+export const DashboardTimePicker: React.ComponentClass<{}> = connect<{}, {}, TimePickerProps>(
   (state: State) => ({
-    end: state.range.end,
-    step: state.range.duration,
+    end: state.range.end || new Date(),
+    step: state.range.duration || 60 * 60,
   }),
-  (dispatch: redux.Dispatch<time.PickEndAction>) => ({
-    onPickNow: () => dispatch({
+  (dispatch: redux.Dispatch<State>) => ({
+    onPickNow: () => dispatch<time.PickEndAction>({
       type: time.PICK_END,
       end: new Date(),
     }),
-    onPickEnd: (end: Date) => dispatch({
+    onPickEnd: (end: Date) => dispatch<time.PickEndAction>({
       type: time.PICK_END,
       end: end,
     }),

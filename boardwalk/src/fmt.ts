@@ -1,6 +1,7 @@
 import * as moment from 'moment';
 
 const timeFormat = 'YYYY-MM-DD HH:mm:ssZZ';
+const durationPattern = /^(?:(\d+)w)?(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/;
 
 export function FormatDuration(seconds: number): string {
   const week = 7 * 24 * 60 * 60;
@@ -31,6 +32,19 @@ export function FormatDuration(seconds: number): string {
   if (seconds > 0) {
     res = res + seconds.toString() + 's';
   }
+  return res;
+}
+
+export function ParseDuration(durationString: string): number {
+  if (!durationString) {
+    return 0;
+  }
+  var [weeks, days, hours, minutes, seconds] = (durationString.match(durationPattern) || []).slice(1);
+  var res = parseInt(weeks || '0', 10);
+  res = res * 7 + parseInt(days || '0', 10);
+  res = res * 24 + parseInt(hours || '0', 10);
+  res = res * 60 + parseInt(minutes || '0', 10);
+  res = res * 60 + parseInt(seconds || '0', 10);
   return res;
 }
 
