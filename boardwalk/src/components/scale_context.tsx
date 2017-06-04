@@ -4,7 +4,7 @@ import * as Plottable from 'plottable';
 
 const colorScale = new Plottable.Scales.Color();
 
-interface ScaleContext {
+export interface ScaleContext {
   timeScale: Plottable.Scales.Time;
   colorScale: Plottable.Scales.Color;
 }

@@ -12,3 +12,5 @@ import { GraphContainer } from './graph';
 export { GraphContainer as Graph };
 import { ScaleProvider } from './scale_context';
 export { ScaleProvider };
+import { QueryKey } from './query_key';
+export { QueryKey };
