@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package io.nevill.boardwalk;
+
+message Config {
+  map<string, Console> consoles = 1;
+}
+
+message Console {
+  string title = 1;
+  repeated Selector selectors = 2;
+  repeated ConsoleContents contents = 3;
+}
+
+message ConsoleContents {
+  oneof panels {
+    Graph graph = 3;
+    Section section = 4;
+  }
+}
+
+message Selector {
+  string label = 1;
+  repeated string options = 2;
+  repeated SelectorQuery queries = 3;
+}
+
+message SelectorQuery {
+  string query = 1;
+  string source = 2;
+  string label = 3;
+  map<string, string> match = 4;
+}
+
+message Section {
+  string title = 1;
+  repeated Link links = 2;
+}
+
+message Link {
+  string url = 1;
+  string text = 2;
+  map<string, string> match = 3;
+}
+
+message Graph {
+  repeated GraphQuery queries = 1;
+}
+
+message GraphQuery {
+  string title = 1;
+  string query = 2;
+  string source = 3;
+  map<string, string> match = 4;
+  SelectorGraph expanded = 5;
+}
+
+message SelectorGraph {
+  string title = 1;
+  string query = 2;
+  string source = 3;
+  map<string, string> labels = 4;
+}
