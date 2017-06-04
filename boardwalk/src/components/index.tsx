@@ -10,3 +10,5 @@ import { SetupGraph } from './base_graph';
 export { SetupGraph };
 import { GraphContainer } from './graph';
 export { GraphContainer as Graph };
+import { ScaleProvider } from './scale_context';
+export { ScaleProvider };

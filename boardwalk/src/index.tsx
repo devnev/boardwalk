@@ -7,8 +7,10 @@ import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 import './index.css';
 import * as reducers from './reducers';
+import { syncScaleWithStore } from './components/time_scale';
 
 const store = createStore(reducers.reducer, applyMiddleware(...reducers.middleware));
+syncScaleWithStore(store);
 
 ReactDOM.render(
   <Provider store={store}>
