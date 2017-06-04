@@ -2,6 +2,8 @@ import { DashboardTimePicker } from './time_picker';
 export { DashboardTimePicker };
 import { DashboardDurationPicker } from './duration_picker';
 export { DashboardDurationPicker };
+import { DashboardRangePicker } from './range_picker';
+export { DashboardRangePicker };
 import { MatrixQuerySet, VectorQuerySet } from './query_set';
 export { MatrixQuerySet, VectorQuerySet };
 import { FilterSelectControlContainer } from './filter_controls';
