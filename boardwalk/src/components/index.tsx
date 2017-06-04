@@ -20,3 +20,5 @@ import { MetricsPanelContainer } from './metrics_panel';
 export { MetricsPanelContainer as MetricsPanel };
 import { GraphPanelContainer } from './graph_panel';
 export { GraphPanelContainer as GraphPanel };
+import { Section } from './section';
+export { Section };
