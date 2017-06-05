@@ -46,7 +46,7 @@ abstract class BaseQuerySet<
   }
   _onRawData(queryIndex: number, rawResults: RawResult) {
     console.log('queryset.onrawdata.begin', queryIndex, rawResults);
-    if (rawResults.result.length === 0 && this.state.results[queryIndex].length === 0) {
+    if (rawResults.result.length === 0 && !this.state.results[queryIndex]) {
       return;
     }
     const results = _.map(rawResults.result, (result: Row): Result<Row> => (Object.assign({}, result, {queryIndex})));

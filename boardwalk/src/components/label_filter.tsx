@@ -3,6 +3,8 @@ import * as React from 'react';
 import * as _ from 'underscore';
 import * as query_set from './query_set';
 import { LabelSelector } from './label_selector';
+import * as filter_actions from '../actions/filter';
+import { State } from '../reducers';
 
 export interface SelectorQuery {
   query: string;
@@ -90,12 +92,12 @@ interface LabelFilterContainerProps {
 }
 
 export const LabelFilterContainer: React.ComponentClass<LabelFilterContainerProps> = connect(
-  (state) => ({
-    filter: state.filter,
+  (state: State) => ({
+    filter: state.filter.filters,
   }),
   (dispatch) => ({
-    onSelect: (label, value) => dispatch({
-      type: 'SET_FILTERS',
+    onSelect: (label, value) => dispatch<filter_actions.Action>({
+      type: filter_actions.FILTER_CHANGE,
       filters: {[label]: value},
     }),
   }),
