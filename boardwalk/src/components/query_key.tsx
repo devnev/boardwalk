@@ -4,16 +4,22 @@
 import * as React from 'react';
 import { ScaleContext } from './scale_context';
 import * as types from './types';
+import * as Plottable from 'plottable';
 
 interface QueryKeyProps {
   series: types.SeriesValue[];
   onSelectMetric: (queryIndex: number, metricLabels: {[label: string]: string}) => void;
 }
 
+interface QueryKeyContext {
+  colorScale: Plottable.Scales.Color;
+}
+
 export class QueryKey extends React.Component<QueryKeyProps, {}> {
   static contextTypes: React.ValidationMap<ScaleContext> = {
     colorScale: React.PropTypes.object.isRequired,
   };
+  context: QueryKeyContext;
   render(): JSX.Element {
     const renderItem = (item: types.SeriesValue, index: number) => {
       const color = this.context.colorScale.scale(item.title);

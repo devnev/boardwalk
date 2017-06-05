@@ -37,18 +37,20 @@ export const queryRequestMiddleware =
     case 'LOAD_QUERY': {
       const step = Math.floor((action.end.getTime() / 1000 - action.start.getTime() / 1000) / 200);
       const cancel = axios.CancelToken.source();
-      const request = axios.get(action.source, {params: {
-        query: action.query,
-        start: Math.round(action.start.getTime() / 1000),
-        end: Math.round(action.end.getTime() / 1000),
-        step: step.toString() + 's',
+      const request = axios.get(action.source, {
+        params: {
+          query: action.query,
+          start: Math.round(action.start.getTime() / 1000),
+          end: Math.round(action.end.getTime() / 1000),
+          step: step.toString() + 's',
+        },
         cancelToken: cancel.token,
-      }});
+      });
       request.then((response) => dispatch<actions.QueryDataAction>({
         ...action,
         type: actions.QUERY_DATA,
         request: cancel,
-        data: response.data.data.result,
+        data: response.data.data,
       }));
       return next<actions.LoadQueryAction>({...action, request: cancel});
     }
@@ -76,7 +78,7 @@ function initialState(): State {
   const g = <D>(st: {}, q: string, s: string, def: D) => def;
   const s: State = {get: g, queries: {}};
   s.get = <D>(state: State, query: string, source: string, def: D): QueryState|D =>
-    get(s.queries, queryKey(query, source), def);
+    get(state.queries, queryKey(query, source), def);
   return s;
 }
 
@@ -125,6 +127,7 @@ export function reducer(state: State = initialState(), action: Actions = Unknown
     case actions.QUERY_DATA: {
       const key = queryKey(action.query, action.source);
       const entry = get(state.queries, key, {request: undefined});
+      console.log('got query data action for ', key, action);
       return {
         ...state,
         queries: {
@@ -136,8 +139,8 @@ export function reducer(state: State = initialState(), action: Actions = Unknown
             end: action.end,
             request: action.request === entry.request ? undefined : entry.request,
             data: action.data,
-          }
-        }
+          },
+        },
       };
     }
     default:

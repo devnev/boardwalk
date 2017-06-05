@@ -3,7 +3,6 @@ import * as ReactDOM from 'react-dom';
 import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { ConnectedRouter } from 'react-router-redux';
-//import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 import './index.css';
 import * as reducers from './reducers';

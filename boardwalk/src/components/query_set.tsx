@@ -45,11 +45,13 @@ abstract class BaseQuerySet<
     }
   }
   _onRawData(queryIndex: number, rawResults: RawResult) {
+    console.log('queryset.onrawdata.begin', queryIndex, rawResults);
     if (rawResults.result.length === 0 && this.state.results[queryIndex].length === 0) {
       return;
     }
     const results = _.map(rawResults.result, (result: Row): Result<Row> => (Object.assign({}, result, {queryIndex})));
     this.state.results[queryIndex] = results;
+    console.log('queryset.onrawdata.end', this.state.results);
     this.props.onData(_.flatten(this.state.results, true).filter(_.identity));
   }
   render(): JSX.Element {
@@ -75,6 +77,7 @@ export type VectorResult = Result<VectorRow>;
 export class VectorQuerySet extends BaseQuerySet<VectorRow, prom.PromVector> {
   _onUnknownData(queryIndex: number, rawResults: object): void {
     if (!prom.isVector(rawResults)) {
+      console.warn('expected prom vector, got', rawResults);
       return;
     }
     this._onRawData(queryIndex, rawResults);
@@ -91,6 +94,7 @@ export type MatrixResult = Result<MatrixRow>;
 export class MatrixQuerySet extends BaseQuerySet<MatrixRow, prom.PromMatrix> {
   _onUnknownData(queryIndex: number, rawResults: object): void {
     if (!prom.isMatrix(rawResults)) {
+      console.warn('expected prom matrix, got', rawResults);
       return;
     }
     this._onRawData(queryIndex, rawResults);

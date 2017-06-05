@@ -44,5 +44,5 @@ export interface QueryDataAction {
   request: QueryRequest;
   start: Date;
   end: Date;
-  data: any; // tslint:disable-line
+  data: object;
 }
