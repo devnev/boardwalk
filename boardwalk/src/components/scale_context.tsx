@@ -10,7 +10,7 @@ export interface ScaleContext {
 }
 
 export class ScaleProvider extends React.Component<{}, {}> implements React.ChildContextProvider<ScaleContext> {
-  static chlidContextTypes: React.ValidationMap<ScaleContext> = {
+  static childContextTypes: React.ValidationMap<ScaleContext> = {
     timeScale: React.PropTypes.object.isRequired,
     colorScale: React.PropTypes.object.isRequired,
   };

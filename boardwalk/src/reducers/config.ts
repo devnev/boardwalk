@@ -1,19 +1,15 @@
+import * as config from '../types/config';
 import { UnknownAction } from '../actions';
 import { Action, RECEIVE_CONFIG } from '../actions/config';
 
 export interface State {
-  config: string;
+  config?: config.Config;
 }
 
-function initialState(): State {
-  return {
-    config: '',
-  };
-}
-
-export function reducer(state: State = initialState(), action: Action|UnknownAction = UnknownAction): State {
+export function reducer(state: State = {}, action: Action|UnknownAction = UnknownAction): State {
   switch (action.type) {
     case RECEIVE_CONFIG:
+      console.log(action.config);
       return { config: action.config };
     default:
       return state;

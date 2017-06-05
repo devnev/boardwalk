@@ -7,6 +7,8 @@ import * as React from 'react';
 import * as Plottable from 'plottable';
 import { SetupGraph, GraphInfo } from './base_graph';
 import * as types from './types';
+import { State } from '../reducers';
+import * as hover_actions from '../actions/hover';
 
 interface GraphProps {
   datasets: Plottable.Dataset[];
@@ -23,8 +25,13 @@ interface GraphContext {
 }
 
 class Graph extends React.Component<GraphProps, {}> {
+  static contextTypes: React.ValidationMap<GraphContext> = {
+    timeScale: React.PropTypes.object.isRequired,
+    colorScale: React.PropTypes.object.isRequired,
+  };
   id: string;
   components: GraphInfo;
+  context: GraphContext;
 
   constructor(props: GraphProps, context: GraphContext) {
     super(props, context);
@@ -89,12 +96,12 @@ interface GraphContainerProps {
 }
 
 export const GraphContainer: React.ComponentClass<GraphContainerProps> = connect(
-  (state) => ({
+  (state: State) => ({
     highlightTime: state.hover.time,
   }),
   (dispatch) => ({
-    onHoverTime: (time, point) => dispatch({
-      type: 'HOVER',
+    onHoverTime: (time, point) => dispatch<hover_actions.HoverAction>({
+      type: hover_actions.HOVER,
       time: time,
       point: point,
     }),

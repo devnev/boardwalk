@@ -9,6 +9,7 @@ import * as query_subscriptions from './query_subscriptions';
 import * as console from './console';
 import * as expand from './expand';
 import * as router from './router';
+import * as hover from './hover';
 
 export const history = createHistory();
 
@@ -21,6 +22,7 @@ export const reducer = combineReducers({
   router: routerReducer,
   console: console.reducer,
   expanded: expand.reducer,
+  hover: hover.reducer,
 });
 
 export const middleware: Middleware[] = [
@@ -39,4 +41,5 @@ export interface State {
   router: RouterState;
   console: console.State;
   expanded: expand.State;
+  hover: hover.State;
 }

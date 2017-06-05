@@ -15,8 +15,7 @@ class App extends React.Component<{}, null> {
         <p className="App-intro">
           To get started, edit <code>src/App.tsx</code> and save to reload.
         </p>
-        <components.DashboardTimePicker />
-        <components.DashboardDurationPicker />
+        <components.DashboardContainer />
       </div>
     );
   }

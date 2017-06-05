@@ -2,10 +2,11 @@ import { connect } from 'react-redux';
 import * as React from 'react';
 import * as _ from 'underscore';
 import { LabelFilterContainer, Selector } from './label_filter';
+import { State } from '../reducers';
 
 interface FilterSelectControlProps {
   selectors: Selector[];
-  filter: object;
+  filter: {[label: string]: string};
   onRemoveFilter: (label: string) => void;
 }
 
@@ -14,7 +15,7 @@ function FilterSelectControl(props: FilterSelectControlProps): JSX.Element {
   var unknown = _.difference(_.keys(props.filter), selectorLabels);
   return (
     <ul>
-      {props.selectors.map((selector: Selector) => (
+      {props.selectors.map((selector: Selector): JSX.Element => (
         <li key={selector.label}>
           <span>{selector.label}</span>
           <LabelFilterContainer
@@ -24,7 +25,7 @@ function FilterSelectControl(props: FilterSelectControlProps): JSX.Element {
           />
         </li>
       ))}
-      {unknown.map((label: string) => (
+      {unknown.map((label: string): JSX.Element => (
         <li key={label}>
           <span>{label}</span>
           <span>{props.filter[label]}</span>
@@ -36,9 +37,9 @@ function FilterSelectControl(props: FilterSelectControlProps): JSX.Element {
 }
 
 export const FilterSelectControlContainer: React.ComponentClass<{}> = connect(
-  (state) => ({
-    selectors: state.config.consoles[state.console].selectors,
-    filter: state.filter,
+  (state: State) => ({
+    selectors: (state.config.config ? state.config.config.consoles[state.console.path].selectors : []),
+    filter: state.filter.filters,
   }),
   (dispatch) => ({
     onRemoveFilter: (name) => dispatch({

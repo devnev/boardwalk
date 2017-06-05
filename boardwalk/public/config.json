@@ -1,0 +1,166 @@
+{
+  "consoles": {
+    "": {
+      "title": "RPCs",
+      "selectors": [
+        {
+          "label": "job",
+          "options": ["server1", "server2"],
+          "queries": [
+            {
+              "label": "job",
+              "query": "count(job:grpc_server_handled_total:rate1m) by (job)",
+              "source": "http://dev-prometheus:80/api/v1/query"
+            }
+          ]
+        }
+      ],
+      "contents": [
+        {
+          "section": {
+            "title": "Handled",
+            "links": [
+              {
+                "match": {
+                  "job": ".+"
+                },
+                "url": "https://localhost/${job}",
+                "text": "${job} redirect"
+              }
+            ]
+          }
+        },
+        {
+          "graph": {
+            "queries": [
+              {
+                "title": "rpcs",
+                "match": {},
+                "query": "sum(job:grpc_server_handled_total:rate1m)",
+                "source": "http://dev-prometheus:80/api/v1/query_range",
+                "expanded": {
+                  "title": "${job}",
+                  "query": "job:grpc_server_handled_total:rate1m",
+                  "source": "http://dev-prometheus:80/api/v1/query_range",
+                  "labels": {
+                    "job": "job"
+                  }
+                }
+              },
+              {
+                "title": "${job} rpcs",
+                "match": {
+                  "job": ".+"
+                },
+                "query": "job:grpc_server_handled_total:rate1m{job=\"${job}\"}",
+                "source": "http://dev-prometheus:80/api/v1/query_range",
+                "expanded": {
+                  "title": "${job} ${grpc_service}",
+                  "query": "sum(service_method_code:grpc_server_handled_total:rate1m{job=\"${job}\"}) by (job,grpc_service)",
+                  "source": "http://dev-prometheus:80/api/v1/query_range",
+                  "labels": {
+                    "grpc_service": "service"
+                  }
+                }
+              },
+              {
+                "title": "${job} ${grpc_service} rpcs",
+                "match": {
+                  "job": ".+",
+                  "service": ".+"
+                },
+                "query": "sum(service_method_code:grpc_server_handled_total:rate1m{job=\"${job}\",grpc_service=\"${service}\"}) by (job,grpc_service)",
+                "source": "http://dev-prometheus:80/api/v1/query_range",
+                "expanded": {
+                  "title": "${job} ${grpc_service} ${grpc_method}",
+                  "query": "sum(service_method_code:grpc_server_handled_total:rate1m{job=\"${job}\"}) by (job,grpc_service,grpc_method)",
+                  "source": "http://dev-prometheus:80/api/v1/query_range",
+                  "labels": {
+                    "grpc_method": "method"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "graph": {
+            "queries": [
+              {
+                "query": "job:grpc_server_handled_total:rate1m",
+                "source": "http://dev-prometheus:80/api/v1/query_range"
+              }
+            ]
+          }
+        },
+        {
+          "graph": {
+            "queries": [
+              {
+                "title": "count",
+                "query": "count(up)",
+                "source": "http://dev-prometheus:80/api/v1/query_range"
+              },
+              {
+                "title": "up",
+                "query": "sum(up)",
+                "source": "http://dev-prometheus:80/api/v1/query_range"
+              },
+              {
+                "title": "down",
+                "query": "sum(up == 0)",
+                "source": "http://dev-prometheus:80/api/v1/query_range"
+              },
+              {
+                "title": "${job} count",
+                "query": "count(up{job=\"${job}\"}) by (job)",
+                "source": "http://dev-prometheus:80/api/v1/query_range",
+                "match": { "job": ".+" }
+              },
+              {
+                "title": "${job} up",
+                "query": "sum(up{job=\"${job}\"}) by (job)",
+                "source": "http://dev-prometheus:80/api/v1/query_range",
+                "match": { "job": ".+" }
+              },
+              {
+                "title": "${job} down",
+                "query": "sum(up{job=\"${job}\"} == 0) by (job)",
+                "source": "http://dev-prometheus:80/api/v1/query_range",
+                "match": { "job": ".+" }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "/res": {
+      "title": "Resources",
+      "selectors": [],
+      "contents": [
+        {
+          "graph": {
+            "queries": [
+              {
+                "match": {},
+                "query": "sum(increase(process_cpu_seconds_total[1m]))",
+                "source": "http://dev-prometheus:80/api/v1/query_range"
+              }
+            ]
+          }
+        },
+        {
+          "graph": {
+            "queries": [
+              {
+                "match": {},
+                "query": "sum(process_resident_memory_bytes)",
+                "source": "http://dev-prometheus:80/api/v1/query_range"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

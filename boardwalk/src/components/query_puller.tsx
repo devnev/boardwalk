@@ -82,7 +82,7 @@ interface QueryContainerProps {
 export const QueryContainer: React.ComponentClass<QueryContainerProps> = connect<{}, {}, QueryContainerProps>(
   (state: State) => ({
     filter: state.filter.filters,
-    data: state.data.queries,
+    data: state.data,
   }),
   (dispatch) => ({
     subscribe: (query: string, source: string, obj: {}) => dispatch<query_actions.SubscribeQueryAction>({

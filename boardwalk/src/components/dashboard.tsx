@@ -11,6 +11,8 @@ import { DashboardNav as ConsoleNav } from './console_nav';
 import { ScaleProvider } from './scale_context';
 import { GraphPanelContainer as GraphPanel, GraphQuery } from './graph_panel';
 import { State as RangeState } from '../reducers/range';
+import { State } from '../reducers';
+import * as config_types from '../types/config';
 
 interface DashboardProps {
   range: RangeState;
@@ -38,15 +40,13 @@ export const DashboardContainer: React.ComponentClass<{}> = connect(
 
 interface ConsolePageProps {
   console: string;
-  config?: {
-    title: string;
-  };
+  config?: config_types.Console;
 }
 
 function ConsolePage(props: ConsolePageProps): JSX.Element {
   const config = props.config;
   const title = config ? config.title : 'Console Not Found';
-  const console = config ? <ConsoleContainer /> : null;
+  const console = config ? <Console contents={config.contents} /> : null;
   return (
     <div>
       <h1>{title}</h1>
@@ -62,9 +62,9 @@ function ConsolePage(props: ConsolePageProps): JSX.Element {
 }
 
 const ConsolePageContainer: React.ComponentClass<{}> = connect(
-  (state) => ({
+  (state: State) => ({
     console: state.console,
-    config: state.config.consoles[state.console],
+    config: (state.config.config ? state.config.config.consoles[state.console.path] : undefined),
   })
 )(ConsolePage);
 
@@ -109,9 +109,3 @@ class Console extends React.Component<{contents: ConsoleItem[]}, {}> {
     );
   }
 }
-
-const ConsoleContainer: React.ComponentClass<{}> = connect(
-  (state) => ({
-    contents: state.config.consoles[state.console].contents,
-  })
-)(Console);
