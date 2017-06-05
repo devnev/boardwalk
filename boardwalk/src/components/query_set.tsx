@@ -27,17 +27,21 @@ type Result<Row> = Row & {
 interface BaseProps<Row> {
   queries: Query[];
   strictMatch: boolean;
-  onData: (results: Result<Row>[]) => void;
+  onData?: (results: Result<Row>[]) => void;
+  children?: React.ReactElement<{results: Result<Row>[]}>[];
 }
 
 abstract class BaseQuerySet<
     Row extends object,
     RawResult extends {result: Row[]}
-> extends React.Component<BaseProps<Row>, {results: Result<Row>[][]}> {
+> extends React.Component<BaseProps<Row>, {results: Result<Row>[][], flatResults: Result<Row>[]}> {
   abstract _onUnknownData(queryIndex: number, rawResults: object): void;
   constructor(props: BaseProps<Row>) {
     super(props);
-    this.state = {results: new Array(props.queries.length)};
+    this.state = {
+      results: new Array<Result<Row>[]>(props.queries.length),
+      flatResults: new Array<Result<Row>>(),
+    };
   }
   componentWillReceiveProps(nextProps: BaseProps<Row>) {
     if (this.props.queries !== nextProps.queries) {
@@ -49,10 +53,27 @@ abstract class BaseQuerySet<
     if (rawResults.result.length === 0 && !this.state.results[queryIndex]) {
       return;
     }
-    const results = _.map(rawResults.result, (result: Row): Result<Row> => (Object.assign({}, result, {queryIndex})));
-    this.state.results[queryIndex] = results;
-    console.log('queryset.onrawdata.end', this.state.results);
-    this.props.onData(_.flatten(this.state.results, true).filter(_.identity));
+    const rowResults = _.map(
+      rawResults.result,
+      (result: Row): Result<Row> => (Object.assign({}, result, {queryIndex}))
+    );
+    const results = this.state.results;
+    results[queryIndex] = rowResults;
+    const flatResults = _.flatten(this.state.results, true).filter(_.identity);
+    if (this.props.onData) {
+      this.props.onData(_.flatten(this.state.results, true).filter(_.identity));
+    }
+    this.setState({
+      results: results,
+      flatResults: flatResults,
+    });
+  }
+  renderChildren() {
+    return React.Children.map(this.props.children, (child: React.ReactElement<{results: Result<Row>[]}>) => {
+      return React.cloneElement(child, {
+        results: this.state.flatResults,
+      });
+    });
   }
   render(): JSX.Element {
     const queries = this.props.queries.map((opts: Query, index: number): JSX.Element => (
@@ -60,10 +81,15 @@ abstract class BaseQuerySet<
         key={index}
         options={opts}
         strictMatch={this.props.strictMatch}
-        updated={(results: object) => this._onUnknownData(index, results)}
+        updated={this._onUnknownData.bind(this, index)}
       />
     ));
-    return <div>{queries}</div>;
+    return (
+      <div>
+        {queries}
+        {this.props.children && this.state.flatResults.length > 0 ? this.renderChildren() : null}
+      </div>
+    );
   }
 }
 

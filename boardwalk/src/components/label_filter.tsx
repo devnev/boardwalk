@@ -72,7 +72,7 @@ class FilterSelector extends React.Component<LabelFilterProps, LabelFilterState>
     });
   }
   render() {
-    const select = (value: string) => this.props.onSelect(this.props.label, value);
+    const select = this.props.onSelect.bind(this, this.props.label);
     const value = get(this.props.filter, this.props.label, '');
     const options = _.union(this.props.options, this.state.labels);
     console.log('rendering filter options', options)
