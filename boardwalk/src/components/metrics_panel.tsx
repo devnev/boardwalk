@@ -9,6 +9,7 @@ import * as query_set from './query_set';
 import { QueryKey } from './query_key';
 import { GraphContainer } from './graph';
 import * as types from './types';
+import * as fmt from '../fmt';
 
 function computeHighlights(
     datasets: Plottable.Dataset[],
@@ -83,7 +84,7 @@ class MetricsPanel extends React.Component<MetricsPanelProps, MetricsPanelState>
         };
       });
       return new Plottable.Dataset(dataset, {
-        title: this.props.queries[result.queryIndex].title,
+        title: fmt.FormatTemplate(this.props.queries[result.queryIndex].title, result.metric),
         metric: result.metric,
         queryIndex: result.queryIndex,
       });
