@@ -10,7 +10,9 @@ interface LoaderProps {
 
 class Loader extends React.Component<LoaderProps, {}> {
   componentDidMount() {
-    this.props.onLoadConfig();
+    if (!this.props.loaded) {
+      this.props.onLoadConfig();
+    }
   }
   render() {
     if (!this.props.loaded) {
