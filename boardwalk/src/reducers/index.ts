@@ -46,6 +46,7 @@ export const reducer = combineReducers<State>({
 export const middleware: Middleware[] = [
   query_data.queryRequestMiddleware,
   query_subscriptions.queryDispatchMiddleware,
+  config.middleware,
   routerMiddleware(history),
   router.locationMiddleware(history),
 ];

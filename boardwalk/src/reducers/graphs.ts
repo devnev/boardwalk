@@ -1,6 +1,6 @@
 import * as _ from 'underscore';
 import { UnknownAction } from '../actions';
-import { Action as ReceiveConfigAction, RECEIVE_CONFIG } from '../actions/config';
+import { ReceiveConfigAction, RECEIVE_CONFIG } from '../actions/config';
 import * as types from '../types/config';
 
 export type State = Map<string, types.Graph>;

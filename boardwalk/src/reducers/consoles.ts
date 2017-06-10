@@ -1,7 +1,7 @@
 import * as _ from 'underscore';
 import { UnknownAction } from '../actions';
 import { Console } from '../types/config';
-import { Action as ReceiveConfigAction, RECEIVE_CONFIG } from '../actions/config';
+import { ReceiveConfigAction, RECEIVE_CONFIG } from '../actions/config';
 
 export type State = Map<string, Console>;
 
