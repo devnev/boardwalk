@@ -12,6 +12,7 @@ import * as expand from './expand';
 import * as router from './router';
 import * as hover from './hover';
 import * as graphs from './graphs';
+import * as graph_queries from './graph_queries';
 
 export const history = createHistory();
 
@@ -27,6 +28,7 @@ export interface State {
   expanded: expand.State;
   hover: hover.State;
   graphs: graphs.State;
+  graphQueries: graph_queries.State;
 }
 
 export const reducer = combineReducers<State>({
@@ -41,6 +43,7 @@ export const reducer = combineReducers<State>({
   expanded: expand.reducer,
   hover: hover.reducer,
   graphs: graphs.reducer,
+  graphQueries: graph_queries.reducer,
 });
 
 export const middleware: Middleware[] = [
