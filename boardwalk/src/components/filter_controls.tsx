@@ -3,19 +3,23 @@ import * as React from 'react';
 import * as _ from 'underscore';
 import { LabelFilterContainer, Selector } from './label_filter';
 import { State } from '../reducers';
+import * as config_types from '../types/config';
 
 interface FilterSelectControlProps {
-  selectors: Selector[];
+  consolePath: string;
+  consoles: Map<string, config_types.Console>;
   filter: {[label: string]: string};
   onRemoveFilter: (label: string) => void;
 }
 
 function FilterSelectControl(props: FilterSelectControlProps): React.ReactElement<{}> {
-  var selectorLabels = props.selectors.map((s: Selector) => s.label);
+  const console = props.consoles.get(props.consolePath);
+  const selectors = console ? console.selectors : [];
+  var selectorLabels = selectors.map((s: Selector) => s.label);
   var unknown = _.difference(_.keys(props.filter), selectorLabels);
   return (
     <ul>
-      {props.selectors.map((selector: Selector): React.ReactElement<{}> => (
+      {selectors.map((selector: Selector): React.ReactElement<{}> => (
         <li key={selector.label}>
           <span>{selector.label}</span>
           <LabelFilterContainer
@@ -38,7 +42,8 @@ function FilterSelectControl(props: FilterSelectControlProps): React.ReactElemen
 
 export const FilterSelectControlContainer: React.ComponentClass<{}> = connect(
   (state: State) => ({
-    selectors: (state.config.config ? state.config.config.consoles[state.console.path].selectors : []),
+    consolePath: state.consolePath,
+    consoles: state.consoles,
     filter: state.filter.filters,
   }),
   (dispatch) => ({

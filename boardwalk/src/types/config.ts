@@ -46,7 +46,7 @@ export interface GraphQuery {
   query: string;
   source: string;
   match: {[label: string]: string};
-  expanded: SelectorGraph;
+  expanded?: SelectorGraph;
 }
 
 export interface SelectorGraph {

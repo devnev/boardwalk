@@ -4,45 +4,38 @@
 import { connect } from 'react-redux';
 import * as React from 'react';
 import { MetricsPanelContainer as MetricsPanel } from './metrics_panel';
+import { State } from '../reducers';
+import { State as ExpandState } from '../reducers/expand';
+import { key as graphKey } from '../reducers/graphs';
+import * as config_types from '../types/config';
 
-export interface GraphQuery {
-  title: string;
-  query: string;
-  source: string;
-  match: {[label: string]: string};
-  expanded?: ExpandQuery;
-}
-
-export interface ExpandQuery {
-  title: string;
-  query: string;
-  source: string;
-  labels: {[label: string]: string};
-}
-
-type MatchedExpandQuery = ExpandQuery & {
-  match: {[label: string]: string};
-};
+type MatchedExpandQuery = config_types.GraphQuery & config_types.SelectorGraph;
 
 interface GraphPanelProps {
+  consolePath: string;
   index: number;
-  graph: {
-    queries: GraphQuery[];
-  };
-  expanded: {
-    panelIndex: number;
-    queryIndex: number;
-  };
+  graphs: Map<string, config_types.Graph>;
+  expanded: ExpandState;
   onExpandMetric: (panelIndex: number, queryIndex: number, metricLabels: {[label: string]: string}) => void;
   onSelectFilter: (filter: {[label: string]: string}) => void;
 }
 
 class GraphPanel extends React.Component<GraphPanelProps, {}> {
-  _getExpandedQuery() {
+  _onSelectExpanded(query: MatchedExpandQuery, queryIndex: number, metricLabels: {[label: string]: string}): void {
+      let filter = {};
+      Object.keys(query.labels).forEach((labelName) => {
+        filter[query.labels[labelName]] = metricLabels[labelName];
+      });
+      this.props.onSelectFilter(filter);
+  }
+  _getExpandedQuery(queries: config_types.GraphQuery[]): MatchedExpandQuery|undefined {
+    if (this.props.expanded.panelIndex === undefined || this.props.expanded.queryIndex === undefined) {
+      return;
+    }
     if (this.props.expanded.panelIndex !== this.props.index) {
       return;
     }
-    var query = this.props.graph.queries[this.props.expanded.queryIndex];
+    const query = queries[this.props.expanded.queryIndex];
     if (!query || !query.expanded) {
       return;
     }
@@ -51,14 +44,8 @@ class GraphPanel extends React.Component<GraphPanelProps, {}> {
       match: query.match,
     };
   }
-  _expandedPanel(query: MatchedExpandQuery) {
-    const select = (queryIndex: number, metricLabels: {[label: string]: string}) => {
-      let filter = {};
-      Object.keys(query.labels).forEach((labelName) => {
-        filter[query.labels[labelName]] = metricLabels[labelName];
-      });
-      this.props.onSelectFilter(filter);
-    };
+  _expandedPanel(query: MatchedExpandQuery): React.ReactElement<{}> {
+    const select = this._onSelectExpanded.bind(this, query);
     return (
       <MetricsPanel
         queries={[query]}
@@ -67,34 +54,37 @@ class GraphPanel extends React.Component<GraphPanelProps, {}> {
       />
     );
   }
-  _dataPanel() {
+  _dataPanel(queries: config_types.GraphQuery[]): React.ReactElement<{}> {
     const expand = this.props.onExpandMetric.bind(null, this.props.index);
     return (
       <MetricsPanel
-        queries={this.props.graph.queries}
+        queries={queries}
         graphHeight="300px"
         onSelectMetric={expand}
       />
     );
   }
-  render() {
-    var expandedQuery = this._getExpandedQuery();
+  render(): React.ReactElement<{}>|null {
+    const graph = this.props.graphs.get(graphKey(this.props.consolePath, this.props.index));
+    if (!graph) {
+      return null;
+    }
+    var expandedQuery = this._getExpandedQuery(graph.queries);
     if (expandedQuery) {
       return this._expandedPanel(expandedQuery);
     }
-    return this._dataPanel();
+    return this._dataPanel(graph.queries);
   }
 }
 
 interface GraphPanelContainerProps {
+  consolePath: string;
   index: number;
-  graph: {
-    queries: GraphQuery[];
-  };
 }
 
 export const GraphPanelContainer: React.ComponentClass<GraphPanelContainerProps> = connect(
-  (state) => ({
+  (state: State) => ({
+    graphs: state.graphs,
     expanded: state.expanded,
   }),
   (dispatch) => ({
