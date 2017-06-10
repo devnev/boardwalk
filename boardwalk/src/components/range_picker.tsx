@@ -5,6 +5,6 @@ import * as React from 'react';
 import { DashboardTimePicker } from './time_picker';
 import { DashboardDurationPicker } from './duration_picker';
 
-export function DashboardRangePicker(): JSX.Element {
+export function DashboardRangePicker(): React.ReactElement<{}> {
   return <div><DashboardDurationPicker /><DashboardTimePicker /></div>;
 }

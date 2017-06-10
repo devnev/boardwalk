@@ -16,7 +16,7 @@ interface NavNodeListProps {
 }
 
 export class NavNodeList extends React.Component<NavNodeListProps, {}> {
-  render(): JSX.Element | null {
+  render(): React.ReactElement<{}> | null {
     if (_.isEmpty(this.props.nodes)) {
       return null;
     }
@@ -30,7 +30,7 @@ export class NavNodeList extends React.Component<NavNodeListProps, {}> {
   }
 }
 
-function NavNode(props: {node: Node}): JSX.Element {
+function NavNode(props: {node: Node}): React.ReactElement<{}> {
   return (
     <div>
       {props.node.console ? <NodeLink node={props.node} /> : null}
@@ -44,7 +44,7 @@ interface ClickableNodeLinkProps {
   onSwitch: (path: string) => void;
 }
 
-function ClickableNodeLink(props: ClickableNodeLinkProps): JSX.Element {
+function ClickableNodeLink(props: ClickableNodeLinkProps): React.ReactElement<{}> {
   return <a onClick={() => props.onSwitch(props.node.path)}>{props.node.console.title}</a>;
 }
 

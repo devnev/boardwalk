@@ -35,7 +35,7 @@ function ConsoleTree(consoles: {[path: string]: Console}): Node {
   return root;
 }
 
-function ConsoleNav(props: {consoles: {[path: string]: Console}}): JSX.Element {
+function ConsoleNav(props: {consoles: {[path: string]: Console}}): React.ReactElement<{}> {
   var root = ConsoleTree(props.consoles);
   var rootNode;
   if (root.console) {

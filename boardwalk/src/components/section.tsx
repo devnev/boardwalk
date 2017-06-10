@@ -17,7 +17,7 @@ interface SectionProps {
   links: Link[];
 }
 
-export function Section(props: SectionProps): JSX.Element {
+export function Section(props: SectionProps): React.ReactElement<{}> {
   return (
     <div>
       <h2>{props.title}</h2>
@@ -26,7 +26,7 @@ export function Section(props: SectionProps): JSX.Element {
   );
 }
 
-function LinksList(props: {links: Link[]}): JSX.Element {
+function LinksList(props: {links: Link[]}): React.ReactElement<{}> {
   return (
     <ul>
       {props.links.map((link, index) => (
@@ -39,7 +39,7 @@ function LinksList(props: {links: Link[]}): JSX.Element {
 type FilterLinkProps = Link & {filter: {[label: string]: string}};
 
 class FilterLink extends React.Component<FilterLinkProps, {}> {
-  render(): JSX.Element | null {
+  render(): React.ReactElement<{}> | null {
     if (!MatchFilter(this.props.match, this.props.filter)) {
       return null;
     }

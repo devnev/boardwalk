@@ -74,8 +74,8 @@ abstract class BaseQuerySet<
       });
     });
   }
-  render(): JSX.Element {
-    const queries = this.props.queries.map((opts: Query, index: number): JSX.Element => (
+  render(): React.ReactElement<{}> {
+    const queries = this.props.queries.map((opts: Query, index: number): React.ReactElement<{}> => (
       <QueryContainer
         key={index}
         options={opts}

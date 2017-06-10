@@ -19,7 +19,7 @@ interface DashboardProps {
 }
 
 class Dashboard extends React.Component<DashboardProps, {}> {
-  render(): JSX.Element | null {
+  render(): React.ReactElement<{}> | null {
     if (!this.props.range.duration || !this.props.range.end) {
       return null;
     }
@@ -43,7 +43,7 @@ interface ConsolePageProps {
   config?: config_types.Console;
 }
 
-function ConsolePage(props: ConsolePageProps): JSX.Element {
+function ConsolePage(props: ConsolePageProps): React.ReactElement<{}> {
   const config = props.config;
   const title = config ? config.title : 'Console Not Found';
   const console = config ? <Console contents={config.contents} /> : null;
@@ -79,7 +79,7 @@ interface ConsoleItem {
 }
 
 class Console extends React.Component<{contents: ConsoleItem[]}, {}> {
-  _renderItem(index: number): JSX.Element | null {
+  _renderItem(index: number): React.ReactElement<{}> | null {
     let item = this.props.contents[index];
     if (item.graph) {
       return (
@@ -101,7 +101,7 @@ class Console extends React.Component<{contents: ConsoleItem[]}, {}> {
       return null;
     }
   }
-  render(): JSX.Element {
+  render(): React.ReactElement<{}> {
     return (
       <div>
         {this.props.contents.map((item, index) => this._renderItem(index))}

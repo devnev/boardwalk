@@ -58,7 +58,7 @@ class Graph extends React.Component<GraphProps, {}> {
   shouldComponentUpdate(props: GraphProps, state: {}) {
     return false;
   }
-  render(): JSX.Element {
+  render(): React.ReactElement<{}> {
     return (
       <div
         id={this.id}

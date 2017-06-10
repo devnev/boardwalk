@@ -22,7 +22,7 @@ interface DurationPickerFormProps {
   onPick?: () => void;
 }
 
-function DurationPickerForm(props: DurationPickerFormProps): JSX.Element {
+function DurationPickerForm(props: DurationPickerFormProps): React.ReactElement<{}> {
   const {value, valid, dirty, onDecrease, onIncrease, onChanged, onPick} = props;
   const cls = (valid ? 'valid' : 'error') + (dirty ? ' dirty' : '');
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -97,7 +97,7 @@ export class DurationPicker extends React.Component<DurationPickerProps, Duratio
     }
   }
 
-  render(): JSX.Element {
+  render(): React.ReactElement<{}> {
     return (
       <DurationPickerForm
         value={this.state.value}

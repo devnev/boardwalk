@@ -20,7 +20,7 @@ export class QueryKey extends React.Component<QueryKeyProps, {}> {
     colorScale: React.PropTypes.object.isRequired,
   };
   context: QueryKeyContext;
-  render(): JSX.Element {
+  render(): React.ReactElement<{}> {
     const renderItem = (item: types.SeriesValue, index: number) => {
       const color = this.context.colorScale.scale(item.title);
       const select = () => this.props.onSelectMetric(item.queryIndex, item.metric);

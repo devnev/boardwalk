@@ -18,7 +18,7 @@ interface TimePickerFormProps {
   onPickNow?: () => void;
 }
 
-function TimePickerForm(props: TimePickerFormProps): JSX.Element {
+function TimePickerForm(props: TimePickerFormProps): React.ReactElement<{}> {
   const {value, step, valid, dirty, onStepBack, onStepForward, onChanged, onPick, onPickNow} = props;
   const cls = (valid ? 'valid' : 'error') + (dirty ? ' dirty' : '');
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -96,7 +96,7 @@ export class TimePicker extends React.Component<TimePickerProps, TimePickerState
     this.props.onPickNow();
   }
 
-  render(): JSX.Element {
+  render(): React.ReactElement<{}> {
     return (
       <TimePickerForm
         value={this.state.value}

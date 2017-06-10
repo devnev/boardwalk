@@ -10,12 +10,12 @@ interface FilterSelectControlProps {
   onRemoveFilter: (label: string) => void;
 }
 
-function FilterSelectControl(props: FilterSelectControlProps): JSX.Element {
+function FilterSelectControl(props: FilterSelectControlProps): React.ReactElement<{}> {
   var selectorLabels = props.selectors.map((s: Selector) => s.label);
   var unknown = _.difference(_.keys(props.filter), selectorLabels);
   return (
     <ul>
-      {props.selectors.map((selector: Selector): JSX.Element => (
+      {props.selectors.map((selector: Selector): React.ReactElement<{}> => (
         <li key={selector.label}>
           <span>{selector.label}</span>
           <LabelFilterContainer
@@ -25,7 +25,7 @@ function FilterSelectControl(props: FilterSelectControlProps): JSX.Element {
           />
         </li>
       ))}
-      {unknown.map((label: string): JSX.Element => (
+      {unknown.map((label: string): React.ReactElement<{}> => (
         <li key={label}>
           <span>{label}</span>
           <span>{props.filter[label]}</span>

@@ -7,7 +7,7 @@ interface LabelSelectorProps {
   onSelect: (value: string) => void;
 }
 
-export function LabelSelector(props: LabelSelectorProps): JSX.Element {
+export function LabelSelector(props: LabelSelectorProps): React.ReactElement<{}> {
   const select = (event: React.ChangeEvent<HTMLSelectElement>) => props.onSelect(event.target.value);
 
   let options = props.options;

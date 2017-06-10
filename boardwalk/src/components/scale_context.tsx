@@ -20,7 +20,7 @@ export class ScaleProvider extends React.Component<{}, {}> implements React.Chil
       timeScale: timeScale,
     };
   }
-  render(): JSX.Element {
+  render(): React.ReactElement<{}> {
     return React.Children.only(this.props.children);
   }
 }
