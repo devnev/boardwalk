@@ -10,6 +10,42 @@ import * as types from './types';
 import { State } from '../reducers';
 import * as hover_actions from '../actions/hover';
 
+interface PlotProps {
+  plot: Plottable.Component;
+}
+
+class Plot extends React.Component<PlotProps, {}> {
+  constructor(props: PlotProps) {
+    super(props);
+    this._redraw = this._redraw.bind(this);
+  }
+  componentDidMount() {
+    window.addEventListener('resize', this._redraw);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._redraw);
+  }
+  componentWillReceiveProps(nextProps: PlotProps) {
+    if (nextProps.plot !== this.props.plot) {
+      this.props.plot.detach();
+    }
+  }
+  shouldComponentUpdate() {
+    return false;
+  }
+  _redraw() {
+    this.props.plot.redraw();
+  }
+  render(): React.ReactElement<{}> {
+    return (
+      <div
+        style={{width: '100%', height: '100%'}}
+        ref={(ref) => ref ? this.props.plot.renderTo(ref) : this.props.plot.detach()}
+      />
+    );
+  }
+}
+
 interface GraphProps {
   datasets: Plottable.Dataset[];
   onSelectMetric: (queryIndex: number, metricLabels: {[label: string]: string}) => void;
@@ -37,7 +73,6 @@ class Graph extends React.Component<GraphProps, {}> {
     super(props, context);
 
     // binds
-    this._redraw = this._redraw.bind(this);
     this._onSelect = this._onSelect.bind(this);
 
     // init data
@@ -46,31 +81,15 @@ class Graph extends React.Component<GraphProps, {}> {
     this.components.highlight.datasets([new Plottable.Dataset()]);
     this._receiveProps(null, this.props);
   }
-  componentDidMount() {
-    window.addEventListener('resize', this._redraw);
-  }
-  componentWillUnmount() {
-    window.removeEventListener('resize', this._redraw);
-  }
   componentWillReceiveProps(nextProps: GraphProps) {
     this._receiveProps(this.props, nextProps);
   }
-  shouldComponentUpdate(props: GraphProps, state: {}) {
-    return false;
-  }
   render(): React.ReactElement<{}> {
     return (
-      <div
-        id={this.id}
-        style={{width: '100%', height: this.props.height}}
-        ref={(ref) => ref ? this.components.graph.renderTo(ref) : this.components.graph.detach()}
-      />
+      <div id={this.id} style={{width: '100%', height: this.props.height}}>
+        <Plot plot={this.components.graph} />
+      </div>
     );
-  }
-  _redraw() {
-    if (this.components.graph) {
-      this.components.graph.redraw();
-    }
   }
   _onSelect(time: Date, point: Plottable.Point, nearest: Plottable.Plots.IPlotEntity) {
     if (!nearest) {
