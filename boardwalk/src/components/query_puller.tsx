@@ -39,29 +39,23 @@ class QueryPuller extends React.Component<QueryPullerProps, {}> {
     }
   }
   componentWillReceiveProps(nextProps: QueryPullerProps) {
-    // console.log('got new props for', this.props.options.query, nextProps);
     let data = null;
     let query = null;
     let source = null;
     const matchFn = this.props.strictMatch ? StrictMatchFilter : MatchFilter;
     if (matchFn(this.props.options.match, this.props.filter)) {
-      // console.log('got match of old props vs filter', this.props.options.match, this.props.filter);
       source = FormatTemplate(this.props.options.source, this.props.filter);
       query = FormatTemplate(this.props.options.query, this.props.filter);
       data = this.props.data.get(this.props.data, query, source, {data: null}).data;
-      // console.log('old data', data);
-      // console.log('old props data', this.props.data.queries)
     }
     let nextData = null;
     let nextQuery = null;
     let nextSource = null;
     const nextMatchFn = nextProps.strictMatch ? StrictMatchFilter : MatchFilter;
     if (nextMatchFn(nextProps.options.match, nextProps.filter)) {
-      // console.log('got match of new props vs filter', nextProps.options.match, this.props.filter);
       nextSource = FormatTemplate(nextProps.options.source, nextProps.filter);
       nextQuery = FormatTemplate(nextProps.options.query, nextProps.filter);
       nextData = nextProps.data.get(nextProps.data, nextQuery, nextSource, {data: null}).data;
-      // console.log('new data', nextData);
     }
     if (query !== nextQuery || source !== nextSource) {
       if (query && source) {
@@ -74,7 +68,6 @@ class QueryPuller extends React.Component<QueryPullerProps, {}> {
       }
     }
     if (data !== nextData) {
-      console.log('sending updated data for', this.props.options.query, nextData)
       nextProps.updated(nextData || {});
     }
   }

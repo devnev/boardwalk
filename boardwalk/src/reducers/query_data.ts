@@ -127,7 +127,6 @@ export function reducer(state: State = initialState(), action: Actions = Unknown
     case actions.QUERY_DATA: {
       const key = queryKey(action.query, action.source);
       const entry = get(state.queries, key, {request: undefined});
-      console.log('got query data action for ', key, action);
       return {
         ...state,
         queries: {

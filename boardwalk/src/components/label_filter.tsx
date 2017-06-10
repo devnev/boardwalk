@@ -50,7 +50,6 @@ interface LabelFilterState {
 class FilterSelector extends React.Component<LabelFilterProps, LabelFilterState> {
   constructor(props: LabelFilterProps) {
     super(props);
-    console.log('filter queries', props.queries);
     this.state = {
       labels: [],
     };
@@ -64,7 +63,6 @@ class FilterSelector extends React.Component<LabelFilterProps, LabelFilterState>
     return labels;
   }
   _onData(results: query_set.VectorResult[]) {
-    console.log('got filter label results', results)
     const labels = this._labelsFromResults(results);
     this.setState({
       ...this.state,
@@ -75,7 +73,6 @@ class FilterSelector extends React.Component<LabelFilterProps, LabelFilterState>
     const select = this.props.onSelect.bind(this, this.props.label);
     const value = get(this.props.filter, this.props.label, '');
     const options = _.union(this.props.options, this.state.labels);
-    console.log('rendering filter options', options)
     return (
       <div>
         <query_set.VectorQuerySet queries={this.props.queries} strictMatch={false} onData={this._onData} />

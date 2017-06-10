@@ -9,7 +9,6 @@ export interface State {
 export function reducer(state: State = {}, action: Action|UnknownAction = UnknownAction): State {
   switch (action.type) {
     case RECEIVE_CONFIG:
-      console.log(action.config);
       return { config: action.config };
     default:
       return state;

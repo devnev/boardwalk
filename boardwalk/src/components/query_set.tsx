@@ -49,7 +49,6 @@ abstract class BaseQuerySet<
     }
   }
   _onRawData(queryIndex: number, rawResults: RawResult) {
-    console.log('queryset.onrawdata.begin', queryIndex, rawResults);
     if (rawResults.result.length === 0 && !this.state.results[queryIndex]) {
       return;
     }
