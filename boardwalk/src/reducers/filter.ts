@@ -10,7 +10,7 @@ export interface State {
   filters: { [label: string]: string };
 }
 
-function initialState(): State {
+export function initialState(): State {
   return {
     filters: {},
   };

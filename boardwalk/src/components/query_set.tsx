@@ -7,7 +7,7 @@ import * as _ from 'underscore';
 // import { State as QueryDataState } from '../reducers/query_data';
 // import * as query_actions from '../actions/query';
 import { Query, QueryContainer } from './query_puller';
-import * as prom from './prom';
+import * as prom from '../types//prom';
 
 // function formatResults(options: QueryOptions, results: {}): QueryResult[] {
 //   return results.map((result) => {

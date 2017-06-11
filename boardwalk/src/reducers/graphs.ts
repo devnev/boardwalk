@@ -3,11 +3,15 @@ import { UnknownAction } from '../actions';
 import { ReceiveConfigAction, RECEIVE_CONFIG } from '../actions/config';
 import * as types from '../types/config';
 
-export type State = Map<string, types.Graph>;
+export interface State {
+  map: Map<string, types.Graph>;
+}
+
+const initialState = () => ({ map: new Map<string, types.Graph>() });
 
 type Actions = ReceiveConfigAction|UnknownAction;
 
-export function reducer(state: State = new Map<string, types.Graph>(), action: Actions = UnknownAction): State {
+export function reducer(state: State = initialState(), action: Actions = UnknownAction): State {
   switch (action.type) {
   case RECEIVE_CONFIG:
     action = action as ReceiveConfigAction;
@@ -19,7 +23,7 @@ export function reducer(state: State = new Map<string, types.Graph>(), action: A
         }
       });
     });
-    return graphs;
+    return { map: graphs };
   default:
     return state;
   }
