@@ -30,7 +30,7 @@ export const makeReducer =
 );
 
 export function subReducer(
-    oldParent: ParentState,
+    oldParent: ParentState|undefined,
     newParent: ParentState,
     state: SubState = initialSubState(),
     action: {}

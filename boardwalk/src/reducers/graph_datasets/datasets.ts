@@ -16,8 +16,10 @@ export interface State {
   datasets: Map<string, Plottable.Dataset[]>;
 }
 
+export type SubState = { graphDatasets: State };
+
 export const makeReducer =
-  <S extends ParentState>(parent: sequence.Reducer<S>): sequence.Reducer<S & {graphDatasets: State}> =>
+  <S extends ParentState>(parent: sequence.Reducer<S>): sequence.Reducer<S & SubState> =>
     sequence.sequenceReducers(parent, {graphDatasets: reducer});
 
 export function reducer(

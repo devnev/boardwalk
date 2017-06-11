@@ -2,7 +2,17 @@ import * as query_results from './query_results';
 import * as subscriptions from './subscriptions';
 import * as graph_queries from './graph_queries';
 import * as datasets from './datasets';
+import * as highlights from './highlights';
 import * as sequence from '../../sequence';
+import * as filter from '../filter';
+import * as config from '../config';
+import * as hover from '../hover';
+
+export interface ParentState {
+  filter: filter.State;
+  config: config.State;
+  hover: hover.State;
+}
 
 interface SubState1 {
   results: query_results.State;
@@ -15,18 +25,20 @@ export interface GraphDatasetsState {
   subscriptions: subscriptions.SubState;
   graphQueries: graph_queries.State;
   graphDatasets: datasets.State;
+  graphHighlights: highlights.State;
 }
 
 export const makeReducer =
-    <S extends subscriptions.ParentState>(parent: sequence.Reducer<S>): sequence.Reducer<S & GraphDatasetsState> => {
+    <S extends ParentState>(parent: sequence.Reducer<S>): sequence.Reducer<S & GraphDatasetsState> => {
   const r1: sequence.Reducer<S & datasets.ParentState> =
       sequence.sequenceReducers<subscriptions.ParentState, S, SubState1>(parent, {
     results: sequence.ignoringParent(query_results.reducer),
     subscriptions: subscriptions.subReducer,
     graphQueries: sequence.ignoringParent(graph_queries.reducer),
   });
-  const r2: sequence.Reducer<S & GraphDatasetsState> = datasets.makeReducer<S & datasets.ParentState>(r1);
-  return r2;
+  const r2 = datasets.makeReducer<S & datasets.ParentState>(r1);
+  const r3: sequence.Reducer<S & GraphDatasetsState> = highlights.makeReducer(r2);
+  return r3;
 };
 
 // export const reducer: redux.Reducer<State> = datasets.makeReducer(

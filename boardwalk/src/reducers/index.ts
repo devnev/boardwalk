@@ -37,20 +37,20 @@ export interface State extends graph_datasets.GraphDatasetsState {
 }
 
 export const reducer = ((): sequence.Reducer<State> => {
-  // interface Stage1 {
-  //   config: config.State;
-  //   filter: filter.State;
-  //   data: query_data.State;
-  //   range: range.State;
-  //   // subscriptions: query_subscriptions.State;
-  //   router: RouterState;
-  //   consolePath: console_path.State;
-  //   consoles: consoles.State;
-  //   expanded: expand.State;
-  //   hover: hover.State;
-  //   graphs: graphs.State;
-  //   // graphQueries: graph_queries.State;
-  // }
+  interface Stage1 {
+    config: config.State;
+    filter: filter.State;
+    data: query_data.State;
+    range: range.State;
+    // subscriptions: query_subscriptions.State;
+    router: RouterState;
+    consolePath: console_path.State;
+    consoles: consoles.State;
+    expanded: expand.State;
+    hover: hover.State;
+    graphs: graphs.State;
+    // graphQueries: graph_queries.State;
+  }
   const baseReducer = sequence.combineReducers({
     config: config.reducer,
     filter: filter.reducer,
@@ -65,7 +65,7 @@ export const reducer = ((): sequence.Reducer<State> => {
     graphs: graphs.reducer,
     // graphQueries: graph_queries.reducer,
   });
-  return graph_datasets.makeReducer(baseReducer);
+  return graph_datasets.makeReducer<Stage1>(baseReducer);
   // return combineReducers<State>({
   //   config: config.reducer,
   //   filter: filter.reducer,

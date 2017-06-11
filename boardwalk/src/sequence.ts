@@ -20,23 +20,26 @@ import * as redux from 'redux';
 export type Reducer<State> = <A extends redux.Action>(state: State|undefined, action: A) => State;
 
 export type SubReducer<Parent, Sub> =
-  (prevParent: Parent, parentState: Parent, state: Sub|undefined, action: redux.Action) => Sub;
+  (prevParent: Parent|undefined, parentState: Parent, state: Sub|undefined, action: redux.Action) => Sub;
 
 export const sequenceReducers =
     <View, In extends View, Sub>(
       parentReducer: Reducer<In>,
-      subs: {[R in keyof Sub]: SubReducer<View, Sub[R]>}) =>
-    (state: In & Sub, action: redux.Action): In & Sub => {
+      subs: {[R in keyof Sub]: SubReducer<View, Sub[R]>}): Reducer<In & Sub> =>
+    (state: (In & Sub)|undefined, action: redux.Action): In & Sub => {
   let changed = false;
 
   // copy out the sub state
-  const subStates = {} as Sub;
-  for (const k in subs) {
-    if (!Object.prototype.hasOwnProperty.call(subs, k)) {
-      continue;
+  const subStates = !state ? undefined : (() => {
+    const res = {} as Sub;
+    for (const k in subs) {
+      if (!Object.prototype.hasOwnProperty.call(subs, k)) {
+        continue;
+      }
+      res[k] = state[k];
     }
-    subStates[k] = state[k];
-  }
+    return res;
+  })();
 
   // apply parent to whole state, which is restricted to only the parent state in the type system
   const parentThen = parentReducer(state, action);
@@ -48,12 +51,12 @@ export const sequenceReducers =
     if (!Object.prototype.hasOwnProperty.call(subs, k)) {
       continue;
     }
-    subThens[k] = subs[k](state, parentThen, subStates[k], action);
-    changed = changed || (subThens[k] !== subStates[k]);
+    subThens[k] = subs[k](state, parentThen, subStates ? subStates[k] : undefined, action);
+    changed = changed || !subStates || (subThens[k] !== subStates[k]);
   }
 
   // if no changes occurred, ensure we return the original state object
-  if (!changed) {
+  if (state && !changed) {
     return state;
   }
 
@@ -63,7 +66,7 @@ export const sequenceReducers =
 
 export const ignoringParent =
     <Sub>(reducer: Reducer<Sub>) =>
-    (prevParent: {}, parentState: {}, state: Sub|undefined, action: redux.Action): Sub => {
+    (prevParent: {}|undefined, parentState: {}, state: Sub|undefined, action: redux.Action): Sub => {
   return reducer(state, action);
 };
 
