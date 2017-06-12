@@ -9,32 +9,36 @@ import * as sequence from '../../sequence';
 
 type Subscriptions = Map<string, { set: Set<string> }>;
 
-export interface State {
+// export interface State {
+//   filter: filter.State;
+//   config: config.State;
+//   map: Subscriptions;
+// }
+
+export interface ParentState1 {
   filter: filter.State;
   config: config.State;
-  map: Subscriptions;
 }
 
-export interface ParentState {
-  filter: filter.State;
-  config: config.State;
+export interface State {
+  map: Subscriptions;
 }
 
 export interface SubState {
-  map: Subscriptions;
+  subscriptions: State;
 }
 
 export const makeReducer =
-    <S extends ParentState>(parent: redux.Reducer<S>): redux.Reducer<S & {subscriptions: SubState}> => (
-  sequence.sequenceReducers(parent, {subscriptions: subReducer})
+    <S extends ParentState1>(parent: redux.Reducer<S>): redux.Reducer<S & SubState> => (
+  sequence.sequenceReducers<ParentState1, S, SubState>(parent, {subscriptions: subReducer})
 );
 
 export function subReducer(
-    oldParent: ParentState|undefined,
-    newParent: ParentState,
-    state: SubState = initialSubState(),
+    oldParent: ParentState1|undefined,
+    newParent: ParentState1,
+    state: State = initialState(),
     action: {}
-): SubState {
+): State {
   if (oldParent === newParent) {
     return state;
   }
@@ -45,16 +49,16 @@ export function subReducer(
   return { map: state.map };
 }
 
+const initialState = (): State => ({
+  map: new Map<string, { set: Set<string> }>(),
+});
+
 // const initialState = (): State => ({
 //   filter: filter.initialState(),
 //   map: new Map<string, { set: Set<string> }>(),
 // });
 //
 // type Actions = UnknownAction;
-
-const initialSubState = (): SubState => ({
-  map: new Map<string, { set: Set<string> }>(),
-});
 
 const queryKey = (query: string, source: string): string => source + '?query=' + query;
 

@@ -3,6 +3,7 @@ import * as subscriptions from './subscriptions';
 import * as graph_queries from './graph_queries';
 import * as datasets from './datasets';
 import * as highlights from './highlights';
+import * as series from './series';
 import * as sequence from '../../sequence';
 import * as filter from '../filter';
 import * as config from '../config';
@@ -14,31 +15,34 @@ export interface ParentState {
   hover: hover.State;
 }
 
-interface SubState1 {
+export type GraphDatasetsState = {
   results: query_results.State;
-  subscriptions: subscriptions.SubState;
   graphQueries: graph_queries.State;
-}
-
-export interface GraphDatasetsState {
-  results: query_results.State;
-  subscriptions: subscriptions.SubState;
-  graphQueries: graph_queries.State;
+  subscriptions: subscriptions.State;
   graphDatasets: datasets.State;
   graphHighlights: highlights.State;
-}
+  graphSeries: series.State;
+};
 
 export const makeReducer =
     <S extends ParentState>(parent: sequence.Reducer<S>): sequence.Reducer<S & GraphDatasetsState> => {
-  const r1: sequence.Reducer<S & datasets.ParentState> =
-      sequence.sequenceReducers<subscriptions.ParentState, S, SubState1>(parent, {
+  type Stuff = {results: query_results.State, graphQueries: graph_queries.State};
+  type S1 = S & Stuff;
+  const r1: sequence.Reducer<S1> = sequence.sequenceReducers<{}, S, Stuff>(parent, {
     results: sequence.ignoringParent(query_results.reducer),
-    subscriptions: subscriptions.subReducer,
     graphQueries: sequence.ignoringParent(graph_queries.reducer),
   });
-  const r2 = datasets.makeReducer<S & datasets.ParentState>(r1);
-  const r3: sequence.Reducer<S & GraphDatasetsState> = highlights.makeReducer(r2);
-  return r3;
+
+  type S2 = S1 & subscriptions.SubState;
+  const r2: sequence.Reducer<S2> = subscriptions.makeReducer<S1>(r1);
+  type S3 = S2 & datasets.SubState;
+  const r3: sequence.Reducer<S3> = datasets.makeReducer(r2);
+  type S4 = S3 & highlights.SubState;
+  const r4: sequence.Reducer<S4> = highlights.makeReducer(r3);
+  type S5 = S4 & series.SubState;
+  const r5: sequence.Reducer<S5> = series.makeReducer(r4);
+
+  return r5;
 };
 
 // export const reducer: redux.Reducer<State> = datasets.makeReducer(

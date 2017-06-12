@@ -8,7 +8,7 @@ import * as sequence from '../../sequence';
 
 export interface ParentState {
   results: query_results.State;
-  subscriptions: subscriptions.SubState;
+  subscriptions: subscriptions.State;
   graphQueries: graph_queries.State;
 }
 

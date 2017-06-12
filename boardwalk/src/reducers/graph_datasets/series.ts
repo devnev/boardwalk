@@ -16,10 +16,8 @@ export interface Point {
     y: number;
 }
 
-export type SeriesHighlight = Metadata & Point;
-
 export type SeriesValue = Metadata & {
-    value: string|number;
+    value: string;
 };
 
 export interface ParentState {
@@ -28,26 +26,27 @@ export interface ParentState {
 }
 
 export interface State {
-  datasets: Map<string, SeriesHighlight[]>;
+  values: Map<string, SeriesValue[]>;
 }
 
 export interface SubState {
-  graphHighlights: State;
+  graphSeries: State;
 }
 
 export const initialState = (): State => ({
-  datasets: new Map<string, SeriesHighlight[]>(),
+  values: new Map<string, SeriesValue[]>(),
 });
 
 export const makeReducer =
   <S extends ParentState>(parent: sequence.Reducer<S>): sequence.Reducer<S & SubState> =>
-    sequence.sequenceReducers(parent, {graphHighlights: subReducer});
+    sequence.sequenceReducers(parent, {graphSeries: subReducer});
 
-const calculateHeighlights = (datasets: Plottable.Dataset[], highlight: Date): SeriesHighlight[] => {
-  const points = new Array<SeriesHighlight>();
+const calculateSeries = (datasets: Plottable.Dataset[], highlight: Date): SeriesValue[] => {
+  const series = new Array<SeriesValue>();
   datasets.forEach((dataset: Plottable.Dataset): void => {
     const data = dataset.data() as Point[];
     if (data.length === 0 || data[0].t > highlight) {
+      series.push({...dataset.metadata() as Metadata, value: ''});
       return;
     }
     let index = _.sortedIndex<{t: Date}, Date>(data, {t: highlight}, (d => d.t));
@@ -55,12 +54,11 @@ const calculateHeighlights = (datasets: Plottable.Dataset[], highlight: Date): S
       index -= 1;
     }
     let point = data[index];
-    points.push({
-      ...dataset.metadata() as Metadata,
-      ...point,
+    series.push({
+      ...dataset.metadata() as Metadata, value: point.y.toString(),
     });
   });
-  return points;
+  return series;
 };
 
 export function subReducer(
@@ -71,7 +69,7 @@ export function subReducer(
 
   // hover removed, clear state
   if (newParent.hover.time === undefined) {
-    if (state && state.datasets.size === 0) {
+    if (state && state.values.size === 0) {
       return state;
     }
     return initialState();
@@ -82,7 +80,7 @@ export function subReducer(
   if (!state || !parent.hover.time || newParent.hover.time.getTime() !== parent.hover.time.getTime()) {
     const newState = initialState();
     newParent.graphDatasets.datasets.forEach((datasets: Plottable.Dataset[], graphKey: string) => {
-      newState.datasets.set(graphKey, calculateHeighlights(datasets, target));
+      newState.values.set(graphKey, calculateSeries(datasets, target));
     });
     return newState;
   }
@@ -91,13 +89,13 @@ export function subReducer(
   let changed = false;
   newParent.graphDatasets.datasets.forEach((datasets: Plottable.Dataset[], graphKey: string) => {
     const oldData = parent.graphDatasets.datasets.get(graphKey);
-    const oldHighlight = state.datasets.get(graphKey);
+    const oldHighlight = state.values.get(graphKey);
     if (oldData === datasets && oldHighlight) {
-      newState.datasets.set(graphKey, oldHighlight);
+      newState.values.set(graphKey, oldHighlight);
       return;
     }
     changed = true;
-    newState.datasets.set(graphKey, calculateHeighlights(datasets, target));
+    newState.values.set(graphKey, calculateSeries(datasets, target));
   });
   return changed ? newState : state;
 }
