@@ -1,8 +1,5 @@
 import * as _ from 'underscore';
 import * as redux from 'redux';
-import * as query_results from './query_results';
-import * as subscriptions from './subscriptions';
-import * as graph_queries from './graph_queries';
 import * as datasets from './datasets';
 import * as Plottable from 'plottable';
 import * as sequence from '../../sequence';
@@ -26,9 +23,6 @@ export type SeriesValue = Metadata & {
 };
 
 export interface ParentState {
-  results: query_results.State;
-  subscriptions: subscriptions.SubState;
-  graphQueries: graph_queries.State;
   graphDatasets: datasets.State;
   hover: hover.State;
 }
